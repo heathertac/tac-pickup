@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>TAC Pickup</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f5;min-height:100vh;}
+.app{max-width:420px;margin:0 auto;background:#fff;min-height:100vh;}
+.header{background:#fff;border-bottom:3px solid #F4600C;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;}
+.brand-name{font-size:16px;font-weight:600;color:#1a1a1a;letter-spacing:-0.3px;line-height:1;}
+.brand-sub{font-size:9px;letter-spacing:0.22em;color:#1a1a1a;text-transform:uppercase;margin-top:1px;}
+.brand-tag{font-size:11px;color:#F4600C;margin-top:3px;}
+.day-pill{background:#FEE8DC;color:#C44A06;font-size:12px;font-weight:500;padding:5px 14px;border-radius:999px;border:1px solid #F4A27C;white-space:nowrap;}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:12px 16px 0;}
+.stat{background:#f5f5f5;border-radius:8px;padding:10px 12px;}
+.stat-n{font-size:22px;font-weight:600;color:#1a1a1a;}
+.stat-n.green{color:#27500A;}
+.stat-n.red{color:#C0392B;}
+.stat-l{font-size:10px;color:#888;margin-top:2px;}
+.alert-box{margin:12px 16px 0;border-radius:12px;overflow:hidden;border:1px solid #F09595;}
+.alert-hdr{background:#FCEBEB;padding:10px 14px;display:flex;align-items:center;gap:8px;}
+.alert-hdr-text{font-size:12px;font-weight:600;color:#A32D2D;}
+.alert-item{background:#fff;border-top:1px solid #F09595;padding:10px 14px;}
+.alert-name{font-size:14px;font-weight:500;color:#1a1a1a;}
+.alert-detail{font-size:12px;color:#888;margin-top:2px;}
+.clear-bar{margin:12px 16px 0;background:#EAF3DE;border:1px solid #97C459;border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:8px;}
+.clear-text{font-size:13px;color:#27500A;font-weight:500;}
+.filter-bar{padding:12px 16px 0;display:flex;gap:6px;flex-wrap:wrap;}
+.filter-pill{background:#f5f5f5;border:1px solid #ddd;color:#666;font-size:12px;font-weight:500;padding:5px 12px;border-radius:999px;cursor:pointer;display:flex;align-items:center;gap:5px;white-space:nowrap;}
+.filter-pill.active{background:#FEE8DC;border-color:#F4A27C;color:#7A2800;}
+.filter-pill img{width:20px;height:20px;border-radius:50%;object-fit:cover;}
+.section-hdr{padding:14px 16px 8px;display:flex;align-items:center;justify-content:space-between;}
+.section-title{font-size:12px;font-weight:600;color:#C44A06;letter-spacing:0.05em;text-transform:uppercase;}
+.count-chip{font-size:11px;color:#888;background:#f5f5f5;padding:2px 8px;border-radius:999px;}
+.cards{padding:0 16px 80px;display:flex;flex-direction:column;gap:10px;}
+.card{background:#fff;border:1px solid #eee;border-radius:12px;overflow:hidden;}
+.card.enroute{border-color:#EF9F27;}
+.card.done{border-color:#97C459;}
+.card.absent{border-color:#94A3B8;opacity:0.85;}
+.card-accent{height:3px;background:#F4600C;}
+.card-accent.enroute{background:#EF9F27;}
+.card-accent.done{background:#97C459;}
+.card-accent.absent{background:#94A3B8;}
+.card-top{padding:14px 14px 10px;display:flex;align-items:center;gap:12px;}
+.av{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;flex-shrink:0;overflow:hidden;border:2px solid #F4A27C;background:#FEE8DC;color:#7A2800;}
+.av img{width:100%;height:100%;object-fit:cover;}
+.av.enroute{border-color:#EF9F27;background:#FAEEDA;}
+.av.done{border-color:#97C459;background:#EAF3DE;color:#27500A;}
+.av.absent{border-color:#94A3B8;background:#F1F5F9;color:#64748B;}
+.sname{font-size:16px;font-weight:600;color:#1a1a1a;}
+.sstatus{font-size:12px;color:#888;margin-top:2px;display:flex;align-items:center;gap:5px;}
+.sdot{width:6px;height:6px;border-radius:50%;background:#F4A27C;flex-shrink:0;}
+.sdot.enroute{background:#EF9F27;}
+.sdot.done{background:#97C459;}
+.sdot.absent{background:#94A3B8;}
+.info-row{display:flex;align-items:center;gap:6px;margin-top:4px;flex-wrap:wrap;}
+.location-chip{display:inline-flex;align-items:center;gap:4px;background:#FFF7ED;border:1px solid #FED7AA;border-radius:6px;padding:2px 8px;font-size:11px;color:#9A3412;}
+.school-chip{display:inline-flex;align-items:center;gap:4px;background:#F0F4FF;border:1px solid #C7D7FF;border-radius:6px;padding:2px 8px;font-size:11px;color:#3451B2;}
+.teacher-line{font-size:11px;color:#aaa;margin-top:2px;}
+.instr-chip{display:flex;align-items:center;gap:5px;background:#FEE8DC;border:1px solid #F4A27C;border-radius:999px;padding:3px 10px 3px 4px;flex-shrink:0;}
+.instr-photo{width:24px;height:24px;border-radius:50%;object-fit:cover;}
+.instr-name{font-size:11px;color:#7A2800;font-weight:600;}
+.parent-row{margin:0 14px 6px;padding:8px 12px;background:#f5f5f5;border-radius:8px;}
+.parent-contacts{display:flex;flex-direction:column;gap:6px;}
+.parent-contact{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.parent-name{font-size:12px;color:#666;}
+.parent-phone{font-size:11px;color:#888;font-family:monospace;opacity:0.8;}
+.no-phone{font-size:11px;color:#aaa;font-style:italic;}
+.btn-sms{background:#FEE8DC;border:1px solid #F4A27C;color:#7A2800;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:4px;flex-shrink:0;}
+.btn-sms.secondary{background:#EEF2FF;border-color:#A5B4FC;color:#3730A3;}
+.card-actions{padding:0 14px 10px;display:flex;gap:8px;}
+.btn-action{flex:1;padding:11px;border-radius:8px;border:1px solid #F4A27C;background:#FEE8DC;color:#7A2800;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;}
+.btn-enroute{border-color:#EF9F27;background:#FAEEDA;color:#633806;}
+.btn-picked{border-color:#97C459;background:#EAF3DE;color:#27500A;}
+.btn-absent{border-color:#94A3B8;background:#F1F5F9;color:#475569;font-size:12px;}
+.btn-complete{opacity:0.4;cursor:default;}
+.btn-absent-done{border-color:#94A3B8;background:#F1F5F9;color:#64748B;opacity:0.6;cursor:default;}
+.absent-note{margin:0 14px 12px;}
+.absent-note-label{font-size:11px;color:#64748B;font-weight:500;margin-bottom:5px;display:flex;align-items:center;gap:4px;}
+.absent-input{width:100%;border:1px solid #CBD5E1;border-radius:8px;padding:9px 12px;font-size:13px;font-family:inherit;color:#1a1a1a;resize:none;outline:none;background:#F8FAFC;}
+.absent-input:focus{border-color:#94A3B8;}
+.absent-actions{display:flex;gap:6px;margin-top:6px;}
+.btn-absent-send{flex:1;background:#475569;border:none;color:#fff;border-radius:8px;padding:9px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;}
+.post-pickup{padding:0 14px 12px;display:flex;flex-direction:column;gap:6px;}
+.note-btn{background:none;border:none;color:#aaa;font-size:12px;cursor:pointer;text-align:left;padding:2px 0;display:flex;align-items:center;gap:5px;}
+.note-btn:hover{color:#888;}
+.note-form{display:flex;flex-direction:column;gap:6px;}
+.note-input{width:100%;border:1px solid #ddd;border-radius:8px;padding:9px 12px;font-size:13px;font-family:inherit;color:#1a1a1a;resize:none;outline:none;}
+.note-input:focus{border-color:#F4A27C;}
+.note-row{display:flex;gap:6px;}
+.btn-note-send{flex:1;background:#F4600C;border:none;color:#fff;border-radius:8px;padding:9px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;}
+.btn-note-cancel{background:#f5f5f5;border:none;color:#888;border-radius:8px;padding:9px 14px;font-size:13px;cursor:pointer;}
+.note-sent{font-size:12px;color:#27500A;display:flex;align-items:center;gap:5px;}
+.urgent-link{background:none;border:none;color:#C0392B;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:4px;padding:0;}
+.sheet-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:200;display:flex;align-items:flex-end;justify-content:center;}
+.sheet{background:#fff;border-radius:16px 16px 0 0;width:100%;max-width:420px;padding:20px 20px 36px;}
+.sheet-handle{width:36px;height:4px;background:#ddd;border-radius:2px;margin:0 auto 16px;}
+.sheet-title{font-size:16px;font-weight:600;color:#C0392B;margin-bottom:4px;}
+.sheet-sub{font-size:13px;color:#888;margin-bottom:14px;}
+.sheet-input{width:100%;border:1px solid #FFBDBD;border-radius:10px;padding:12px;font-size:14px;font-family:inherit;color:#1a1a1a;resize:none;outline:none;min-height:80px;background:#FFF5F5;}
+.sheet-input:focus{border-color:#C0392B;}
+.sheet-actions{display:flex;gap:8px;margin-top:12px;}
+.btn-urgent-send{flex:1;background:#C0392B;border:none;color:#fff;border-radius:10px;padding:13px;font-size:14px;font-weight:600;cursor:pointer;}
+.btn-sheet-cancel{background:#f5f5f5;border:none;color:#888;border-radius:10px;padding:13px 18px;font-size:14px;cursor:pointer;}
+.offline-bar{background:#FAEEDA;border-bottom:1px solid #F4A27C;padding:6px 16px;font-size:11px;color:#633806;display:flex;align-items:center;gap:6px;}
+.loading{padding:60px 16px;text-align:center;}
+.spin{display:inline-block;width:28px;height:28px;border:3px solid #FEE8DC;border-top-color:#F4600C;border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:14px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading-t{font-size:14px;color:#888;}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <div class="loading"><div class="spin"></div><div class="loading-t">Loading today's roster…</div></div>
+</div>
+<div class="sheet-overlay" id="urgentOverlay" style="display:none" onclick="closeUrgent(event)">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">🚨 Urgent alert</div>
+    <div class="sheet-sub" id="urgentSub"></div>
+    <textarea class="sheet-input" id="urgentText" placeholder="Describe what's happening so the team can act immediately…"></textarea>
+    <div class="sheet-actions">
+      <button class="btn-sheet-cancel" onclick="closeUrgentSheet()">Cancel</button>
+      <button class="btn-urgent-send" onclick="sendUrgent()">Send alert now</button>
+    </div>
+  </div>
+</div>
+<script>
+const BASE='appnWviGYgpWT2VPH';
+const TODAY=new Date();
+const DAYS_FULL=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const DAYS_SHORT=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const todayFull=DAYS_FULL[TODAY.getDay()];
+const todayShort=DAYS_SHORT[TODAY.getDay()];
+const todayStr=`${MONTHS[TODAY.getMonth()]} ${TODAY.getDate()}`;
+const CACHE_KEY=`tac_pickup_${todayShort}_${TODAY.toDateString()}`;
+const STATE_KEY=`tac_states_${TODAY.toDateString()}`;
+const REBECCA_PHONE='7705471075';
+
+const INSTRUCTOR_PHOTOS={
+  'Rebecca':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/TxAMrQbSpLoiHDsvpULJOA/1St2g5ELC6xIR_RJf165eF8O7FWmXg3qM0R2Bl-fFJhEJooX0yS8gYl-PRK2Rrwh9wZBkomGkudLdBAxcjHN5bNPMloujsxPd5t2R3-0gOTvEkGCnvTInXOMYqzRd8RXr-DXmtVdDe2IYUyvlEgg/PEFkkFXtntjuNUffaeFa1fn_89pI_Sasp-A1k52mI_k',
+  'Kevin':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/SqsjI-n1iZgN7W0D4aTVFA/cPaEEx0iSOVW_I-gTwozAKbtibr6L8E9rANffXJor1Y0227SkwuPGIZGLqL9jg6sXf7PgZbfaPqw5TqtOS7t-LEitFREVexj6QMG6vya5BjMDN4vV9Jm5aLIApKkI0MKiGJaMSdzoPUoLlp43sZC7g/ZG3XqGm7gY1CPvBnPTVo1DeQs9Q4wOSqmPODUUhcTDw',
+  'Nicola':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/dYK2H1feWBX2zGpNZntE2Q/xIuvw-qzw3eqfUPLoQY2tE0qpBV_F6ej0PAhXKpamVYeaFIhihTrV9nLFPmPZOY5YKlWYTXtKk-Vy5nzfAMtnUSo45XrX9OfS7Tofy33vGpMxxTiuWRXWW25_0FtEwsRiTClsua7xdPyhqQakyAE4Q/kKZoS55jQn6MJ5dhkbfhyY2cqntlokZLmDnA4wdPXf4',
+  'Rachel Bernstein':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/sebSApiZabDB3Kumn-LVaQ/25RPGa63MpsqzIzYPQaHH0bfXba2E4RHFecgF-iEs-BjGgtThA09WwNq-E5J08XTvabOegZ1-YLhfAheXWroT__cH4hvjyWBjfHPhlNMOOP4x-JYFQzmt49M6TNBmzdGNXLLir2BKQnBCJWuzY5aQA/lRaww2QMuSe_j51VYPyNcYQznu2yoLUvxk3gLZ42pUY',
+  'Janet Chow':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/g_lKIPiMbgJJEQ1ebMNo4w/YfwuBSihBcBxvoamth7AgwNpcqe0p33zUa9qhMqPS41GizC-0XI2CLW4DrxgU1XdkT1gv2TtJVnDg1U2WW6KDyYwaLtQKRl1qSK2ro-0zOUJmdH1bfU1tVHAueySfHIyZsDSXWvcxsLNtJVk1VJpwQ/l0NUBS-nBa-Ecu-e74DG7Z5_87PMCLKfby0oHLrBTI8',
+  'Ricky':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/nPwkTwnGBYd94bd75l9TMw/Rsva16-LVXbkCcngRZPWlwbRbxaB4ye2H2lkA_R7mKijkt15nNBsXxlaa01IMjn7lz1c3nGp7BGdCv9apHnmeyWjMSzm7tHWjec7mWfsPkNYm6yswn8ev9z8-iRU-9MhMvQri2VKBxR4wrhqg5Icxw/u3AWjmHDERyvuWHfZsY0m73UrQar-kyR82ifJ3UFkQk',
+  "Regina D'Soto":'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/LigiIrDMV63tpUsPQINRIA/3cjWxamjs0KzIg9G_avb1LmXJ9XXC72LKomR4sIncrraXQLmeJF6MSFAv3etRBoPWXHUBSExFfzVRXZMt2LMl5O_1xbMQtVi_5Q9Q4_Rsd_v3pSTi-n1MCcPNgndzevJAdqx13G0vxFzn66SKCm7_Q/J5vt7DoVAfmd21aNwykB_NEZ7jeJgED5adcPHe_6Bjg',
+  'Teresa':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/u5Ju62g0GMUWTQ6321YFVw/pQwRu5sMs2YKezjwuIphmuvA9gHzLgSosRDaR-qhhIT-5pOCqje87GMDsKlDky_vm1TKQiQAnHXeZ_XzvYxD3jJxh_4y2lF5iXxubc1utg5B_ERmJIfGjSHLyz-AdkHbatqQDXdLveH2ZVl9XPCeLw/nsY6z6JZ7atKh3t3PHEDtaBCrM7Z1iOdoS7PY7PElDc',
+  'Josue Hernandez':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/5lxOnWnUPPkLWgc1vmbmLQ/MRM6NLz49v8G3nv_jmq2-GqYhzAmIAA5Cr_heXhEV51xlbg0dEkrl1sthUUEkFv-M-PZX5bCtzyp2GjOk0pooq6W7VdxAUPRyN_LeEN4lFikriGMFLgNTC5zwEB-oq0uRp3aHBJ6aXFjKwuNdm1ZG-BlSwYjkXTzFSlNfhz6wzQ/FXD2_iZFYDYrd2TJQ7PPIO9Z0R2Bh7e-we1g15ZtsvY',
+};
+
+let students=[],changes=[],activeFilter='all',isOffline=false,urgentStudentId=null;
+
+// Persisted state
+function loadPersistedState(){
+  try{const s=localStorage.getItem(STATE_KEY);return s?JSON.parse(s):{states:{},absentNotes:{},teamNotes:{}};}
+  catch(e){return{states:{},absentNotes:{},teamNotes:{}};}
+}
+function savePersistedState(){
+  try{localStorage.setItem(STATE_KEY,JSON.stringify({states,absentNotes,teamNotes}));}catch(e){}
+}
+let {states,absentNotes,teamNotes}=loadPersistedState();
+
+function initials(n){return(n||'').split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase();}
+function normDay(d){const s=(d||'').toLowerCase();if(s.startsWith('mo'))return'mon';if(s.startsWith('tu'))return'tue';if(s.startsWith('we'))return'wed';if(s.startsWith('th'))return'thu';if(s.startsWith('fr'))return'fri';return s.slice(0,3);}
+
+function parseSecondary(n){
+  if(!n)return null;
+  const m=n.match(/Also text[^\d]*?([\w\s]+?)\s+at\s+([\d\-\(\)\s]+)/i);
+  if(!m)return null;
+  return{name:m[1].trim().replace(/^(Dad|Mom|dad|mom)\s+/,''),phone:m[2].trim()};
+}
+
+function todayList(){
+  const t=normDay(todayShort);
+  let list=students.filter(s=>{
+    const days=(s.days||[]).map(d=>normDay(d.name||d));
+    return days.includes(t)&&(s.status||'').toLowerCase().includes('active');
+  });
+  if(activeFilter!=='all')list=list.filter(s=>s.instrName===activeFilter);
+  return list;
+}
+
+function getInstructors(){
+  const t=normDay(todayShort);
+  return students.filter(s=>s.instrName&&(s.instrDays||[]).map(d=>normDay(d.name||d)).includes(t)).map(s=>s.instrName).filter((v,i,a)=>a.indexOf(v)===i).sort();
+}
+
+function openSMS(phone,name,studentName,type){
+  const greeting=name?`Hi ${name}!`:'Hi there!';
+  const body=type==='done'
+    ?`${greeting} ${studentName} has been safely picked up and is on the way to the STEAM Lab. We'll see you at pickup time!`
+    :`${greeting} This is your instructor from The Afterschool Collective — I'm on my way to pick up ${studentName} right now. See you soon!`;
+  const p=(phone||'').replace(/\D/g,'');
+  window.open((p?`sms:${p}`:'sms:')+`?body=${encodeURIComponent(body)}`,'_self');
+}
+
+function saveCache(data){try{sessionStorage.setItem(CACHE_KEY,JSON.stringify({ts:Date.now(),data}));}catch(e){}}
+function loadCache(){try{const c=sessionStorage.getItem(CACHE_KEY);if(c){const p=JSON.parse(c);if(Date.now()-p.ts<8*3600000)return p.data;}}catch(e){}return null;}
+
+async function callAirtable(prompt){
+  try{
+    const r=await fetch('/api/proxy',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:2000,system:'Data relay. Return ONLY raw JSON, no markdown.',messages:[{role:'user',content:prompt}],mcp_servers:[{type:'url',url:'https://mcp.airtable.com/mcp',name:'airtable'}]})});
+    const d=await r.json();
+    for(const b of(d.content||[])){if(b.type==='mcp_tool_result'){try{const p=JSON.parse(b.content?.[0]?.text||'');if(p.records)return p.records;}catch{}}}
+    const txt=(d.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
+    try{const p=JSON.parse(txt);if(p.records)return p.records;if(Array.isArray(p))return p;}catch{}
+  }catch(e){}return null;
+}
+
+function setst(id,s){
+  states[id]=s;
+  if(s==='absent'){absentNotes[id]=absentNotes[id]||{open:true,sent:false};}
+  savePersistedState();render();
+}
+function setFilter(f){activeFilter=f;render();}
+
+function toggleAbsentNote(id){
+  absentNotes[id]=absentNotes[id]||{};
+  absentNotes[id].open=!absentNotes[id].open;
+  savePersistedState();render();
+}
+
+async function sendAbsentNote(id){
+  const s=students.find(x=>x.id===id);
+  const el=document.getElementById(`absent-${id}`);
+  const text=el?el.value.trim():'';
+  if(!text)return;
+  absentNotes[id]={sent:true,open:false};
+  savePersistedState();render();
+  await callAirtable(`Create a record in Airtable base ${BASE} table tblBrZKAPGrg893o1 with fields: Description "ABSENT — ${s?.name||id}: ${text} [${todayStr}]", Type "Field Note", Severity "Low".`);
+}
+
+function toggleTeamNote(id){
+  teamNotes[id]=teamNotes[id]||{};
+  teamNotes[id].open=!teamNotes[id].open;
+  savePersistedState();render();
+}
+
+async function sendTeamNote(id){
+  const s=students.find(x=>x.id===id);
+  const el=document.getElementById(`note-${id}`);
+  const text=el?el.value.trim():'';
+  if(!text)return;
+  teamNotes[id]={sent:true,open:false};
+  savePersistedState();render();
+  await callAirtable(`Create a record in Airtable base ${BASE} table tblBrZKAPGrg893o1 with fields: Description "${text} [Student: ${s?.name||id}, Date: ${todayStr}]", Type "Field Note", Severity "Low".`);
+}
+
+function openUrgent(id){
+  const s=students.find(x=>x.id===id);
+  urgentStudentId=id;
+  document.getElementById('urgentSub').textContent=`Student: ${s?.name||''}`;
+  document.getElementById('urgentText').value='';
+  document.getElementById('urgentOverlay').style.display='flex';
+}
+function closeUrgent(e){if(e.target.id==='urgentOverlay')closeUrgentSheet();}
+function closeUrgentSheet(){document.getElementById('urgentOverlay').style.display='none';urgentStudentId=null;}
+async function sendUrgent(){
+  const text=document.getElementById('urgentText').value.trim();
+  const s=students.find(x=>x.id===urgentStudentId);
+  closeUrgentSheet();
+  const msg=`🚨 URGENT — ${s?.name||'Student'} situation at pickup. ${text} [${todayStr}]`;
+  window.open(`sms:${REBECCA_PHONE}?body=${encodeURIComponent(msg)}`,'_self');
+  await callAirtable(`Create a record in Airtable base ${BASE} table tblBrZKAPGrg893o1 with fields: Description "${msg}", Type "Missing Student", Severity "High".`);
+}
+
+function render(){
+  const list=todayList();
+  const allToday=students.filter(s=>{const t=normDay(todayShort);const days=(s.days||[]).map(d=>normDay(d.name||d));return days.includes(t)&&(s.status||'').toLowerCase().includes('active');});
+  const doneCount=Object.values(states).filter(s=>s==='done').length;
+  const absentCount=Object.values(states).filter(s=>s==='absent').length;
+  const todayChanges=changes.filter(c=>{const f=c.cellValuesByFieldId||c.fields||{};return f.fldQ6hdzA6AWLPuDC;});
+  const instructors=getInstructors();
+
+  document.getElementById('app').innerHTML=`
+  ${isOffline?`<div class="offline-bar"><i class="ti ti-wifi-off"></i> Offline — showing cached roster</div>`:''}
+  <div class="header">
+    <div>
+      <div class="brand-name">AFTERSCHOOL</div>
+      <div class="brand-sub">Collective</div>
+      <div class="brand-tag">Pickup — ${todayStr}</div>
+    </div>
+    <div class="day-pill">${todayFull}</div>
+  </div>
+  <div class="stats">
+    <div class="stat"><div class="stat-n">${allToday.length}</div><div class="stat-l">Expected</div></div>
+    <div class="stat"><div class="stat-n green">${doneCount}</div><div class="stat-l">Picked up</div></div>
+    <div class="stat"><div class="stat-n ${absentCount>0?'red':''}">${absentCount}</div><div class="stat-l">Absent</div></div>
+  </div>
+  ${todayChanges.length?`
+  <div class="alert-box" style="margin:12px 16px 0">
+    <div class="alert-hdr"><i class="ti ti-alert-triangle" style="font-size:16px;color:#A32D2D"></i><span class="alert-hdr-text">Changes today — read first</span></div>
+    ${todayChanges.map(c=>{const f=c.cellValuesByFieldId||c.fields||{};return`<div class="alert-item"><div class="alert-name">${f.fldQ6hdzA6AWLPuDC||'Change logged'}</div>${f.fldtCI7bXXnnZJyDG?.name?`<div class="alert-detail">${f.fldtCI7bXXnnZJyDG.name} change</div>`:''}</div>`;}).join('')}
+  </div>`:`
+  <div class="clear-bar"><i class="ti ti-circle-check" style="font-size:16px;color:#27500A"></i><span class="clear-text">All clear — no changes today</span></div>`}
+  ${instructors.length>1?`
+  <div class="filter-bar">
+    <button class="filter-pill${activeFilter==='all'?' active':''}" onclick="setFilter('all')"><i class="ti ti-users" style="font-size:13px"></i> All</button>
+    ${instructors.map(name=>`<button class="filter-pill${activeFilter===name?' active':''}" onclick="setFilter('${name.replace(/'/g,"\\'")}')">${INSTRUCTOR_PHOTOS[name]?`<img src="${INSTRUCTOR_PHOTOS[name]}" alt="${name}" onerror="this.style.display='none'">`:''}${name.split(' ')[0]}</button>`).join('')}
+  </div>`:'' }
+  <div class="section-hdr">
+    <span class="section-title">${activeFilter==='all'?"Today's students":activeFilter.split(' ')[0]+"'s students"}</span>
+    <span class="count-chip">${list.length}</span>
+  </div>
+  <div class="cards">
+  ${list.length===0?`<div style="text-align:center;padding:40px 0;color:#888;font-size:14px">No students enrolled for ${todayFull}</div>`:
+  list.map(s=>{
+    const st=states[s.id]||'pending';
+    const secondary=parseSecondary(s.notes);
+    const instrPhoto=INSTRUCTOR_PHOTOS[s.instrName]||null;
+    const smsType=st==='done'?'done':'enroute';
+    const an=absentNotes[s.id]||{};
+    const tn=teamNotes[s.id]||{};
+    const schoolLine=s.school||'';
+    const teacherLine=s.teacher?`${s.teacher}${s.grade?' · '+s.grade:''}`:s.grade||'';
+    const locationLine=s.pickupLocation?`${s.pickupLocation}${s.busTime?' · '+s.busTime:''}`:s.busTime||'';
+    const now=new Date();
+    const timeStr=now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+
+    return`<div class="card ${st}" id="c-${s.id}">
+      <div class="card-accent ${st}"></div>
+      <div class="card-top">
+        <div class="av ${st}">${s.photo?`<img src="${s.photo}" alt="${s.name}" onerror="this.style.display='none';this.parentNode.textContent='${initials(s.name)}'">`:initials(s.name)}</div>
+        <div style="flex:1;min-width:0">
+          <div class="sname">${s.name}</div>
+          <div class="sstatus"><div class="sdot ${st}"></div>${st==='pending'?'Not started yet':st==='enroute'?'En route to pickup':st==='absent'?'Marked absent':'Picked up safely'}</div>
+          <div class="info-row">
+            ${locationLine?`<div class="location-chip"><i class="ti ti-map-pin" style="font-size:11px"></i>${locationLine}</div>`:''}
+            ${schoolLine?`<div class="school-chip"><i class="ti ti-building" style="font-size:11px"></i>${schoolLine}</div>`:''}
+          </div>
+          ${teacherLine?`<div class="teacher-line">${teacherLine}</div>`:''}
+        </div>
+        ${instrPhoto&&activeFilter==='all'?`<div class="instr-chip"><img src="${instrPhoto}" class="instr-photo" alt="${s.instrName||''}" onerror="this.style.display='none'"><span class="instr-name">${(s.instrName||'').split(' ')[0]}</span></div>`:''}
+      </div>
+      ${st!=='absent'?`<div class="parent-row">
+        <div class="parent-contacts">
+          <div class="parent-contact">
+            <div>
+              <div class="parent-name">${s.pickupName||'Parent'}</div>
+              ${s.pickupPhone?`<div class="parent-phone">${s.pickupPhone}</div>`:`<div class="no-phone">Awaiting welcome email reply</div>`}
+            </div>
+            ${s.pickupPhone?`<button class="btn-sms" onclick="openSMS('${s.pickupPhone}','${(s.pickupName||'').replace(/'/g,"\\'")}','${s.name.replace(/'/g,"\\'")}','${smsType}')"><i class="ti ti-message" style="font-size:13px"></i> Text</button>`:''}
+          </div>
+          ${secondary?`<div class="parent-contact">
+            <div>
+              <div class="parent-name">${secondary.name}</div>
+              <div class="parent-phone">${secondary.phone}</div>
+            </div>
+            <button class="btn-sms secondary" onclick="openSMS('${secondary.phone}','${secondary.name.replace(/'/g,"\\'")}','${s.name.replace(/'/g,"\\'")}','${smsType}')"><i class="ti ti-message" style="font-size:13px"></i> Text</button>
+          </div>`:''}
+        </div>
+      </div>`:''}
+      <div class="card-actions">
+        ${st==='pending'?`<button class="btn-action btn-enroute" onclick="setst('${s.id}','enroute')"><i class="ti ti-walk" style="font-size:15px"></i>En route to pickup</button>`
+        :st==='enroute'?`
+          <button class="btn-action btn-picked" onclick="setst('${s.id}','done')"><i class="ti ti-check" style="font-size:15px"></i>Child picked up</button>
+          <button class="btn-action btn-absent" onclick="setst('${s.id}','absent')" style="max-width:110px"><i class="ti ti-user-x" style="font-size:14px"></i>Not there</button>`
+        :st==='absent'?`<button class="btn-action btn-absent-done" disabled><i class="ti ti-user-x" style="font-size:14px"></i>Marked absent</button>`
+        :`<button class="btn-action btn-complete" disabled><i class="ti ti-circle-check" style="font-size:15px"></i>Complete</button>`}
+      </div>
+      ${st==='absent'?`
+      <div class="absent-note">
+        <div class="absent-note-label"><i class="ti ti-pencil" style="font-size:12px"></i> What happened?</div>
+        ${an.sent?`<div style="font-size:12px;color:#64748B;display:flex;align-items:center;gap:5px;padding:4px 0"><i class="ti ti-circle-check" style="font-size:13px"></i> Note sent to the team</div>`
+        :`<textarea class="absent-input" id="absent-${s.id}" rows="2" placeholder="${s.name} was not at pickup at ${timeStr}. "></textarea>
+        <div class="absent-actions">
+          <button class="btn-absent-send" onclick="sendAbsentNote('${s.id}')"><i class="ti ti-send" style="font-size:13px"></i> Send to team</button>
+        </div>`}
+        <div style="margin-top:8px">
+          <button class="urgent-link" onclick="openUrgent('${s.id}')"><i class="ti ti-alert-triangle" style="font-size:13px"></i> This is urgent — send an alert</button>
+        </div>
+      </div>`:''}
+      ${st==='done'?`
+      <div class="post-pickup">
+        ${tn.sent?`<div class="note-sent"><i class="ti ti-circle-check" style="font-size:14px;color:#27500A"></i> Note sent to the team</div>`
+        :tn.open?`<div class="note-form">
+          <textarea class="note-input" id="note-${s.id}" rows="2" placeholder="e.g. Bus arrived 10 min late at a new stop on 47th Ave"></textarea>
+          <div class="note-row">
+            <button class="btn-note-cancel" onclick="toggleTeamNote('${s.id}')">Cancel</button>
+            <button class="btn-note-send" onclick="sendTeamNote('${s.id}')"><i class="ti ti-send" style="font-size:13px"></i> Send to team</button>
+          </div>
+        </div>`
+        :`<button class="note-btn" onclick="toggleTeamNote('${s.id}')"><i class="ti ti-pencil" style="font-size:13px"></i> Leave a note for the team</button>`}
+        <button class="urgent-link" onclick="openUrgent('${s.id}')"><i class="ti ti-alert-triangle" style="font-size:13px"></i> Send an urgent alert</button>
+      </div>`:''}
+    </div>`;
+  }).join('')}
+  </div>`;
+}
+
+async function init(){
+  const cached=loadCache();
+  if(cached){students=cached.students;changes=cached.changes;isOffline=false;render();}
+  const raw=await callAirtable(`Fetch all records from Airtable base ${BASE} table tblJSQjtxq7yc29cY. Return JSON with id and fields: fldSxrnb5OVFoTXea (name), fldCg5jyD4lNtmXS6 (status), fldqiZE6x6xmkfTp6 (days), fldS1uncWbXSUnMjQ (photo), fldNrNE405tkGrmh8 (pickupPhone), fldXOFfMJuj4xK4YA (pickupName), fldYTfbphzjOJLDZE (notes), fldTYrtOCYNOuGB1M (teacher), fldFbfzsmGPPBUAP3 (grade), fldYKQp60pwoB7YFr (school), fldQVHtMRmpemPtZE (pickupLocation).`);
+  if(raw){
+    const staffRaw=await callAirtable(`Fetch all records from Airtable base ${BASE} table tblWuCldxuiPhtUUC. Return JSON with id and fields: fldpTZVDA2K7wAfKq (name), fldR41zcrl85iKLBq (days), fldQZZW5GuC6EMl6A (status).`);
+    const staff=(staffRaw||[]).filter(r=>(r.cellValuesByFieldId?.fldQZZW5GuC6EMl6A?.name||'').toLowerCase().includes('active'));
+    const t=normDay(todayShort);
+    students=raw.map(r=>{
+      const f=r.cellValuesByFieldId||{};
+      const photos=f.fldS1uncWbXSUnMjQ||[];
+      const studentDays=(f.fldqiZE6x6xmkfTp6||[]).map(d=>normDay(d.name||d));
+      const matchedInstr=staff.find(st=>{
+        const sd=(st.cellValuesByFieldId?.fldR41zcrl85iKLBq||[]).map(d=>normDay(d.name||d));
+        return sd.includes(t)&&studentDays.includes(t);
+      });
+      const pickupLocs=f.fldQVHtMRmpemPtZE||[];
+      const pickupLocation=pickupLocs[0]?.name||'';
+      return{
+        id:r.id,
+        name:f.fldSxrnb5OVFoTXea||'Unknown',
+        status:f.fldCg5jyD4lNtmXS6?.name||'Active',
+        days:f.fldqiZE6x6xmkfTp6||[],
+        photo:photos[0]?.thumbnails?.small?.url||photos[0]?.url||null,
+        pickupPhone:f.fldNrNE405tkGrmh8||'',
+        pickupName:f.fldXOFfMJuj4xK4YA||'',
+        notes:f.fldYTfbphzjOJLDZE||'',
+        teacher:f.fldTYrtOCYNOuGB1M||'',
+        grade:f.fldFbfzsmGPPBUAP3?.name||'',
+        school:f.fldYKQp60pwoB7YFr?.name||'',
+        pickupLocation,
+        instrName:matchedInstr?.cellValuesByFieldId?.fldpTZVDA2K7wAfKq||'',
+        instrDays:matchedInstr?.cellValuesByFieldId?.fldR41zcrl85iKLBq||[],
+      };
+    });
+    const rawC=await callAirtable(`Fetch all records from Airtable base ${BASE} table tblEdgjx4phKSj4wS. Return full JSON.`);
+    changes=rawC||[];
+    saveCache({students,changes});
+    isOffline=false;
+  }else if(!cached){isOffline=true;students=[];changes=[];}
+  else{isOffline=true;}
+  render();
+}
+init();
+</script>
+</body>
+</html>
