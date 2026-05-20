@@ -12,7 +12,15 @@ module.exports = async function handler(req, res) {
     const r = await fetch(`https://api.airtable.com/v0/${BASE}/${path}`, {
       headers: { Authorization: `Bearer ${AIRTABLE_TOKEN}` }
     });
-    return r.json();
+    const data = await r.json();
+    // Normalize: map cellValuesByFieldId to fields
+    if (data.records) {
+      data.records = data.records.map(rec => ({
+        ...rec,
+        fields: rec.fields || rec.cellValuesByFieldId || {}
+      }));
+    }
+    return data;
   }
 
   try {
@@ -20,17 +28,10 @@ module.exports = async function handler(req, res) {
 
     if (action === 'getStudents') {
       const fields = [
-        'fldSxrnb5OVFoTXea', // name
-        'fldCg5jyD4lNtmXS6', // status
-        'fldqiZE6x6xmkfTp6', // days
-        'fldS1uncWbXSUnMjQ', // photo
-        'fldNrNE405tkGrmh8', // pickupPhone
-        'fldXOFfMJuj4xK4YA', // pickupName
-        'fldYTfbphzjOJLDZE', // notes
-        'fldTYrtOCYNOuGB1M', // teacher
-        'fldFbfzsmGPPBUAP3', // grade
-        'fldYKQp60pwoB7YFr', // school
-        'fldQVHtMRmpemPtZE', // pickupLocation
+        'fldSxrnb5OVFoTXea','fldCg5jyD4lNtmXS6','fldqiZE6x6xmkfTp6',
+        'fldS1uncWbXSUnMjQ','fldNrNE405tkGrmh8','fldXOFfMJuj4xK4YA',
+        'fldYTfbphzjOJLDZE','fldTYrtOCYNOuGB1M','fldFbfzsmGPPBUAP3',
+        'fldYKQp60pwoB7YFr','fldQVHtMRmpemPtZE',
       ];
       const fieldParams = fields.map(f => `fields[]=${f}`).join('&');
       let allRecords = [];
@@ -45,7 +46,7 @@ module.exports = async function handler(req, res) {
     }
 
     if (action === 'getStaff') {
-      const fields = ['fldpTZVDA2K7wAfKq', 'fldR41zcrl85iKLBq', 'fldQZZW5GuC6EMl6A'];
+      const fields = ['fldpTZVDA2K7wAfKq','fldR41zcrl85iKLBq','fldQZZW5GuC6EMl6A'];
       const fieldParams = fields.map(f => `fields[]=${f}`).join('&');
       const data = await airtableFetch(`tblWuCldxuiPhtUUC?${fieldParams}`);
       return res.status(200).json({ records: data.records || [] });
