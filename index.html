@@ -25,7 +25,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .alert-hdr-text{font-size:12px;font-weight:600;color:#A32D2D;}
 .alert-item{background:#fff;border-top:1px solid #F09595;padding:10px 14px;}
 .alert-name{font-size:14px;font-weight:500;color:#1a1a1a;}
-.alert-detail{font-size:12px;color:#888;margin-top:2px;}
 .clear-bar{margin:12px 16px 0;background:#EAF3DE;border:1px solid #97C459;border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:8px;}
 .clear-text{font-size:13px;color:#27500A;font-weight:500;}
 .filter-bar{padding:12px 16px 0;display:flex;gap:6px;flex-wrap:wrap;}
@@ -81,14 +80,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .absent-note{margin:0 14px 12px;}
 .absent-note-label{font-size:11px;color:#64748B;font-weight:500;margin-bottom:5px;display:flex;align-items:center;gap:4px;}
 .absent-input{width:100%;border:1px solid #CBD5E1;border-radius:8px;padding:9px 12px;font-size:13px;font-family:inherit;color:#1a1a1a;resize:none;outline:none;background:#F8FAFC;}
-.absent-input:focus{border-color:#94A3B8;}
 .absent-actions{display:flex;gap:6px;margin-top:6px;}
 .btn-absent-send{flex:1;background:#475569;border:none;color:#fff;border-radius:8px;padding:9px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;}
 .post-pickup{padding:0 14px 12px;display:flex;flex-direction:column;gap:6px;}
 .note-btn{background:none;border:none;color:#aaa;font-size:12px;cursor:pointer;text-align:left;padding:2px 0;display:flex;align-items:center;gap:5px;}
 .note-form{display:flex;flex-direction:column;gap:6px;}
 .note-input{width:100%;border:1px solid #ddd;border-radius:8px;padding:9px 12px;font-size:13px;font-family:inherit;color:#1a1a1a;resize:none;outline:none;}
-.note-input:focus{border-color:#F4A27C;}
 .note-row{display:flex;gap:6px;}
 .btn-note-send{flex:1;background:#F4600C;border:none;color:#fff;border-radius:8px;padding:9px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;}
 .btn-note-cancel{background:#f5f5f5;border:none;color:#888;border-radius:8px;padding:9px 14px;font-size:13px;cursor:pointer;}
@@ -138,6 +135,26 @@ const CACHE_KEY=`tac_roster_${TODAY.toDateString()}`;
 const STATE_KEY=`tac_states_${TODAY.toDateString()}`;
 const REBECCA_PHONE='7705471075';
 
+// Field IDs — Airtable REST API returns fields by name, but we'll use the name-based approach
+// since that's what the REST API returns in the `fields` object
+const F = {
+  NAME: 'Name',
+  STATUS: 'Status',
+  DAYS: 'Enrolled Days',
+  PHOTO: 'Photo',
+  PICKUP_PHONE: 'Pickup Contact Phone',
+  PICKUP_NAME: 'Pickup Contact Name',
+  NOTES: 'Notes (Nice to Know)',
+  TEACHER: 'Homeroom Teacher',
+  GRADE: 'Grade',
+  SCHOOL: 'School',
+  PICKUP_LOC: 'Default Pickup Location',
+  STAFF_NAME: 'Name',
+  STAFF_DAYS: 'Default Availability',
+  STAFF_STATUS: 'Status',
+  CHANGE_SUMMARY: 'Change Summary',
+};
+
 const INSTRUCTOR_PHOTOS={
   'Rebecca':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/TxAMrQbSpLoiHDsvpULJOA/1St2g5ELC6xIR_RJf165eF8O7FWmXg3qM0R2Bl-fFJhEJooX0yS8gYl-PRK2Rrwh9wZBkomGkudLdBAxcjHN5bNPMloujsxPd5t2R3-0gOTvEkGCnvTInXOMYqzRd8RXr-DXmtVdDe2IYUyvlEgg/PEFkkFXtntjuNUffaeFa1fn_89pI_Sasp-A1k52mI_k',
   'Kevin':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/SqsjI-n1iZgN7W0D4aTVFA/cPaEEx0iSOVW_I-gTwozAKbtibr6L8E9rANffXJor1Y0227SkwuPGIZGLqL9jg6sXf7PgZbfaPqw5TqtOS7t-LEitFREVexj6QMG6vya5BjMDN4vV9Jm5aLIApKkI0MKiGJaMSdzoPUoLlp43sZC7g/ZG3XqGm7gY1CPvBnPTVo1DeQs9Q4wOSqmPODUUhcTDw',
@@ -151,24 +168,51 @@ const INSTRUCTOR_PHOTOS={
 };
 
 let students=[],changes=[],activeFilter='all',isOffline=false,urgentStudentId=null;
-let {states,absentNotes,teamNotes}=loadPersistedState();
+let {states,absentNotes,teamNotes}=loadState();
 
-function loadPersistedState(){
-  try{const s=localStorage.getItem(STATE_KEY);return s?JSON.parse(s):{states:{},absentNotes:{},teamNotes:{}};}
-  catch(e){return{states:{},absentNotes:{},teamNotes:{}};}
-}
-function savePersistedState(){
-  try{localStorage.setItem(STATE_KEY,JSON.stringify({states,absentNotes,teamNotes}));}catch(e){}
-}
+function loadState(){try{const s=localStorage.getItem(STATE_KEY);return s?JSON.parse(s):{states:{},absentNotes:{},teamNotes:{}};}catch(e){return{states:{},absentNotes:{},teamNotes:{}};}}
+function saveState(){try{localStorage.setItem(STATE_KEY,JSON.stringify({states,absentNotes,teamNotes}));}catch(e){}}
 
 function initials(n){return(n||'').split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase();}
 function normDay(d){const s=(d||'').toLowerCase();if(s.startsWith('mo'))return'mon';if(s.startsWith('tu'))return'tue';if(s.startsWith('we'))return'wed';if(s.startsWith('th'))return'thu';if(s.startsWith('fr'))return'fri';return s.slice(0,3);}
+function parseSecondary(n){if(!n)return null;const m=n.match(/Also text[^\d]*?([\w\s]+?)\s+at\s+([\d\-\(\)\s]+)/i);if(!m)return null;return{name:m[1].trim().replace(/^(Dad|Mom|dad|mom)\s+/,''),phone:m[2].trim()};}
 
-function parseSecondary(n){
-  if(!n)return null;
-  const m=n.match(/Also text[^\d]*?([\w\s]+?)\s+at\s+([\d\-\(\)\s]+)/i);
-  if(!m)return null;
-  return{name:m[1].trim().replace(/^(Dad|Mom|dad|mom)\s+/,''),phone:m[2].trim()};
+// The REST API returns fields by NAME — this function gets a field value by name
+function gf(f, key) {
+  // Try field name directly
+  if (f[key] !== undefined) return f[key];
+  return null;
+}
+
+function mapStudent(r, staff, t) {
+  const f = r.fields || {};
+  const rawDays = f['Enrolled Days'] || [];
+  const studentDays = rawDays.map(d => normDay(d.name || d));
+  const photos = f['Photo'] || [];
+  const pickupLocs = f['Default Pickup Location'] || [];
+  
+  const matchedInstr = staff.find(st => {
+    const sf = st.fields || {};
+    const sd = (sf['Default Availability'] || []).map(d => normDay(d.name || d));
+    return sd.includes(t) && studentDays.includes(t);
+  });
+
+  return {
+    id: r.id,
+    name: f['Name'] || 'Unknown',
+    status: (f['Status']?.name || f['Status'] || 'Active'),
+    days: rawDays,
+    photo: photos[0]?.thumbnails?.small?.url || photos[0]?.url || null,
+    pickupPhone: f['Pickup Contact Phone'] || '',
+    pickupName: f['Pickup Contact Name'] || '',
+    notes: f['Notes (Nice to Know)'] || '',
+    teacher: f['Homeroom Teacher'] || '',
+    grade: f['Grade']?.name || f['Grade'] || '',
+    school: f['School']?.name || f['School'] || '',
+    pickupLocation: pickupLocs[0]?.name || '',
+    instrName: matchedInstr?.fields?.['Name'] || '',
+    instrDays: matchedInstr?.fields?.['Default Availability'] || [],
+  };
 }
 
 function todayList(){
@@ -188,9 +232,7 @@ function getInstructors(){
 
 function openSMS(phone,name,studentName,type){
   const greeting=name?`Hi ${name}!`:'Hi there!';
-  const body=type==='done'
-    ?`${greeting} ${studentName} has been safely picked up and is on the way to the STEAM Lab. We'll see you at pickup time!`
-    :`${greeting} This is your instructor from The Afterschool Collective — I'm on my way to pick up ${studentName} right now. See you soon!`;
+  const body=type==='done'?`${greeting} ${studentName} has been safely picked up and is on the way to the STEAM Lab. We'll see you at pickup time!`:`${greeting} This is your instructor from The Afterschool Collective — I'm on my way to pick up ${studentName} right now. See you soon!`;
   const p=(phone||'').replace(/\D/g,'');
   window.open((p?`sms:${p}`:'sms:')+`?body=${encodeURIComponent(body)}`,'_self');
 }
@@ -198,28 +240,22 @@ function openSMS(phone,name,studentName,type){
 function saveCache(data){try{sessionStorage.setItem(CACHE_KEY,JSON.stringify({ts:Date.now(),data}));}catch(e){}}
 function loadCache(){try{const c=sessionStorage.getItem(CACHE_KEY);if(c){const p=JSON.parse(c);if(Date.now()-p.ts<8*3600000)return p.data;}}catch(e){}return null;}
 
-async function callProxy(action, extra={}) {
-  const r = await fetch('/api/proxy', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({action, ...extra})
-  });
+async function proxy(action,extra={}){
+  const r=await fetch('/api/proxy',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,...extra})});
   return r.json();
 }
 
-function setst(id,s){states[id]=s;if(s==='absent'){absentNotes[id]=absentNotes[id]||{open:true,sent:false};}savePersistedState();render();}
+function setst(id,s){states[id]=s;if(s==='absent'){absentNotes[id]=absentNotes[id]||{open:true,sent:false};}saveState();render();}
 function setFilter(f){activeFilter=f;render();}
-
-function toggleTeamNote(id){teamNotes[id]=teamNotes[id]||{};teamNotes[id].open=!teamNotes[id].open;savePersistedState();render();}
+function toggleTeamNote(id){teamNotes[id]=teamNotes[id]||{};teamNotes[id].open=!teamNotes[id].open;saveState();render();}
 
 async function sendAbsentNote(id){
   const s=students.find(x=>x.id===id);
   const el=document.getElementById(`absent-${id}`);
   const text=el?el.value.trim():'';
   if(!text)return;
-  absentNotes[id]={sent:true,open:false};
-  savePersistedState();render();
-  await callProxy('logIncident',{description:`ABSENT — ${s?.name||id}: ${text} [${todayStr}]`,type:'Field Note',severity:'Low'});
+  absentNotes[id]={sent:true,open:false};saveState();render();
+  await proxy('logIncident',{description:`ABSENT — ${s?.name||id}: ${text} [${todayStr}]`,type:'Field Note',severity:'Low'});
 }
 
 async function sendTeamNote(id){
@@ -227,9 +263,8 @@ async function sendTeamNote(id){
   const el=document.getElementById(`note-${id}`);
   const text=el?el.value.trim():'';
   if(!text)return;
-  teamNotes[id]={sent:true,open:false};
-  savePersistedState();render();
-  await callProxy('logIncident',{description:`${text} [Student: ${s?.name||id}, Date: ${todayStr}]`,type:'Field Note',severity:'Low'});
+  teamNotes[id]={sent:true,open:false};saveState();render();
+  await proxy('logIncident',{description:`${text} [Student: ${s?.name||id}, Date: ${todayStr}]`,type:'Field Note',severity:'Low'});
 }
 
 function openUrgent(id){
@@ -247,7 +282,7 @@ async function sendUrgent(){
   closeUrgentSheet();
   const msg=`🚨 URGENT — ${s?.name||'Student'} situation at pickup. ${text} [${todayStr}]`;
   window.open(`sms:${REBECCA_PHONE}?body=${encodeURIComponent(msg)}`,'_self');
-  await callProxy('logIncident',{description:msg,type:'Missing Student',severity:'High'});
+  await proxy('logIncident',{description:msg,type:'Missing Student',severity:'High'});
 }
 
 function render(){
@@ -255,35 +290,20 @@ function render(){
   const allToday=students.filter(s=>{const t=normDay(todayShort);const days=(s.days||[]).map(d=>normDay(d.name||d));return days.includes(t)&&(s.status||'').toLowerCase().includes('active');});
   const doneCount=Object.values(states).filter(s=>s==='done').length;
   const absentCount=Object.values(states).filter(s=>s==='absent').length;
-  const todayChanges=changes.filter(c=>{const f=c.fields||{};return f.fldQ6hdzA6AWLPuDC;});
+  const todayChanges=changes.filter(c=>(c.fields||{})['Change Summary']);
   const instructors=getInstructors();
 
   document.getElementById('app').innerHTML=`
   ${isOffline?`<div class="offline-bar"><i class="ti ti-wifi-off"></i> Offline — showing cached roster</div>`:''}
-  <div class="header">
-    <div><div class="brand-name">AFTERSCHOOL</div><div class="brand-sub">Collective</div><div class="brand-tag">Pickup — ${todayStr}</div></div>
-    <div class="day-pill">${todayFull}</div>
-  </div>
+  <div class="header"><div><div class="brand-name">AFTERSCHOOL</div><div class="brand-sub">Collective</div><div class="brand-tag">Pickup — ${todayStr}</div></div><div class="day-pill">${todayFull}</div></div>
   <div class="stats">
     <div class="stat"><div class="stat-n">${allToday.length}</div><div class="stat-l">Expected</div></div>
     <div class="stat"><div class="stat-n green">${doneCount}</div><div class="stat-l">Picked up</div></div>
     <div class="stat"><div class="stat-n ${absentCount>0?'red':''}">${absentCount}</div><div class="stat-l">Absent</div></div>
   </div>
-  ${todayChanges.length?`
-  <div class="alert-box" style="margin:12px 16px 0">
-    <div class="alert-hdr"><i class="ti ti-alert-triangle" style="font-size:16px;color:#A32D2D"></i><span class="alert-hdr-text">Changes today — read first</span></div>
-    ${todayChanges.map(c=>{const f=c.fields||{};return`<div class="alert-item"><div class="alert-name">${f.fldQ6hdzA6AWLPuDC||'Change logged'}</div></div>`;}).join('')}
-  </div>`:`
-  <div class="clear-bar"><i class="ti ti-circle-check" style="font-size:16px;color:#27500A"></i><span class="clear-text">All clear — no changes today</span></div>`}
-  ${instructors.length>1?`
-  <div class="filter-bar">
-    <button class="filter-pill${activeFilter==='all'?' active':''}" onclick="setFilter('all')"><i class="ti ti-users" style="font-size:13px"></i> All</button>
-    ${instructors.map(name=>`<button class="filter-pill${activeFilter===name?' active':''}" onclick="setFilter('${name.replace(/'/g,"\\'")}')">${INSTRUCTOR_PHOTOS[name]?`<img src="${INSTRUCTOR_PHOTOS[name]}" alt="${name}" onerror="this.style.display='none'">`:''}${name.split(' ')[0]}</button>`).join('')}
-  </div>`:'' }
-  <div class="section-hdr">
-    <span class="section-title">${activeFilter==='all'?"Today's students":activeFilter.split(' ')[0]+"'s students"}</span>
-    <span class="count-chip">${list.length}</span>
-  </div>
+  ${todayChanges.length?`<div class="alert-box" style="margin:12px 16px 0"><div class="alert-hdr"><i class="ti ti-alert-triangle" style="font-size:16px;color:#A32D2D"></i><span class="alert-hdr-text">Changes today — read first</span></div>${todayChanges.map(c=>`<div class="alert-item"><div class="alert-name">${(c.fields||{})['Change Summary']||'Change logged'}</div></div>`).join('')}</div>`:`<div class="clear-bar"><i class="ti ti-circle-check" style="font-size:16px;color:#27500A"></i><span class="clear-text">All clear — no changes today</span></div>`}
+  ${instructors.length>1?`<div class="filter-bar"><button class="filter-pill${activeFilter==='all'?' active':''}" onclick="setFilter('all')"><i class="ti ti-users" style="font-size:13px"></i> All</button>${instructors.map(name=>`<button class="filter-pill${activeFilter===name?' active':''}" onclick="setFilter('${name.replace(/'/g,"\\'")}')">${INSTRUCTOR_PHOTOS[name]?`<img src="${INSTRUCTOR_PHOTOS[name]}" alt="${name}" onerror="this.style.display='none'">`:''}${name.split(' ')[0]}</button>`).join('')}</div>`:'' }
+  <div class="section-hdr"><span class="section-title">${activeFilter==='all'?"Today's students":activeFilter.split(' ')[0]+"'s students"}</span><span class="count-chip">${list.length}</span></div>
   <div class="cards">
   ${list.length===0?`<div style="text-align:center;padding:40px 0;color:#888;font-size:14px">No students enrolled for ${todayFull}</div>`:
   list.map(s=>{
@@ -293,12 +313,8 @@ function render(){
     const smsType=st==='done'?'done':'enroute';
     const an=absentNotes[s.id]||{};
     const tn=teamNotes[s.id]||{};
-    const locationLine=s.pickupLocation||'';
-    const schoolLine=s.school||'';
-    const teacherLine=s.teacher?`${s.teacher}${s.grade?' · '+s.grade:''}`:s.grade||'';
     const now=new Date();
     const timeStr=now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-
     return`<div class="card ${st}" id="c-${s.id}">
       <div class="card-accent ${st}"></div>
       <div class="card-top">
@@ -307,49 +323,30 @@ function render(){
           <div class="sname">${s.name}</div>
           <div class="sstatus"><div class="sdot ${st}"></div>${st==='pending'?'Not started yet':st==='enroute'?'En route to pickup':st==='absent'?'Marked absent':'Picked up safely'}</div>
           <div class="info-row">
-            ${locationLine?`<div class="location-chip"><i class="ti ti-map-pin" style="font-size:11px"></i>${locationLine}</div>`:''}
-            ${schoolLine?`<div class="school-chip"><i class="ti ti-building" style="font-size:11px"></i>${schoolLine}</div>`:''}
+            ${s.pickupLocation?`<div class="location-chip"><i class="ti ti-map-pin" style="font-size:11px"></i>${s.pickupLocation}</div>`:''}
+            ${s.school?`<div class="school-chip"><i class="ti ti-building" style="font-size:11px"></i>${s.school}</div>`:''}
           </div>
-          ${teacherLine?`<div class="teacher-line">${teacherLine}</div>`:''}
+          ${s.teacher?`<div class="teacher-line">${s.teacher}${s.grade?' · '+s.grade:''}</div>`:''}
         </div>
         ${instrPhoto&&activeFilter==='all'?`<div class="instr-chip"><img src="${instrPhoto}" class="instr-photo" alt="${s.instrName||''}" onerror="this.style.display='none'"><span class="instr-name">${(s.instrName||'').split(' ')[0]}</span></div>`:''}
       </div>
       ${st!=='absent'?`<div class="parent-row"><div class="parent-contacts">
-        <div class="parent-contact">
-          <div><div class="parent-name">${s.pickupName||'Parent'}</div>${s.pickupPhone?`<div class="parent-phone">${s.pickupPhone}</div>`:`<div class="no-phone">Awaiting welcome email reply</div>`}</div>
-          ${s.pickupPhone?`<button class="btn-sms" onclick="openSMS('${s.pickupPhone}','${(s.pickupName||'').replace(/'/g,"\\'")}','${s.name.replace(/'/g,"\\'")}','${smsType}')"><i class="ti ti-message" style="font-size:13px"></i> Text</button>`:''}
-        </div>
-        ${secondary?`<div class="parent-contact">
-          <div><div class="parent-name">${secondary.name}</div><div class="parent-phone">${secondary.phone}</div></div>
-          <button class="btn-sms secondary" onclick="openSMS('${secondary.phone}','${secondary.name.replace(/'/g,"\\'")}','${s.name.replace(/'/g,"\\'")}','${smsType}')"><i class="ti ti-message" style="font-size:13px"></i> Text</button>
-        </div>`:''}
+        <div class="parent-contact"><div><div class="parent-name">${s.pickupName||'Parent'}</div>${s.pickupPhone?`<div class="parent-phone">${s.pickupPhone}</div>`:`<div class="no-phone">Awaiting welcome email reply</div>`}</div>${s.pickupPhone?`<button class="btn-sms" onclick="openSMS('${s.pickupPhone}','${(s.pickupName||'').replace(/'/g,"\\'")}','${s.name.replace(/'/g,"\\'")}','${smsType}')"><i class="ti ti-message" style="font-size:13px"></i> Text</button>`:''}</div>
+        ${secondary?`<div class="parent-contact"><div><div class="parent-name">${secondary.name}</div><div class="parent-phone">${secondary.phone}</div></div><button class="btn-sms secondary" onclick="openSMS('${secondary.phone}','${secondary.name.replace(/'/g,"\\'")}','${s.name.replace(/'/g,"\\'")}','${smsType}')"><i class="ti ti-message" style="font-size:13px"></i> Text</button></div>`:''}
       </div></div>`:''}
       <div class="card-actions">
         ${st==='pending'?`<button class="btn-action btn-enroute" onclick="setst('${s.id}','enroute')"><i class="ti ti-walk" style="font-size:15px"></i>En route to pickup</button>`
-        :st==='enroute'?`
-          <button class="btn-action btn-picked" onclick="setst('${s.id}','done')"><i class="ti ti-check" style="font-size:15px"></i>Child picked up</button>
-          <button class="btn-action btn-absent" onclick="setst('${s.id}','absent')" style="max-width:110px"><i class="ti ti-user-x" style="font-size:14px"></i>Not there</button>`
+        :st==='enroute'?`<button class="btn-action btn-picked" onclick="setst('${s.id}','done')"><i class="ti ti-check" style="font-size:15px"></i>Child picked up</button><button class="btn-action btn-absent" onclick="setst('${s.id}','absent')" style="max-width:110px"><i class="ti ti-user-x" style="font-size:14px"></i>Not there</button>`
         :st==='absent'?`<button class="btn-action btn-absent-done" disabled><i class="ti ti-user-x" style="font-size:14px"></i>Marked absent</button>`
         :`<button class="btn-action btn-complete" disabled><i class="ti ti-circle-check" style="font-size:15px"></i>Complete</button>`}
       </div>
-      ${st==='absent'?`
-      <div class="absent-note">
+      ${st==='absent'?`<div class="absent-note">
         <div class="absent-note-label"><i class="ti ti-pencil" style="font-size:12px"></i> What happened?</div>
-        ${an.sent?`<div style="font-size:12px;color:#64748B;display:flex;align-items:center;gap:5px;padding:4px 0"><i class="ti ti-circle-check" style="font-size:13px"></i> Note sent to the team</div>`
-        :`<textarea class="absent-input" id="absent-${s.id}" rows="2" placeholder="${s.name} was not at pickup at ${timeStr}. "></textarea>
-        <div class="absent-actions"><button class="btn-absent-send" onclick="sendAbsentNote('${s.id}')"><i class="ti ti-send" style="font-size:13px"></i> Send to team</button></div>`}
+        ${an.sent?`<div style="font-size:12px;color:#64748B;display:flex;align-items:center;gap:5px;padding:4px 0"><i class="ti ti-circle-check" style="font-size:13px"></i> Note sent to the team</div>`:`<textarea class="absent-input" id="absent-${s.id}" rows="2" placeholder="${s.name} was not at pickup at ${timeStr}. "></textarea><div class="absent-actions"><button class="btn-absent-send" onclick="sendAbsentNote('${s.id}')"><i class="ti ti-send" style="font-size:13px"></i> Send to team</button></div>`}
         <div style="margin-top:8px"><button class="urgent-link" onclick="openUrgent('${s.id}')"><i class="ti ti-alert-triangle" style="font-size:13px"></i> This is urgent — send an alert</button></div>
       </div>`:''}
-      ${st==='done'?`
-      <div class="post-pickup">
-        ${tn.sent?`<div class="note-sent"><i class="ti ti-circle-check" style="font-size:14px;color:#27500A"></i> Note sent to the team</div>`
-        :tn.open?`<div class="note-form">
-          <textarea class="note-input" id="note-${s.id}" rows="2" placeholder="e.g. Bus arrived 10 min late at a new stop on 47th Ave"></textarea>
-          <div class="note-row">
-            <button class="btn-note-cancel" onclick="toggleTeamNote('${s.id}')">Cancel</button>
-            <button class="btn-note-send" onclick="sendTeamNote('${s.id}')"><i class="ti ti-send" style="font-size:13px"></i> Send to team</button>
-          </div></div>`
-        :`<button class="note-btn" onclick="toggleTeamNote('${s.id}')"><i class="ti ti-pencil" style="font-size:13px"></i> Leave a note for the team</button>`}
+      ${st==='done'?`<div class="post-pickup">
+        ${tn.sent?`<div class="note-sent"><i class="ti ti-circle-check" style="font-size:14px;color:#27500A"></i> Note sent to the team</div>`:tn.open?`<div class="note-form"><textarea class="note-input" id="note-${s.id}" rows="2" placeholder="e.g. Bus arrived 10 min late at a new stop on 47th Ave"></textarea><div class="note-row"><button class="btn-note-cancel" onclick="toggleTeamNote('${s.id}')">Cancel</button><button class="btn-note-send" onclick="sendTeamNote('${s.id}')"><i class="ti ti-send" style="font-size:13px"></i> Send to team</button></div></div>`:`<button class="note-btn" onclick="toggleTeamNote('${s.id}')"><i class="ti ti-pencil" style="font-size:13px"></i> Leave a note for the team</button>`}
         <button class="urgent-link" onclick="openUrgent('${s.id}')"><i class="ti ti-alert-triangle" style="font-size:13px"></i> Send an urgent alert</button>
       </div>`:''}
     </div>`;
@@ -360,50 +357,17 @@ function render(){
 async function init(){
   const cached=loadCache();
   if(cached){students=cached.students;changes=cached.changes;isOffline=false;render();}
-
   try{
-    const [studentsData, staffData, changesData] = await Promise.all([
-      callProxy('getStudents'),
-      callProxy('getStaff'),
-      callProxy('getChanges'),
-    ]);
-
-    const staff=(staffData.records||[]).filter(r=>(r.fields?.fldQZZW5GuC6EMl6A?.name||'').toLowerCase().includes('active'));
     const t=normDay(todayShort);
-
-    students=(studentsData.records||[]).map(r=>{
-      const f=r.fields||{};
-      const photos=f.fldS1uncWbXSUnMjQ||[];
-      const studentDays=(f.fldqiZE6x6xmkfTp6||[]).map(d=>normDay(d.name||d));
-      const matchedInstr=staff.find(st=>{
-        const sd=(st.fields?.fldR41zcrl85iKLBq||[]).map(d=>normDay(d.name||d));
-        return sd.includes(t)&&studentDays.includes(t);
-      });
-      const pickupLocs=f.fldQVHtMRmpemPtZE||[];
-      return{
-        id:r.id,
-        name:f.fldSxrnb5OVFoTXea||'Unknown',
-        status:f.fldCg5jyD4lNtmXS6?.name||'Active',
-        days:f.fldqiZE6x6xmkfTp6||[],
-        photo:photos[0]?.thumbnails?.small?.url||photos[0]?.url||null,
-        pickupPhone:f.fldNrNE405tkGrmh8||'',
-        pickupName:f.fldXOFfMJuj4xK4YA||'',
-        notes:f.fldYTfbphzjOJLDZE||'',
-        teacher:f.fldTYrtOCYNOuGB1M||'',
-        grade:f.fldFbfzsmGPPBUAP3?.name||'',
-        school:f.fldYKQp60pwoB7YFr?.name||'',
-        pickupLocation:pickupLocs[0]?.name||'',
-        instrName:matchedInstr?.fields?.fldpTZVDA2K7wAfKq||'',
-        instrDays:matchedInstr?.fields?.fldR41zcrl85iKLBq||[],
-      };
-    });
-
-    changes=changesData.records||[];
+    const [sd,stf,cd]=await Promise.all([proxy('getStudents'),proxy('getStaff'),proxy('getChanges')]);
+    const staff=(stf.records||[]).filter(r=>(r.fields?.['Status']?.name||r.fields?.['Status']||'').toLowerCase().includes('active'));
+    students=(sd.records||[]).map(r=>mapStudent(r,staff,t));
+    changes=cd.records||[];
     saveCache({students,changes});
     isOffline=false;
   }catch(e){
     if(!cached){isOffline=true;students=[];changes=[];}
-    else{isOffline=true;}
+    else isOffline=true;
   }
   render();
 }
