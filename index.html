@@ -36,9 +36,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .count-chip{font-size:11px;color:#888;background:#f5f5f5;padding:2px 8px;border-radius:999px;}
 .cards{padding:0 16px 80px;display:flex;flex-direction:column;gap:10px;}
 .card{background:#fff;border:1px solid #eee;border-radius:12px;overflow:hidden;}
-.card.enroute{border-color:#EF9F27;}
-.card.done{border-color:#97C459;}
-.card.absent{border-color:#94A3B8;opacity:0.85;}
+.card.enroute{border-color:#EF9F27;background:#FFFBF0;}
+.card.done{border-color:#97C459;background:#F0F8E8;}
+.card.absent{border-color:#94A3B8;background:#F8FAFC;opacity:0.95;}
 .card-accent{height:3px;background:#F4600C;}
 .card-accent.enroute{background:#EF9F27;}
 .card-accent.done{background:#97C459;}
@@ -51,6 +51,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .av.absent{border-color:#94A3B8;background:#F1F5F9;color:#64748B;}
 .sname{font-size:16px;font-weight:600;color:#1a1a1a;}
 .sstatus{font-size:12px;color:#888;margin-top:2px;display:flex;align-items:center;gap:5px;}
+.sstatus.enroute{color:#633806;font-weight:500;}
+.sstatus.done{color:#27500A;font-weight:600;}
+.sstatus.absent{color:#64748B;}
 .sdot{width:6px;height:6px;border-radius:50%;background:#F4A27C;flex-shrink:0;}
 .sdot.enroute{background:#EF9F27;}
 .sdot.done{background:#97C459;}
@@ -80,13 +83,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .absent-input{width:100%;border:1px solid #CBD5E1;border-radius:8px;padding:9px 12px;font-size:13px;font-family:inherit;color:#1a1a1a;resize:none;outline:none;background:#F8FAFC;}
 .absent-actions{display:flex;gap:6px;margin-top:6px;}
 .btn-absent-send{flex:1;background:#475569;border:none;color:#fff;border-radius:8px;padding:9px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;}
-.post-pickup{padding:0 14px 12px;display:flex;flex-direction:column;gap:6px;}
+.post-pickup{padding:0 14px 12px;}
+.note-row-wrap{display:flex;gap:8px;align-items:stretch;}
+.btn-note-main{flex:1;background:#F1F5F9;border:1px solid #CBD5E1;color:#475569;font-size:13px;font-weight:600;border-radius:8px;padding:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;min-height:42px;}
+.btn-urgent-icon{flex-shrink:0;width:42px;height:42px;border-radius:8px;background:#FCEBEB;border:1px solid #E89999;color:#A32D2D;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;}
 .note-btn{background:none;border:none;color:#aaa;font-size:12px;cursor:pointer;text-align:left;padding:2px 0;display:flex;align-items:center;gap:5px;}
 .note-form{display:flex;flex-direction:column;gap:6px;}
 .note-input{width:100%;border:1px solid #ddd;border-radius:8px;padding:9px 12px;font-size:13px;font-family:inherit;color:#1a1a1a;resize:none;outline:none;}
 .note-row{display:flex;gap:6px;}
 .btn-note-send{flex:1;background:#F4600C;border:none;color:#fff;border-radius:8px;padding:9px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;}
 .btn-note-cancel{background:#f5f5f5;border:none;color:#888;border-radius:8px;padding:9px 14px;font-size:13px;cursor:pointer;}
+.note-sent-row{display:flex;align-items:center;justify-content:space-between;gap:8px;}
 .note-sent{font-size:12px;color:#27500A;display:flex;align-items:center;gap:5px;}
 .urgent-link{background:none;border:none;color:#C0392B;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:4px;padding:0;}
 .sheet-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:200;display:flex;align-items:flex-end;justify-content:center;}
@@ -166,10 +173,11 @@ const INSTRUCTOR_PHOTOS={
 
 let students=[],changes=[],activeFilter='all',isOffline=false,urgentStudentId=null;
 let pickupContext=null; // tracks which student we're in the "child picked up" flow for
-let {states,absentNotes,teamNotes}=loadState();
+let {states,absentNotes,teamNotes,pickupTimes}=loadState();
+if(!pickupTimes)pickupTimes={};
 
-function loadState(){try{const s=localStorage.getItem(STATE_KEY);return s?JSON.parse(s):{states:{},absentNotes:{},teamNotes:{}};}catch(e){return{states:{},absentNotes:{},teamNotes:{}};}}
-function saveState(){try{localStorage.setItem(STATE_KEY,JSON.stringify({states,absentNotes,teamNotes}));}catch(e){}}
+function loadState(){try{const s=localStorage.getItem(STATE_KEY);return s?JSON.parse(s):{states:{},absentNotes:{},teamNotes:{},pickupTimes:{}};}catch(e){return{states:{},absentNotes:{},teamNotes:{},pickupTimes:{}};}}
+function saveState(){try{localStorage.setItem(STATE_KEY,JSON.stringify({states,absentNotes,teamNotes,pickupTimes}));}catch(e){}}
 function initials(n){return(n||'').split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase();}
 function normDay(d){const s=(d||'').toLowerCase();if(s.startsWith('mo'))return'mon';if(s.startsWith('tu'))return'tue';if(s.startsWith('we'))return'wed';if(s.startsWith('th'))return'thu';if(s.startsWith('fr'))return'fri';return s.slice(0,3);}
 function parseSecondary(n){if(!n)return null;const m=n.match(/Also text[^\d]*?([\w\s]+?)\s+at\s+([\d\-\(\)\s]+)/i);if(!m)return null;return{name:m[1].trim().replace(/^(Dad|Mom|dad|mom)\s+/,''),phone:m[2].trim()};}
@@ -277,6 +285,7 @@ function finishPickup(withPhoto){
 if(!pickupContext)return;
 const s=students.find(x=>x.id===pickupContext.studentId);
 states[pickupContext.studentId]='done';
+pickupTimes[pickupContext.studentId]=new Date().toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
 saveState();
 render();
 if(s)openParentText(s,'done',withPhoto);
@@ -284,14 +293,16 @@ pickupContext=null;
 }
 
 function openParentText(s,type,withPhoto){
-const greeting=s.pickupName?`Hi ${s.pickupName}!`:'Hi there!';
+const parentFirst=(s.pickupName||'').split(' ')[0];
+const greeting=parentFirst?`Hi ${parentFirst}!`:'Hi there!';
 let body;
+const firstName=(s.name||'').split(' ')[0];
 if(type==='enroute'){
-body=`${greeting} This is your instructor from The Afterschool Collective. I'm on my way to pick up ${s.name} right now. See you soon!`;
+body=`${greeting} This is your instructor from The Afterschool Collective. I'm on my way to pick up ${firstName} right now. See you soon!`;
 }else{
 body=withPhoto
-?`${greeting} ${s.name} has been safely picked up and is on the way to the STEAM Lab. Photo attached as proof of custody.`
-:`${greeting} ${s.name} has been safely picked up and is on the way to the STEAM Lab. See you at pickup time!`;
+?`${greeting} ${firstName} has been safely picked up and is on the way back to the studio.`
+:`${greeting} ${firstName} has been safely picked up and is on the way back to the studio. See you at pickup time!`;
 }
 const phone=(s.pickupPhone||'').replace(/\D/g,'');
 window.open((phone?`sms:${phone}`:'sms:')+`?body=${encodeURIComponent(body)}`,'_self');
@@ -395,7 +406,7 @@ return`<div class="card ${st}" id="c-${s.id}">
 <div class="av ${st}">${s.photo?`<img src="${s.photo}" alt="${s.name}" onerror="this.style.display='none';this.parentNode.textContent='${initials(s.name)}'">`:initials(s.name)}</div>
 <div style="flex:1;min-width:0">
 <div class="sname">${s.name}</div>
-<div class="sstatus"><div class="sdot ${st}"></div>${st==='pending'?'Not started yet':st==='enroute'?'En route to pickup':st==='absent'?'Marked absent':'Picked up safely'}</div>
+<div class="sstatus ${st}">${st==='done'?`<i class="ti ti-circle-check" style="font-size:14px;color:#27500A"></i>`:`<div class="sdot ${st}"></div>`}${st==='pending'?'Not started yet':st==='enroute'?'En route to pickup':st==='absent'?'Marked absent':`Picked up${pickupTimes[s.id]?' at '+pickupTimes[s.id]:''}`}</div>
 <div class="info-row">
 ${s.pickupLocation?`<div class="location-chip"><i class="ti ti-map-pin" style="font-size:11px"></i>${s.pickupLocation}</div>`:''}
 ${s.school?`<div class="school-chip"><i class="ti ti-building" style="font-size:11px"></i>${s.school}</div>`:''}
@@ -416,12 +427,10 @@ ${st==='pending'?`<button class="btn-action btn-enroute" onclick="startEnroute('
 </div>
 ${st==='absent'?`<div class="absent-note">
 <div class="absent-note-label"><i class="ti ti-pencil" style="font-size:12px"></i> What happened?</div>
-${an.sent?`<div style="font-size:12px;color:#64748B;display:flex;align-items:center;gap:5px;padding:4px 0"><i class="ti ti-circle-check" style="font-size:13px"></i> Note sent to the team</div>`:`<textarea class="absent-input" id="absent-${s.id}" rows="2" placeholder="${s.name} was not at pickup at ${timeStr}. "></textarea><div class="absent-actions"><button class="btn-absent-send" onclick="sendAbsentNote('${s.id}')"><i class="ti ti-send" style="font-size:13px"></i> Send to team</button></div>`}
-<div style="margin-top:8px"><button class="urgent-link" onclick="openUrgent('${s.id}')"><i class="ti ti-alert-triangle" style="font-size:13px"></i> This is urgent, send an alert</button></div>
+${an.sent?`<div class="note-sent-row"><span style="font-size:12px;color:#64748B;display:flex;align-items:center;gap:5px"><i class="ti ti-circle-check" style="font-size:13px"></i> Note sent to the team</span><button class="btn-urgent-icon" onclick="openUrgent('${s.id}')" aria-label="Send urgent alert"><i class="ti ti-alert-triangle"></i></button></div>`:`<textarea class="absent-input" id="absent-${s.id}" rows="2" placeholder="${s.name} was not at pickup at ${timeStr}. "></textarea><div class="note-row-wrap" style="margin-top:6px"><button class="btn-absent-send" onclick="sendAbsentNote('${s.id}')"><i class="ti ti-send" style="font-size:13px"></i> Send to team</button><button class="btn-urgent-icon" onclick="openUrgent('${s.id}')" aria-label="Send urgent alert"><i class="ti ti-alert-triangle"></i></button></div>`}
 </div>`:''}
 ${st==='done'?`<div class="post-pickup">
-${tn.sent?`<div class="note-sent"><i class="ti ti-circle-check" style="font-size:14px;color:#27500A"></i> Note sent to the team</div>`:tn.open?`<div class="note-form"><textarea class="note-input" id="note-${s.id}" rows="2" placeholder="e.g. Bus arrived 10 min late at a new stop on 47th Ave"></textarea><div class="note-row"><button class="btn-note-cancel" onclick="toggleTeamNote('${s.id}')">Cancel</button><button class="btn-note-send" onclick="sendTeamNote('${s.id}')"><i class="ti ti-send" style="font-size:13px"></i> Send to team</button></div></div>`:`<button class="note-btn" onclick="toggleTeamNote('${s.id}')"><i class="ti ti-pencil" style="font-size:13px"></i> Leave a note for the team</button>`}
-<button class="urgent-link" onclick="openUrgent('${s.id}')"><i class="ti ti-alert-triangle" style="font-size:13px"></i> Send an urgent alert</button>
+${tn.sent?`<div class="note-sent-row"><span class="note-sent"><i class="ti ti-circle-check" style="font-size:14px;color:#27500A"></i> Note sent to the team</span><button class="btn-urgent-icon" onclick="openUrgent('${s.id}')" aria-label="Send urgent alert"><i class="ti ti-alert-triangle"></i></button></div>`:tn.open?`<div class="note-form"><textarea class="note-input" id="note-${s.id}" rows="2" placeholder="e.g. Bus arrived 10 min late at a new stop on 47th Ave"></textarea><div class="note-row"><button class="btn-note-cancel" onclick="toggleTeamNote('${s.id}')">Cancel</button><button class="btn-note-send" onclick="sendTeamNote('${s.id}')"><i class="ti ti-send" style="font-size:13px"></i> Send to team</button></div></div>`:`<div class="note-row-wrap"><button class="btn-note-main" onclick="toggleTeamNote('${s.id}')"><i class="ti ti-pencil" style="font-size:15px"></i> Leave a note for the team</button><button class="btn-urgent-icon" onclick="openUrgent('${s.id}')" aria-label="Send urgent alert"><i class="ti ti-alert-triangle"></i></button></div>`}
 </div>`:''}
 </div>`;
 }).join('')}
