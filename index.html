@@ -35,6 +35,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .section-title{font-size:12px;font-weight:600;color:#C44A06;letter-spacing:0.05em;text-transform:uppercase;}
 .count-chip{font-size:11px;color:#888;background:#f5f5f5;padding:2px 8px;border-radius:999px;}
 .cards{padding:0 16px 80px;display:flex;flex-direction:column;gap:10px;}
+.stop-group{margin-top:14px;}
+.stop-group:first-child{margin-top:0;}
+.stop-hdr{display:flex;align-items:center;gap:8px;padding:0 4px 8px;}
+.stop-hdr-icon{flex-shrink:0;width:28px;height:28px;border-radius:50%;background:#FEE8DC;color:#C44A06;display:flex;align-items:center;justify-content:center;font-size:14px;border:1.5px solid #F4A27C;}
+.stop-hdr-text{flex:1;min-width:0;}
+.stop-hdr-name{font-size:13px;font-weight:600;color:#1a1a1a;line-height:1.2;}
+.stop-hdr-time{font-size:11px;color:#C44A06;font-weight:500;margin-top:1px;}
+.stop-hdr-count{flex-shrink:0;font-size:11px;color:#888;background:#f5f5f5;padding:2px 8px;border-radius:999px;}
+.stop-group .cards-inner{display:flex;flex-direction:column;gap:10px;}
 .card{background:#fff;border:1px solid #eee;border-radius:12px;overflow:hidden;}
 .card.enroute{border-color:#EF9F27;background:#FFFBF0;}
 .card.done{border-color:#97C459;background:#F0F8E8;}
@@ -172,7 +181,7 @@ const INSTRUCTOR_PHOTOS={
 'Josue Hernandez':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/5lxOnWnUPPkLWgc1vmbmLQ/MRM6NLz49v8G3nv_jmq2-GqYhzAmIAA5Cr_heXhEV51xlbg0dEkrl1sthUUEkFv-M-PZX5bCtzyp2GjOk0pooq6W7VdxAUPRyN_LeEN4lFikriGMFLgNTC5zwEB-oq0uRp3aHBJ6aXFjKwuNdm1ZG-BlSwYjkXTzFSlNfhz6wzQ/FXD2_iZFYDYrd2TJQ7PPIO9Z0R2Bh7e-we1g15ZtsvY',
 };
 
-let students=[],changes=[],activeFilter='all',isOffline=false,urgentStudentId=null;
+let students=[],changes=[],locations=[],activeFilter='all',isOffline=false,urgentStudentId=null;
 let pickupContext=null; // tracks which student we're in the "child picked up" flow for
 let {states,absentNotes,teamNotes,pickupTimes}=loadState();
 if(!pickupTimes)pickupTimes={};
@@ -207,6 +216,7 @@ teacher: f['Homeroom Teacher'] || '',
 grade: f['Grade']?.name || f['Grade'] || '',
 school: f['School']?.name || f['School'] || '',
 pickupLocation: pickupLocs[0]?.name || '',
+pickupLocationId: pickupLocs[0]?.id || pickupLocs[0] || '',
 instrName: matchedInstr?.fields?.['Name'] || '',
 instrDays: matchedInstr?.fields?.['Default Availability'] || [],
 };
@@ -364,6 +374,34 @@ await proxy('logIncident',{description:msg,type:'Missing Student',severity:'High
 function saveCache(data){try{sessionStorage.setItem(CACHE_KEY,JSON.stringify({ts:Date.now(),data}));}catch(e){}}
 function loadCache(){try{const c=sessionStorage.getItem(CACHE_KEY);if(c){const p=JSON.parse(c);if(Date.now()-p.ts<8*3600000)return p.data;}}catch(e){}return null;}
 
+// Parse "2:50-3:00pm" or "2:55pm" → minutes since midnight, for sorting bus stops by arrival time
+function parsePickupTime(t){
+if(!t)return 9999;
+const m=String(t).toLowerCase().match(/(\d+):(\d+)\s*(am|pm)?/);
+if(!m)return 9999;
+let h=parseInt(m[1]),min=parseInt(m[2]);
+const ap=m[3]||'pm'; // afternoon pickup default
+if(ap==='pm'&&h<12)h+=12;
+if(ap==='am'&&h===12)h=0;
+return h*60+min;
+}
+
+function groupByLocation(list){
+const locById={};
+locations.forEach(l=>{locById[l.id]={name:l.fields?.['Name']||'',time:l.fields?.['Default Bus Arrival Time']||'',type:l.fields?.['Type']?.name||l.fields?.['Type']||''};});
+const groups={};
+list.forEach(s=>{
+const locId=s.pickupLocationId||'__none__';
+const loc=locById[locId]||{name:s.pickupLocation||'No pickup location set',time:'',type:''};
+if(!groups[locId])groups[locId]={id:locId,name:loc.name,time:loc.time,type:loc.type,students:[]};
+groups[locId].students.push(s);
+});
+return Object.values(groups).sort((a,b)=>{
+if(a.id==='__none__')return 1;if(b.id==='__none__')return -1;
+return parsePickupTime(a.time)-parsePickupTime(b.time);
+});
+}
+
 async function proxy(action,extra={}){
 const r=await fetch('/api/proxy',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,...extra})});
 return r.json();
@@ -393,7 +431,23 @@ ${instructors.length>1?`<div class="filter-bar"><button class="filter-pill${acti
 <div class="section-hdr"><span class="section-title">${activeFilter==='all'?"Today's students":activeFilter.split(' ')[0]+"'s students"}</span><span class="count-chip">${list.length}</span></div>
 <div class="cards">
 ${list.length===0?`<div style="text-align:center;padding:40px 0;color:#888;font-size:14px">No students enrolled for ${todayFull}</div>`:
-list.map(s=>{
+groupByLocation(list).map(g=>`<div class="stop-group">
+<div class="stop-hdr">
+<div class="stop-hdr-icon"><i class="ti ti-${g.type==='Studio'?'building':g.type==='School'?'school':'bus'}"></i></div>
+<div class="stop-hdr-text">
+<div class="stop-hdr-name">${g.name||'Unassigned location'}</div>
+${g.time?`<div class="stop-hdr-time">${g.time}</div>`:''}
+</div>
+<div class="stop-hdr-count">${g.students.length}</div>
+</div>
+<div class="cards-inner">
+${g.students.map(s=>renderCard(s)).join('')}
+</div>
+</div>`).join('')}
+</div>`;
+}
+
+function renderCard(s){
 const st=states[s.id]||'pending';
 const secondary=parseSecondary(s.notes);
 const instrPhoto=INSTRUCTOR_PHOTOS[s.instrName]||null;
@@ -410,7 +464,6 @@ return`<div class="card ${st}" id="c-${s.id}">
 <div class="sname" style="${collapsed?'font-size:15px':''}">${s.name}</div>
 <div class="sstatus ${st}">${st==='done'?`<i class="ti ti-circle-check" style="font-size:14px;color:#27500A"></i>`:`<div class="sdot ${st}"></div>`}${st==='pending'?'Not started yet':st==='enroute'?'En route to pickup':st==='absent'?(an.sent?'Marked absent, note sent':'Marked absent'):`Picked up${pickupTimes[s.id]?' at '+pickupTimes[s.id]:''}`}</div>
 ${collapsed?(s.school?`<div style="margin-top:3px"><div class="school-chip"><i class="ti ti-building" style="font-size:11px"></i>${s.school}</div></div>`:''):`<div class="info-row">
-${s.pickupLocation?`<div class="location-chip"><i class="ti ti-map-pin" style="font-size:11px"></i>${s.pickupLocation}</div>`:''}
 ${s.school?`<div class="school-chip"><i class="ti ti-building" style="font-size:11px"></i>${s.school}</div>`:''}
 </div>
 ${s.teacher?`<div class="teacher-line">${s.teacher}${s.grade?' · '+s.grade:''}</div>`:''}`}
@@ -434,23 +487,22 @@ ${st==='done'?`<div class="post-pickup">
 ${tn.sent?`<div class="note-sent-row"><span class="note-sent"><i class="ti ti-circle-check" style="font-size:14px;color:#27500A"></i> Note sent to the team</span><button class="btn-urgent-icon" onclick="openUrgent('${s.id}')" aria-label="Send urgent alert"><i class="ti ti-alert-triangle"></i></button></div>`:tn.open?`<div class="note-form"><textarea class="note-input" id="note-${s.id}" rows="2" placeholder="e.g. Bus arrived 10 min late at a new stop on 47th Ave"></textarea><div class="note-row"><button class="btn-note-cancel" onclick="toggleTeamNote('${s.id}')">Cancel</button><button class="btn-note-send" onclick="sendTeamNote('${s.id}')"><i class="ti ti-send" style="font-size:13px"></i> Send to team</button></div></div>`:`<div class="note-row-wrap"><button class="btn-note-main" onclick="toggleTeamNote('${s.id}')"><i class="ti ti-pencil" style="font-size:15px"></i> Leave a note for the team</button><button class="btn-urgent-icon" onclick="openUrgent('${s.id}')" aria-label="Send urgent alert"><i class="ti ti-alert-triangle"></i></button></div>`}
 </div>`:''}
 </div>`;
-}).join('')}
-</div>`;
 }
 
 async function init(){
 const cached=loadCache();
-if(cached){students=cached.students;changes=cached.changes;isOffline=false;render();}
+if(cached){students=cached.students;changes=cached.changes;locations=cached.locations||[];isOffline=false;render();}
 try{
 const t=normDay(todayShort);
-const [sd,stf,cd]=await Promise.all([proxy('getStudents'),proxy('getStaff'),proxy('getChanges')]);
+const [sd,stf,cd,ld]=await Promise.all([proxy('getStudents'),proxy('getStaff'),proxy('getChanges'),proxy('getLocations')]);
 const staff=(stf.records||[]).filter(r=>(r.fields?.['Status']?.name||r.fields?.['Status']||'').toLowerCase().includes('active'));
 students=(sd.records||[]).map(r=>mapStudent(r,staff,t));
 changes=cd.records||[];
-saveCache({students,changes});
+locations=ld.records||[];
+saveCache({students,changes,locations});
 isOffline=false;
 }catch(e){
-if(!cached){isOffline=true;students=[];changes=[];}
+if(!cached){isOffline=true;students=[];changes=[];locations=[];}
 else isOffline=true;
 }
 render();
