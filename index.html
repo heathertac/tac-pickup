@@ -165,7 +165,7 @@ const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov',
 const todayFull=DAYS_FULL[TODAY.getDay()];
 const todayShort=DAYS_SHORT[TODAY.getDay()];
 const todayStr=`${MONTHS[TODAY.getMonth()]} ${TODAY.getDate()}`;
-const CACHE_KEY=`tac_roster_${TODAY.toDateString()}`;
+const CACHE_KEY=`tac_roster_v2_${TODAY.toDateString()}`;
 const STATE_KEY=`tac_states_${TODAY.toDateString()}`;
 const REBECCA_PHONE='7705471075';
 
@@ -181,7 +181,7 @@ const INSTRUCTOR_PHOTOS={
 'Josue Hernandez':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/5lxOnWnUPPkLWgc1vmbmLQ/MRM6NLz49v8G3nv_jmq2-GqYhzAmIAA5Cr_heXhEV51xlbg0dEkrl1sthUUEkFv-M-PZX5bCtzyp2GjOk0pooq6W7VdxAUPRyN_LeEN4lFikriGMFLgNTC5zwEB-oq0uRp3aHBJ6aXFjKwuNdm1ZG-BlSwYjkXTzFSlNfhz6wzQ/FXD2_iZFYDYrd2TJQ7PPIO9Z0R2Bh7e-we1g15ZtsvY',
 };
 
-let students=[],changes=[],locations=[],activeFilter='all',isOffline=false,urgentStudentId=null;
+let students=[],changes=[],locations=[],assignments=[],allStaff=[],activeFilter='all',isOffline=false,urgentStudentId=null;
 let pickupContext=null; // tracks which student we're in the "child picked up" flow for
 let {states,absentNotes,teamNotes,pickupTimes}=loadState();
 if(!pickupTimes)pickupTimes={};
@@ -222,19 +222,50 @@ instrDays: matchedInstr?.fields?.['Default Availability'] || [],
 };
 }
 
+// Build a map of studentId → instructorName from today's Pickup Assignments
+function getTodayAssignmentMap(){
+const todayISO=new Date().toISOString().slice(0,10);
+const map={};
+assignments.forEach(a=>{
+const f=a.fields||{};
+if(f['Date']!==todayISO)return;
+const stuIds=(f['Student']||[]).map(s=>s.id||s);
+const instIds=(f['Assigned Instructor']||[]).map(s=>s.id||s);
+const instNames=(f['Assigned Instructor']||[]).map(s=>s.name||'');
+stuIds.forEach(sid=>{
+if(instIds.length)map[sid]={id:instIds[0],name:instNames[0]||''};
+else map[sid]=map[sid]||null;
+});
+});
+return map;
+}
+
 function todayList(){
 const t=normDay(todayShort);
+const asnMap=getTodayAssignmentMap();
 let list=students.filter(s=>{
 const days=(s.days||[]).map(d=>normDay(d.name||d));
 return days.includes(t)&&(s.status||'').toLowerCase().includes('active');
 });
+// Override instrName from real Pickup Assignment data
+list=list.map(s=>({...s,instrName:asnMap[s.id]?.name||s.instrName||''}));
 if(activeFilter!=='all')list=list.filter(s=>s.instrName===activeFilter);
 return list;
 }
 
+// Active instructors with today's day in their default availability
 function getInstructors(){
 const t=normDay(todayShort);
-return students.filter(s=>s.instrName&&(s.instrDays||[]).map(d=>normDay(d.name||d)).includes(t)).map(s=>s.instrName).filter((v,i,a)=>a.indexOf(v)===i).sort();
+const tFull={mon:'monday',tue:'tuesday',wed:'wednesday',thu:'thursday',fri:'friday'}[t]||t;
+return allStaff.filter(st=>{
+const f=st.fields||{};
+const status=(f['Status']?.name||f['Status']||'').toLowerCase();
+if(!status.includes('active'))return false;
+const roles=(f['Role']||[]).map(r=>(r.name||r||'').toLowerCase());
+if(!roles.some(r=>r.includes('instructor')||r.includes('manager')))return false;
+const avail=(f['Default Availability']||[]).map(d=>normDay(d.name||d));
+return avail.includes(t);
+}).map(st=>st.fields?.['Name']||'').filter(Boolean).sort();
 }
 
 // ============================================================
@@ -427,7 +458,7 @@ ${isOffline?`<div class="offline-bar"><i class="ti ti-wifi-off"></i> Offline —
 <div class="stat"><div class="stat-n ${absentCount>0?'red':''}">${absentCount}</div><div class="stat-l">Absent</div></div>
 </div>
 ${todayChanges.length?`<div class="alert-box" style="margin:12px 16px 0"><div class="alert-hdr"><i class="ti ti-alert-triangle" style="font-size:16px;color:#A32D2D"></i><span class="alert-hdr-text">Changes today, read first</span></div>${todayChanges.map(c=>`<div class="alert-item"><div class="alert-name">${(c.fields||{})['Change Summary']||'Change logged'}</div></div>`).join('')}</div>`:`<div class="clear-bar"><i class="ti ti-circle-check" style="font-size:16px;color:#27500A"></i><span class="clear-text">All clear, no changes today</span></div>`}
-${instructors.length>1?`<div class="filter-bar"><button class="filter-pill${activeFilter==='all'?' active':''}" onclick="setFilter('all')"><i class="ti ti-users" style="font-size:13px"></i> All</button>${instructors.map(name=>`<button class="filter-pill${activeFilter===name?' active':''}" onclick="setFilter('${name.replace(/'/g,"\\'")}')">${INSTRUCTOR_PHOTOS[name]?`<img src="${INSTRUCTOR_PHOTOS[name]}" alt="${name}" onerror="this.style.display='none'">`:''}${name.split(' ')[0]}</button>`).join('')}</div>`:'' }
+${instructors.length>=1?`<div class="filter-bar"><button class="filter-pill${activeFilter==='all'?' active':''}" onclick="setFilter('all')"><i class="ti ti-users" style="font-size:13px"></i> All</button>${instructors.map(name=>`<button class="filter-pill${activeFilter===name?' active':''}" onclick="setFilter('${name.replace(/'/g,"\\'")}')">${INSTRUCTOR_PHOTOS[name]?`<img src="${INSTRUCTOR_PHOTOS[name]}" alt="${name}" onerror="this.style.display='none'">`:''}${name.split(' ')[0]}</button>`).join('')}</div>`:'' }
 <div class="section-hdr"><span class="section-title">${activeFilter==='all'?"Today's students":activeFilter.split(' ')[0]+"'s students"}</span><span class="count-chip">${list.length}</span></div>
 <div class="cards">
 ${list.length===0?`<div style="text-align:center;padding:40px 0;color:#888;font-size:14px">No students enrolled for ${todayFull}</div>`:
@@ -491,18 +522,20 @@ ${tn.sent?`<div class="note-sent-row"><span class="note-sent"><i class="ti ti-ci
 
 async function init(){
 const cached=loadCache();
-if(cached){students=cached.students;changes=cached.changes;locations=cached.locations||[];isOffline=false;render();}
+if(cached){students=cached.students;changes=cached.changes;locations=cached.locations||[];assignments=cached.assignments||[];allStaff=cached.allStaff||[];isOffline=false;render();}
 try{
 const t=normDay(todayShort);
-const [sd,stf,cd,ld]=await Promise.all([proxy('getStudents'),proxy('getStaff'),proxy('getChanges'),proxy('getLocations')]);
-const staff=(stf.records||[]).filter(r=>(r.fields?.['Status']?.name||r.fields?.['Status']||'').toLowerCase().includes('active'));
+const [sd,stf,cd,ld,ad]=await Promise.all([proxy('getStudents'),proxy('getStaff'),proxy('getChanges'),proxy('getLocations'),proxy('getAssignments')]);
+allStaff=stf.records||[];
+const staff=allStaff.filter(r=>(r.fields?.['Status']?.name||r.fields?.['Status']||'').toLowerCase().includes('active'));
 students=(sd.records||[]).map(r=>mapStudent(r,staff,t));
 changes=cd.records||[];
 locations=ld.records||[];
-saveCache({students,changes,locations});
+assignments=ad.records||[];
+saveCache({students,changes,locations,assignments,allStaff});
 isOffline=false;
 }catch(e){
-if(!cached){isOffline=true;students=[];changes=[];locations=[];}
+if(!cached){isOffline=true;students=[];changes=[];locations=[];assignments=[];allStaff=[];}
 else isOffline=true;
 }
 render();
