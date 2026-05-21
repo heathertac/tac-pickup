@@ -14,18 +14,22 @@ module.exports = async function handler(req, res) {
     return r.json();
   }
 
+  async function getAll(table) {
+    let records = [], offset = null;
+    do {
+      const d = await get(table, offset ? `offset=${offset}` : '');
+      records = records.concat(d.records || []);
+      offset = d.offset;
+    } while (offset);
+    return records;
+  }
+
   try {
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
     const { action } = body || {};
 
     if (action === 'getStudents') {
-      let records = [], offset = null;
-      do {
-        const d = await get('tblJSQjtxq7yc29cY', offset ? `offset=${offset}` : '');
-        records = records.concat(d.records || []);
-        offset = d.offset;
-      } while (offset);
-      return res.status(200).json({ records });
+      return res.status(200).json({ records: await getAll('tblJSQjtxq7yc29cY') });
     }
 
     if (action === 'getStaff') {
@@ -41,6 +45,11 @@ module.exports = async function handler(req, res) {
     if (action === 'getLocations') {
       const d = await get('tblI5cwN5EIXqrdK2');
       return res.status(200).json({ records: d.records || [] });
+    }
+
+    if (action === 'getAssignments') {
+      // Fetch all pickup assignments — client filters by date
+      return res.status(200).json({ records: await getAll('tblqX1tGUs6W5VGt4') });
     }
 
     if (action === 'logIncident') {
