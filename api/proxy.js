@@ -38,6 +38,11 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({ records: d.records || [] });
     }
 
+    if (action === 'getLocations') {
+      const d = await get('tblI5cwN5EIXqrdK2');
+      return res.status(200).json({ records: d.records || [] });
+    }
+
     if (action === 'logIncident') {
       const { description, type, severity } = body;
       const r = await fetch(`https://api.airtable.com/v0/${BASE}/tblBrZKAPGrg893o1`, {
