@@ -7,17 +7,18 @@ module.exports = async function handler(req, res) {
   const TOKEN = process.env.AIRTABLE_API_KEY;
   const BASE = 'appnWviGYgpWT2VPH';
 
-  async function get(table, params = '') {
+  async function get(table, params='') {
     const r = await fetch(`https://api.airtable.com/v0/${BASE}/${table}?${params}`, {
       headers: { Authorization: `Bearer ${TOKEN}` }
     });
     return r.json();
   }
 
-  async function getAllRecords(table, params = '') {
+  async function getAllRecords(table, params='') {
     let records = [], offset = null;
     do {
-      const d = await get(table, offset ? `${params}${params?'&':''}offset=${offset}` : params);
+      const p = offset ? `${params}${params?'&':''}offset=${offset}` : params;
+      const d = await get(table, p);
       records = records.concat(d.records || []);
       offset = d.offset;
     } while (offset);
@@ -34,33 +35,26 @@ module.exports = async function handler(req, res) {
     return s.slice(0, 3);
   }
 
-  // Closed days — no pickup
   const CLOSED_DATES = [
-    '2026-05-25',
-    '2026-05-27',
-    '2026-06-04',
-    '2026-06-05',
-    '2026-06-19',
+    '2026-05-25','2026-05-27','2026-06-04','2026-06-05','2026-06-19',
   ];
 
-  // Fallback master schedule used ONLY when no Pickup Assignment exists for a student today
-  // Key: studentName → { mon, tue, wed, thu, fri } → instructor full name
   const MASTER_SCHEDULE = {
-    'Ethan Owyang':        { wed:'Rebecca Whittemore', fri:'Rebecca Whittemore' },
-    'Adam Cheung':         { tue:'Ricardo Marquez', fri:'Ricardo Marquez' },
-    'Dylan Cheung':        { tue:'Ricardo Marquez', fri:'Ricardo Marquez' },
-    'Ilyaas Wower':        { mon:'Kevin Sims', tue:'Ricardo Marquez', wed:'Kevin Sims', thu:'Kevin Sims', fri:'Ricardo Marquez' },
-    'Alice Huggins':       { mon:'Kevin Sims' },
-    'Ada McGuire':         { mon:'Kevin Sims' },
-    'Nellie Dieterich':    { mon:'Kevin Sims', thu:'Kevin Sims', fri:'Kevin Sims' },
-    'Asher Muller':        { mon:'Kevin Sims', tue:'Kevin Sims', wed:'Kevin Sims', fri:'Teresa' },
-    'Parker Corpuel':      { mon:'Kevin Sims', thu:'Kevin Sims', fri:'Teresa' },
-    'Adina LaSota':        { mon:'Nicola Caminiti', tue:'Nicola Caminiti', fri:"Regina D'Soto" },
-    'Gaius LaSota':        { mon:'Nicola Caminiti', tue:'Nicola Caminiti', fri:"Regina D'Soto" },
-    'Nathaniel Dunham Welt':{ thu:'Janet Chow', fri:"Regina D'Soto" },
-    'Sebastian Doolittle': { mon:'Kevin Sims', wed:'Kevin Sims', fri:"Regina D'Soto" },
-    'Sydney Matani':       { mon:'Nicola Caminiti', tue:'Nicola Caminiti', wed:'Nicola Caminiti', thu:'Nicola Caminiti', fri:"Regina D'Soto" },
-    'Jackson Cruz':        { fri:"Regina D'Soto" },
+    'Ethan Owyang':          { wed:'Rebecca Whittemore', fri:'Rebecca Whittemore' },
+    'Adam Cheung':           { tue:'Ricardo Marquez', fri:'Ricardo Marquez' },
+    'Dylan Cheung':          { tue:'Ricardo Marquez', fri:'Ricardo Marquez' },
+    'Ilyaas Wower':          { mon:'Kevin Sims', tue:'Ricardo Marquez', wed:'Kevin Sims', thu:'Kevin Sims', fri:'Ricardo Marquez' },
+    'Alice Huggins':         { mon:'Kevin Sims' },
+    'Ada McGuire':           { mon:'Kevin Sims' },
+    'Nellie Dieterich':      { mon:'Kevin Sims', thu:'Kevin Sims' },
+    'Asher Muller':          { mon:'Kevin Sims', tue:'Kevin Sims', wed:'Kevin Sims', fri:'Teresa' },
+    'Parker Corpuel':        { mon:'Kevin Sims', thu:'Kevin Sims', fri:'Teresa' },
+    'Adina LaSota':          { mon:'Nicola Caminiti', tue:'Nicola Caminiti', fri:"Regina D'Soto" },
+    'Gaius LaSota':          { mon:'Nicola Caminiti', tue:'Nicola Caminiti', fri:"Regina D'Soto" },
+    'Nathaniel Dunham Welt': { thu:'Janet Chow', fri:"Regina D'Soto" },
+    'Sebastian Doolittle':   { mon:'Kevin Sims', wed:'Kevin Sims', fri:"Regina D'Soto" },
+    'Sydney Matani':         { mon:'Nicola Caminiti', tue:'Nicola Caminiti', wed:'Nicola Caminiti', thu:'Nicola Caminiti' },
+    'Jackson Cruz':          { fri:"Regina D'Soto" },
   };
 
   try {
@@ -70,14 +64,13 @@ module.exports = async function handler(req, res) {
     if (action === 'getTodayRoster') {
       const today = new Date();
       const todayISO = today.toISOString().slice(0, 10);
-      const days = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+      const days = ['sun','mon','tue','wed','thu','fri','sat'];
       const todayDay = days[today.getDay()];
 
       if (CLOSED_DATES.includes(todayISO) || todayDay === 'sat' || todayDay === 'sun') {
-  return res.status(200).json({ roster: [], debug: {todayISO, todayDay, reason:'closed'} });
-}
+        return res.status(200).json({ roster: [] });
+      }
 
-      // Fetch everything in parallel
       const [students, staff, assignments] = await Promise.all([
         getAllRecords('tblJSQjtxq7yc29cY'),
         getAllRecords('tblWuCldxuiPhtUUC'),
@@ -85,35 +78,28 @@ module.exports = async function handler(req, res) {
           `filterByFormula=DATESTR({Date})="${todayISO}"`),
       ]);
 
-      // Build staff map: id → { name, photoUrl }
+      // Staff maps — raw API uses field NAMES as keys
       const staffById = {};
-      staff.forEach(r => {
-        const f = r.fields || {};
-        const photos = f['fld5wi8dP8Av7Y02g'] || [];
-        const photoUrl = photos[0]?.thumbnails?.large?.url || photos[0]?.url || null;
-        staffById[r.id] = { name: f['fldpTZVDA2K7wAfKq'] || '', photoUrl };
-      });
-
-      // Build staff map: name → photoUrl (for master schedule fallback)
       const staffByName = {};
       staff.forEach(r => {
         const f = r.fields || {};
-        const name = f['fldpTZVDA2K7wAfKq'] || '';
-        const photos = f['fld5wi8dP8Av7Y02g'] || [];
+        const name = f['Name'] || '';
+        const photos = f['Photo'] || [];
         const photoUrl = photos[0]?.thumbnails?.large?.url || photos[0]?.url || null;
+        staffById[r.id] = { name, photoUrl };
         if (name) staffByName[name] = photoUrl;
       });
 
-      // Build assignment map: studentId → { instructorName, instructorPhotoUrl, locationId }
+      // Assignment map — raw API uses field NAMES
       const assignmentMap = {};
       assignments.forEach(a => {
         const f = a.fields || {};
-        const stuIds = (f['fldLUu6am3Wuz1dl2'] || []).map(x => x.id || x);
-        const instrArr = f['fldnbcjJYnszepnxK'] || [];
-        const instrId = instrArr[0]?.id || instrArr[0] || null;
+        const stuIds = (f['Student'] || []).map(x => x.id || x);
+        const instrArr = f['Assigned Instructor'] || [];
+        const instrId = instrArr[0]?.id || null;
         const instrData = instrId ? staffById[instrId] : null;
-        const locArr = f['fldypb0ELrWtH4Mlw'] || [];
-        const locationId = locArr[0]?.id || locArr[0] || null;
+        const locArr = f['Pickup Location'] || [];
+        const locationId = locArr[0]?.id || null;
         stuIds.forEach(sid => {
           assignmentMap[sid] = {
             instructorName: instrData?.name || '',
@@ -124,23 +110,21 @@ module.exports = async function handler(req, res) {
         });
       });
 
-      // Filter to today's active students
+      // Build roster — raw API uses field NAMES
       const roster = [];
       for (const r of students) {
         const f = r.fields || {};
-        const status = (f['fldCg5jyD4lNtmXS6']?.name || f['fldCg5jyD4lNtmXS6'] || '').toLowerCase();
+        const status = (f['Status']?.name || f['Status'] || '').toLowerCase();
         if (!status.includes('active')) continue;
 
-        const rawDays = f['fldqiZE6x6xmkfTp6'] || [];
-const enrolledDays = rawDays.map(d => normDay(d.name || d));
-if (!enrolledDays.includes(todayDay)) continue;
+        const enrolledDays = (f['Enrolled Days'] || []).map(d => normDay(d.name || d));
+        if (!enrolledDays.includes(todayDay)) continue;
 
-        const studentName = f['fldSxrnb5OVFoTXea'] || 'Unknown';
-        const photos = f['fldS1uncWbXSUnMjQ'] || [];
-        const defaultLocIds = f['fldQVHtMRmpemPtZE'] || [];
-        const defaultLocId = defaultLocIds[0]?.id || defaultLocIds[0] || null;
+        const studentName = f['Name'] || 'Unknown';
+        const photos = f['Photo'] || [];
+        const defaultLocIds = f['Default Pickup Location'] || [];
+        const defaultLocId = defaultLocIds[0]?.id || null;
 
-        // Instructor: use assignment if exists, else master schedule
         let instructorName = '';
         let instructorPhotoUrl = null;
         let pickupLocationId = defaultLocId || '';
@@ -150,9 +134,8 @@ if (!enrolledDays.includes(todayDay)) continue;
           instructorName = assignmentMap[r.id].instructorName;
           instructorPhotoUrl = assignmentMap[r.id].instructorPhotoUrl;
           pickupLocationId = assignmentMap[r.id].locationId || pickupLocationId;
-          isOverride = assignmentMap[r.id].isOverride;
+          isOverride = true;
         } else {
-          // Fallback to master schedule
           const sched = MASTER_SCHEDULE[studentName];
           instructorName = sched?.[todayDay] || '';
           instructorPhotoUrl = instructorName ? (staffByName[instructorName] || null) : null;
@@ -162,12 +145,12 @@ if (!enrolledDays.includes(todayDay)) continue;
           studentId: r.id,
           studentName,
           photo: photos[0]?.thumbnails?.small?.url || photos[0]?.url || null,
-          school: f['fldYKQp60pwoB7YFr']?.name || f['fldYKQp60pwoB7YFr'] || '',
-          grade: f['fldFbfzsmGPPBUAP3']?.name || f['fldFbfzsmGPPBUAP3'] || '',
-          teacher: f['fldTYrtOCYNOuGB1M'] || '',
-          pickupPhone: f['fldNrNE405tkGrmh8'] || '',
-          pickupName: f['fldXOFfMJuj4xK4YA'] || '',
-          notes: f['fldYTfbphzjOJLDZE'] || '',
+          school: f['School']?.name || f['School'] || '',
+          grade: f['Grade']?.name || f['Grade'] || '',
+          teacher: f['Homeroom Teacher'] || '',
+          pickupPhone: f['Pickup Contact Phone'] || '',
+          pickupName: f['Pickup Contact Name'] || '',
+          notes: f['Notes (Nice to Know)'] || '',
           pickupLocationId,
           pickupLocation: '',
           instructorName,
@@ -176,7 +159,6 @@ if (!enrolledDays.includes(todayDay)) continue;
         });
       }
 
-      return res.status(200).json({ roster, debug: {todayISO, todayDay, studentCount: students.length, fridayCount: roster.length, sampleDays: (students[0]?.fields?.['fldqiZE6x6xmkfTp6'] || 'MISSING')} });
       return res.status(200).json({ roster });
     }
 
@@ -207,7 +189,6 @@ if (!enrolledDays.includes(todayDay)) continue;
       return res.status(200).json(await r.json());
     }
 
-    // Legacy
     if (action === 'getStudents') {
       const records = await getAllRecords('tblJSQjtxq7yc29cY');
       return res.status(200).json({ records });
