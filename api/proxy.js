@@ -182,7 +182,8 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({ records: d.records || [] });
     }
     if (action === 'getChanges') {
-      const d = await get(BASE, 'tblEdgjx4phKSj4wS');
+      const formula = encodeURIComponent(`IS_SAME({Affected Pickup Date}, TODAY(), 'day')`);
+      const d = await get(BASE, 'tblEdgjx4phKSj4wS', `filterByFormula=${formula}`);
       return res.status(200).json({ records: d.records || [] });
     }
     if (action === 'getLocations') {
