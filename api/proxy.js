@@ -161,13 +161,21 @@ module.exports = async function handler(req, res) {
     });
     return r.json();
   }
-  async function patchBatch(base, table, updates) {
-    const results = [];
-    for (let i = 0; i < updates.length; i += 10) {
-      const d = await patch(base, table, updates.slice(i, i + 10));
-      results.push(...(d.records || []));
-    }
-    return results;
+  async function sendEmail(subject, body) {
+    const nodemailer = require('nodemailer');
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.GMAIL_USER,
+        pass: process.env.GMAIL_PASS,
+      }
+    });
+    await transporter.sendMail({
+      from: `"TAC Pickup App" <${process.env.GMAIL_USER}>`,
+      to: 'heather@theafterschoolcollective.org, rebecca@theafterschoolcollective.org',
+      subject,
+      text: body,
+    });
   }
 
   try {
@@ -204,7 +212,19 @@ module.exports = async function handler(req, res) {
           fldVIfEohqez31Wmw: severity || 'Low'
         }}]})
       });
-      return res.status(200).json(await r.json());
+      const result = await r.json();
+      // Send email notification
+      try {
+        const isUrgent = severity === 'High' || type === 'Missing Student';
+        const subject = isUrgent
+          ? `🚨 URGENT — TAC Pickup Alert`
+          : `📋 TAC Pickup — Team Note`;
+        await sendEmail(subject, description);
+      } catch (emailErr) {
+        console.error('Email send failed:', emailErr.message);
+        // Don't fail the whole request if email fails
+      }
+      return res.status(200).json(result);
     }
 
     if (action === 'getTodayRoster') {
