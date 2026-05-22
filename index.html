@@ -165,12 +165,16 @@ const STATE_KEY=`tac_states_${TODAY.toDateString()}`;
 const REBECCA_PHONE='7705471075';
 
 const INSTRUCTOR_PHOTOS={
+'Rebecca Whittemore':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/TxAMrQbSpLoiHDsvpULJOA/1St2g5ELC6xIR_RJf165eF8O7FWmXg3qM0R2Bl-fFJhEJooX0yS8gYl-PRK2Rrwh9wZBkomGkudLdBAxcjHN5bNPMloujsxPd5t2R3-0gOTvEkGCnvTInXOMYqzRd8RXr-DXmtVdDe2IYUyvlEgg/PEFkkFXtntjuNUffaeFa1fn_89pI_Sasp-A1k52mI_k',
 'Rebecca':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/TxAMrQbSpLoiHDsvpULJOA/1St2g5ELC6xIR_RJf165eF8O7FWmXg3qM0R2Bl-fFJhEJooX0yS8gYl-PRK2Rrwh9wZBkomGkudLdBAxcjHN5bNPMloujsxPd5t2R3-0gOTvEkGCnvTInXOMYqzRd8RXr-DXmtVdDe2IYUyvlEgg/PEFkkFXtntjuNUffaeFa1fn_89pI_Sasp-A1k52mI_k',
+'Kevin Sims':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/SqsjI-n1iZgN7W0D4aTVFA/cPaEEx0iSOVW_I-gTwozAKbtibr6L8E9rANffXJor1Y0227SkwuPGIZGLqL9jg6sXf7PgZbfaPqw5TqtOS7t-LEitFREVexj6QMG6vya5BjMDN4vV9Jm5aLIApKkI0MKiGJaMSdzoPUoLlp43sZC7g/ZG3XqGm7gY1CPvBnPTVo1DeQs9Q4wOSqmPODUUhcTDw',
 'Kevin':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/SqsjI-n1iZgN7W0D4aTVFA/cPaEEx0iSOVW_I-gTwozAKbtibr6L8E9rANffXJor1Y0227SkwuPGIZGLqL9jg6sXf7PgZbfaPqw5TqtOS7t-LEitFREVexj6QMG6vya5BjMDN4vV9Jm5aLIApKkI0MKiGJaMSdzoPUoLlp43sZC7g/ZG3XqGm7gY1CPvBnPTVo1DeQs9Q4wOSqmPODUUhcTDw',
+'Nicola Caminiti':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/dYK2H1feWBX2zGpNZntE2Q/xIuvw-qzw3eqfUPLoQY2tE0qpBV_F6ej0PAhXKpamVYeaFIhihTrV9nLFPmPZOY5YKlWYTXtKk-Vy5nzfAMtnUSo45XrX9OfS7Tofy33vGpMxxTiuWRXWW25_0FtEwsRiTClsua7xdPyhqQakyAE4Q/kKZoS55jQn6MJ5dhkbfhyY2cqntlokZLmDnA4wdPXf4',
 'Nicola':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/dYK2H1feWBX2zGpNZntE2Q/xIuvw-qzw3eqfUPLoQY2tE0qpBV_F6ej0PAhXKpamVYeaFIhihTrV9nLFPmPZOY5YKlWYTXtKk-Vy5nzfAMtnUSo45XrX9OfS7Tofy33vGpMxxTiuWRXWW25_0FtEwsRiTClsua7xdPyhqQakyAE4Q/kKZoS55jQn6MJ5dhkbfhyY2cqntlokZLmDnA4wdPXf4',
 'Rachel Bernstein':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/sebSApiZabDB3Kumn-LVaQ/25RPGa63MpsqzIzYPQaHH0bfXba2E4RHFecgF-iEs-BjGgtThA09WwNq-E5J08XTvabOegZ1-YLhfAheXWroT__cH4hvjyWBjfHPhlNMOOP4x-JYFQzmt49M6TNBmzdGNXLLir2BKQnBCJWuzY5aQA/lRaww2QMuSe_j51VYPyNcYQznu2yoLUvxk3gLZ42pUY',
 'Janet Chow':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/g_lKIPiMbgJJEQ1ebMNo4w/YfwuBSihBcBxvoamth7AgwNpcqe0p33zUa9qhMqPS41GizC-0XI2CLW4DrxgU1XdkT1gv2TtJVnDg1U2WW6KDyYwaLtQKRl1qSK2ro-0zOUJmdH1bfU1tVHAueySfHIyZsDSXWvcxsLNtJVk1VJpwQ/l0NUBS-nBa-Ecu-e74DG7Z5_87PMCLKfby0oHLrBTI8',
 'Ricky':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/nPwkTwnGBYd94bd75l9TMw/Rsva16-LVXbkCcngRZPWlwbRbxaB4ye2H2lkA_R7mKijkt15nNBsXxlaa01IMjn7lz1c3nGp7BGdCv9apHnmeyWjMSzm7tHWjec7mWfsPkNYm6yswn8ev9z8-iRU-9MhMvQri2VKBxR4wrhqg5Icxw/u3AWjmHDERyvuWHfZsY0m73UrQar-kyR82ifJ3UFkQk',
+'Ricardo Marquez':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/nPwkTwnGBYd94bd75l9TMw/Rsva16-LVXbkCcngRZPWlwbRbxaB4ye2H2lkA_R7mKijkt15nNBsXxlaa01IMjn7lz1c3nGp7BGdCv9apHnmeyWjMSzm7tHWjec7mWfsPkNYm6yswn8ev9z8-iRU-9MhMvQri2VKBxR4wrhqg5Icxw/u3AWjmHDERyvuWHfZsY0m73UrQar-kyR82ifJ3UFkQk',
 "Regina D'Soto":'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/LigiIrDMV63tpUsPQINRIA/3cjWxamjs0KzIg9G_avb1LmXJ9XXC72LKomR4sIncrraXQLmeJF6MSFAv3etRBoPWXHUBSExFfzVRXZMt2LMl5O_1xbMQtVi_5Q9Q4_Rsd_v3pSTi-n1MCcPNgndzevJAdqx13G0vxFzn66SKCm7_Q/J5vt7DoVAfmd21aNwykB_NEZ7jeJgED5adcPHe_6Bjg',
 'Teresa':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/u5Ju62g0GMUWTQ6321YFVw/pQwRu5sMs2YKezjwuIphmuvA9gHzLgSosRDaR-qhhIT-5pOCqje87GMDsKlDky_vm1TKQiQAnHXeZ_XzvYxD3jJxh_4y2lF5iXxubc1utg5B_ERmJIfGjSHLyz-AdkHbatqQDXdLveH2ZVl9XPCeLw/nsY6z6JZ7atKh3t3PHEDtaBCrM7Z1iOdoS7PY7PElDc',
 'Josue Hernandez':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/5lxOnWnUPPkLWgc1vmbmLQ/MRM6NLz49v8G3nv_jmq2-GqYhzAmIAA5Cr_heXhEV51xlbg0dEkrl1sthUUEkFv-M-PZX5bCtzyp2GjOk0pooq6W7VdxAUPRyN_LeEN4lFikriGMFLgNTC5zwEB-oq0uRp3aHBJ6aXFjKwuNdm1ZG-BlSwYjkXTzFSlNfhz6wzQ/FXD2_iZFYDYrd2TJQ7PPIO9Z0R2Bh7e-we1g15ZtsvY',
@@ -229,6 +233,12 @@ if(instId)map[sid]={id:instId,name:instName};
 return map;
 }
 
+function getInstructors(){
+const asnMap=getTodayAssignmentMap();
+const names=[...new Set(Object.values(asnMap).map(v=>v?.name).filter(Boolean))].sort();
+return names;
+}
+
 function todayList(){
 const t=normDay(todayShort);
 const asnMap=getTodayAssignmentMap();
@@ -239,19 +249,6 @@ return days.includes(t)&&(s.status||'').toLowerCase().includes('active');
 list=list.map(s=>({...s,instrName:asnMap[s.id]?.name||''}));
 if(activeFilter!=='all')list=list.filter(s=>s.instrName===activeFilter);
 return list;
-}
-
-function getInstructors(){
-const t=normDay(todayShort);
-return allStaff.filter(st=>{
-const f=st.fields||{};
-const status=(f['Status']?.name||f['Status']||'').toLowerCase();
-if(!status.includes('active'))return false;
-const roles=(f['Role']||[]).map(r=>(r.name||r||'').toLowerCase());
-if(!roles.some(r=>r.includes('instructor')||r.includes('manager')))return false;
-const avail=(f['Default Availability']||[]).map(d=>normDay(d.name||d));
-return avail.includes(t);
-}).map(st=>st.fields?.['Name']||'').filter(Boolean).sort();
 }
 
 function startEnroute(id){
