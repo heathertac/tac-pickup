@@ -203,7 +203,7 @@ const CACHE_KEY=`tac_roster_v3_${TODAY.toDateString()}`;
 const STATE_KEY=`tac_states_${TODAY.toDateString()}`;
 const REBECCA_PHONE='7705471075';
 
-const INSTRUCTOR_PHOTOS={
+let INSTRUCTOR_PHOTOS={
   'Rebecca Whittemore':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/TxAMrQbSpLoiHDsvpULJOA/1St2g5ELC6xIR_RJf165eF8O7FWmXg3qM0R2Bl-fFJhEJooX0yS8gYl-PRK2Rrwh9wZBkomGkudLdBAxcjHN5bNPMloujsxPd5t2R3-0gOTvEkGCnvTInXOMYqzRd8RXr-DXmtVdDe2IYUyvlEgg/PEFkkFXtntjuNUffaeFa1fn_89pI_Sasp-A1k52mI_k',
   'Kevin Sims':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/SqsjI-n1iZgN7W0D4aTVFA/cPaEEx0iSOVW_I-gTwozAKbtibr6L8E9rANffXJor1Y0227SkwuPGIZGLqL9jg6sXf7PgZbfaPqw5TqtOS7t-LEitFREVexj6QMG6vya5BjMDN4vV9Jm5aLIApKkI0MKiGJaMSdzoPUoLlp43sZC7g/ZG3XqGm7gY1CPvBnPTVo1DeQs9Q4wOSqmPODUUhcTDw',
   'Nicola Caminiti':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/dYK2H1feWBX2zGpNZntE2Q/xIuvw-qzw3eqfUPLoQY2tE0qpBV_F6ej0PAhXKpamVYeaFIhihTrV9nLFPmPZOY5YKlWYTXtKk-Vy5nzfAMtnUSo45XrX9OfS7Tofy33vGpMxxTiuWRXWW25_0FtEwsRiTClsua7xdPyhqQakyAE4Q/kKZoS55jQn6MJ5dhkbfhyY2cqntlokZLmDnA4wdPXf4',
@@ -515,6 +515,7 @@ async function init(){
       proxy('getChanges'),
     ]);
     roster=rosterRes.roster||[];
+    if(rosterRes.staffPhotoMap) Object.assign(INSTRUCTOR_PHOTOS, rosterRes.staffPhotoMap);
     locations=locRes.records||[];
     changes=changeRes.records||[];
     saveCache({roster,locations,changes});
