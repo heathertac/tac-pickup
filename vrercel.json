@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/ops", "destination": "/ops/index.html" },
+    { "source": "/ops/(.*)", "destination": "/ops/index.html" }
+  ]
+}
