@@ -74,8 +74,8 @@ module.exports = async function handler(req, res) {
       const todayDay = days[today.getDay()];
 
       if (CLOSED_DATES.includes(todayISO) || todayDay === 'sat' || todayDay === 'sun') {
-        return res.status(200).json({ roster: [] });
-      }
+  return res.status(200).json({ roster: [], debug: {todayISO, todayDay, reason:'closed'} });
+}
 
       // Fetch everything in parallel
       const [students, staff, assignments] = await Promise.all([
@@ -175,6 +175,7 @@ module.exports = async function handler(req, res) {
         });
       }
 
+      return res.status(200).json({ roster, debug: {todayISO, todayDay, studentCount: students.length, fridayCount: roster.length} });
       return res.status(200).json({ roster });
     }
 
