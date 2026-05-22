@@ -191,36 +191,22 @@ const STATE_KEY=`tac_states_${TODAY.toDateString()}`;
 const REBECCA_PHONE='7705471075';
 const LOGO_URL='https://static.wixstatic.com/media/7e1448_415a7686f7774d038fce84f0816a76b2~mv2.png/v1/fill/w_320,h_125,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/ASC%20LOGO.png';
 
-// All instructors keyed by every name variant the roster might return
-const INSTRUCTOR_PHOTOS={
-'Rebecca Whittemore':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/TxAMrQbSpLoiHDsvpULJOA/1St2g5ELC6xIR_RJf165eF8O7FWmXg3qM0R2Bl-fFJhEJooX0yS8gYl-PRK2Rrwh9wZBkomGkudLdBAxcjHN5bNPMloujsxPd5t2R3-0gOTvEkGCnvTInXOMYqzRd8RXr-DXmtVdDe2IYUyvlEgg/PEFkkFXtntjuNUffaeFa1fn_89pI_Sasp-A1k52mI_k',
-'Rebecca':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/TxAMrQbSpLoiHDsvpULJOA/1St2g5ELC6xIR_RJf165eF8O7FWmXg3qM0R2Bl-fFJhEJooX0yS8gYl-PRK2Rrwh9wZBkomGkudLdBAxcjHN5bNPMloujsxPd5t2R3-0gOTvEkGCnvTInXOMYqzRd8RXr-DXmtVdDe2IYUyvlEgg/PEFkkFXtntjuNUffaeFa1fn_89pI_Sasp-A1k52mI_k',
-'Kevin Sims':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/SqsjI-n1iZgN7W0D4aTVFA/cPaEEx0iSOVW_I-gTwozAKbtibr6L8E9rANffXJor1Y0227SkwuPGIZGLqL9jg6sXf7PgZbfaPqw5TqtOS7t-LEitFREVexj6QMG6vya5BjMDN4vV9Jm5aLIApKkI0MKiGJaMSdzoPUoLlp43sZC7g/ZG3XqGm7gY1CPvBnPTVo1DeQs9Q4wOSqmPODUUhcTDw',
-'Kevin':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/SqsjI-n1iZgN7W0D4aTVFA/cPaEEx0iSOVW_I-gTwozAKbtibr6L8E9rANffXJor1Y0227SkwuPGIZGLqL9jg6sXf7PgZbfaPqw5TqtOS7t-LEitFREVexj6QMG6vya5BjMDN4vV9Jm5aLIApKkI0MKiGJaMSdzoPUoLlp43sZC7g/ZG3XqGm7gY1CPvBnPTVo1DeQs9Q4wOSqmPODUUhcTDw',
-'Nicola Caminiti':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/dYK2H1feWBX2zGpNZntE2Q/xIuvw-qzw3eqfUPLoQY2tE0qpBV_F6ej0PAhXKpamVYeaFIhihTrV9nLFPmPZOY5YKlWYTXtKk-Vy5nzfAMtnUSo45XrX9OfS7Tofy33vGpMxxTiuWRXWW25_0FtEwsRiTClsua7xdPyhqQakyAE4Q/kCoZoS55jQn6MJ5dhkbfhyY2cqntlokZLmDnA4wdPXf4',
-'Nicola':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/dYK2H1feWBX2zGpNZntE2Q/xIuvw-qzw3eqfUPLoQY2tE0qpBV_F6ej0PAhXKpamVYeaFIhihTrV9nLFPmPZOY5YKlWYTXtKk-Vy5nzfAMtnUSo45XrX9OfS7Tofy33vGpMxxTiuWRXWW25_0FtEwsRiTClsua7xdPyhqQakyAE4Q/kCoZoS55jQn6MJ5dhkbfhyY2cqntlokZLmDnA4wdPXf4',
-'Rachel Bernstein':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/sebSApiZabDB3Kumn-LVaQ/25RPGa63MpsqzIzYPQaHH0bfXba2E4RHFecgF-iEs-BjGgtThA09WwNq-E5J08XTvabOegZ1-YLhfAheXWroT__cH4hvjyWBjfHPhlNMOOP4x-JYFQzmt49M6TNBmzdGNXLLir2BKQnBCJWuzY5aQA/lRaww2QMuSe_j51VYPyNcYQznu2yoLUvxk3gLZ42pUY',
-'Rachel':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/sebSApiZabDB3Kumn-LVaQ/25RPGa63MpsqzIzYPQaHH0bfXba2E4RHFecgF-iEs-BjGgtThA09WwNq-E5J08XTvabOegZ1-YLhfAheXWroT__cH4hvjyWBjfHPhlNMOOP4x-JYFQzmt49M6TNBmzdGNXLLir2BKQnBCJWuzY5aQA/lRaww2QMuSe_j51VYPyNcYQznu2yoLUvxk3gLZ42pUY',
-'Janet Chow':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/g_lKIPiMbgJJEQ1ebMNo4w/YfwuBSihBcBxvoamth7AgwNpcqe0p33zUa9qhMqPS41GizC-0XI2CLW4DrxgU1XdkT1gv2TtJVnDg1U2WW6KDyYwaLtQKRl1qSK2ro-0zOUJmdH1bfU1tVHAueySfHIyZsDSXWvcxsLNtJVk1VJpwQ/l0NUBS-nBa-Ecu-e74DG7Z5_87PMCLKfby0oHLrBTI8',
-'Janet':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/g_lKIPiMbgJJEQ1ebMNo4w/YfwuBSihBcBxvoamth7AgwNpcqe0p33zUa9qhMqPS41GizC-0XI2CLW4DrxgU1XdkT1gv2TtJVnDg1U2WW6KDyYwaLtQKRl1qSK2ro-0zOUJmdH1bfU1tVHAueySfHIyZsDSXWvcxsLNtJVk1VJpwQ/l0NUBS-nBa-Ecu-e74DG7Z5_87PMCLKfby0oHLrBTI8',
-'Ricardo Marquez':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/nPwkTwnGBYd94bd75l9TMw/Rsva16-LVXbkCcngRZPWlwbRbxaB4ye2H2lkA_R7mKijkt15nNBsXxlaa01IMjn7lz1c3nGp7BGdCv9apHnmeyWjMSzm7tHWjec7mWfsPkNYm6yswn8ev9z8-iRU-9MhMvQri2VKBxR4wrhqg5Icxw/u3AWjmHDERyvuWHfZsY0m73UrQar-kyR82ifJ3UFkQk',
-'Ricky':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/nPwkTwnGBYd94bd75l9TMw/Rsva16-LVXbkCcngRZPWlwbRbxaB4ye2H2lkA_R7mKijkt15nNBsXxlaa01IMjn7lz1c3nGp7BGdCv9apHnmeyWjMSzm7tHWjec7mWfsPkNYm6yswn8ev9z8-iRU-9MhMvQri2VKBxR4wrhqg5Icxw/u3AWjmHDERyvuWHfZsY0m73UrQar-kyR82ifJ3UFkQk',
-"Regina D'Soto":'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/LigiIrDMV63tpUsPQINRIA/3cjWxamjs0KzIg9G_avb1LmXJ9XXC72LKomR4sIncrraXQLmeJF6MSFAv3etRBoPWXHUBSExFfzVRXZMt2LMl5O_1xbMQtVi_5Q9Q4_Rsd_v3pSTi-n1MCcPNgndzevJAdqx13G0vxFzn66SKCm7_Q/J5vt7DoVAfmd21aNwykB_NEZ7jeJgED5adcPHe_6Bjg',
-'Gina':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/LigiIrDMV63tpUsPQINRIA/3cjWxamjs0KzIg9G_avb1LmXJ9XXC72LKomR4sIncrraXQLmeJF6MSFAv3etRBoPWXHUBSExFfzVRXZMt2LMl5O_1xbMQtVi_5Q9Q4_Rsd_v3pSTi-n1MCcPNgndzevJAdqx13G0vxFzn66SKCm7_Q/J5vt7DoVAfmd21aNwykB_NEZ7jeJgED5adcPHe_6Bjg',
-'Teresa':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/u5Ju62g0GMUWTQ6321YFVw/pQwRu5sMs2YKezjwuIphmuvA9gHzLgSosRDaR-qhhIT-5pOCqje87GMDsKlDky_vm1TKQiQAnHXeZ_XzvYxD3jJxh_4y2lF5iXxubc1utg5B_ERmJIfGjSHLyz-AdkHbatqQDXdLveH2ZVl9XPCeLw/nsY6z6JZ7atKh3t3PHEDtaBCrM7Z1iOdoS7PY7PElDc',
-'Teresa Ramos':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/u5Ju62g0GMUWTQ6321YFVw/pQwRu5sMs2YKezjwuIphmuvA9gHzLgSosRDaR-qhhIT-5pOCqje87GMDsKlDky_vm1TKQiQAnHXeZ_XzvYxD3jJxh_4y2lF5iXxubc1utg5B_ERmJIfGjSHLyz-AdkHbatqQDXdLveH2ZVl9XPCeLw/nsY6z6JZ7atKh3t3PHEDtaBCrM7Z1iOdoS7PY7PElDc',
-'Josue Hernandez':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/5lxOnWnUPPkLWgc1vmbmLQ/MRM6NLz49v8G3nv_jmq2-GqYhzAmIAA5Cr_heXhEV51xlbg0dEkrl1sthUUEkFv-M-PZX5bCtzyp2GjOk0pooq6W7VdxAUPRyN_LeEN4lFikriGMFLgNTC5zwEB-oq0uRp3aHBJ6aXFjKwuNdm1ZG-BlSwYjkXTzFSlNfhz6wzQ/FXD2_iZFYDYrd2TJQ7PPIO9Z0R2Bh7e-we1g15ZtsvY',
-'Josue':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/5lxOnWnUPPkLWgc1vmbmLQ/MRM6NLz49v8G3nv_jmq2-GqYhzAmIAA5Cr_heXhEV51xlbg0dEkrl1sthUUEkFv-M-PZX5bCtzyp2GjOk0pooq6W7VdxAUPRyN_LeEN4lFikriGMFLgNTC5zwEB-oq0uRp3aHBJ6aXFjKwuNdm1ZG-BlSwYjkXTzFSlNfhz6wzQ/FXD2_iZFYDYrd2TJQ7PPIO9Z0R2Bh7e-we1g15ZtsvY',
-};
+// Instructor photos come fresh from the proxy roster — no hardcoding needed.
+// This map is only used for the filter pills (to show photo next to name).
+// It gets populated dynamically from the roster after load.
+const INSTRUCTOR_PHOTO_CACHE = {};
 
-// Helper: look up photo by name, trying progressively shorter matches
 function getInstrPhoto(name){
-if(!name)return null;
-if(INSTRUCTOR_PHOTOS[name])return INSTRUCTOR_PHOTOS[name];
-// Try first name only
-const first=name.split(' ')[0];
-if(INSTRUCTOR_PHOTOS[first])return INSTRUCTOR_PHOTOS[first];
-return null;
+  if(!name)return null;
+  return INSTRUCTOR_PHOTO_CACHE[name]||null;
+}
+
+function buildPhotoCache(){
+  roster.forEach(s=>{
+    if(s.instructorName&&s.instructorPhotoUrl){
+      INSTRUCTOR_PHOTO_CACHE[s.instructorName]=s.instructorPhotoUrl;
+    }
+  });
 }
 
 let roster=[],locations=[],changes=[],activeFilter='all',isOffline=false,urgentStudentId=null;
@@ -469,7 +455,7 @@ function renderCard(s){
 const id=s.studentId;
 const st=states[id]||'pending';
 const secondary=parseSecondary(s.notes);
-const instrPhoto=getInstrPhoto(s.instructorName);
+const instrPhoto=s.instructorPhotoUrl||getInstrPhoto(s.instructorName);
 const an=absentNotes[id]||{};
 const tn=teamNotes[id]||{};
 const now=new Date();
@@ -507,7 +493,7 @@ ${tn.sent?`<div class="note-sent-row"><span class="note-sent"><i class="ti ti-ci
 
 async function init(){
 const cached=loadCache();
-if(cached){roster=cached.roster||[];locations=cached.locations||[];changes=cached.changes||[];isOffline=false;render();}
+if(cached){roster=cached.roster||[];locations=cached.locations||[];changes=cached.changes||[];buildPhotoCache();isOffline=false;render();}
 try{
 const [rosterRes,locRes,changeRes]=await Promise.all([
 proxy('getTodayRoster'),
@@ -517,6 +503,7 @@ proxy('getChanges'),
 roster=rosterRes.roster||[];
 locations=locRes.records||[];
 changes=changeRes.records||[];
+buildPhotoCache();
 saveCache({roster,locations,changes});
 isOffline=false;
 }catch(e){
