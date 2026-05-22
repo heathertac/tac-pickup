@@ -69,7 +69,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .sdot.done{background:#97C459;}
 .sdot.absent{background:#94A3B8;}
 .info-row{display:flex;align-items:center;gap:6px;margin-top:4px;flex-wrap:wrap;}
-.location-chip{display:inline-flex;align-items:center;gap:4px;background:#FFF7ED;border:1px solid #FED7AA;border-radius:6px;padding:2px 8px;font-size:11px;color:#9A3412;}
 .school-chip{display:inline-flex;align-items:center;gap:4px;background:#F0F4FF;border:1px solid #C7D7FF;border-radius:6px;padding:2px 8px;font-size:11px;color:#3451B2;}
 .teacher-line{font-size:11px;color:#aaa;margin-top:2px;}
 .instr-chip{display:flex;align-items:center;gap:5px;background:#FEE8DC;border:1px solid #F4A27C;border-radius:999px;padding:3px 10px 3px 4px;flex-shrink:0;}
@@ -86,18 +85,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .btn-enroute{border-color:#EF9F27;background:#FAEEDA;color:#633806;}
 .btn-picked{border-color:#97C459;background:#EAF3DE;color:#27500A;}
 .btn-absent{border-color:#94A3B8;background:#F1F5F9;color:#475569;font-size:12px;}
-.btn-complete{opacity:0.4;cursor:default;}
 .btn-absent-done{border-color:#94A3B8;background:#F1F5F9;color:#64748B;opacity:0.6;cursor:default;}
 .absent-note{margin:0 14px 12px;}
 .absent-note-label{font-size:11px;color:#64748B;font-weight:500;margin-bottom:5px;display:flex;align-items:center;gap:4px;}
 .absent-input{width:100%;border:1px solid #CBD5E1;border-radius:8px;padding:9px 12px;font-size:13px;font-family:inherit;color:#1a1a1a;resize:none;outline:none;background:#F8FAFC;}
-.absent-actions{display:flex;gap:6px;margin-top:6px;}
 .btn-absent-send{flex:1;background:#475569;border:none;color:#fff;border-radius:8px;padding:9px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;}
 .post-pickup{padding:0 14px 12px;}
 .note-row-wrap{display:flex;gap:8px;align-items:stretch;}
 .btn-note-main{flex:1;background:#F1F5F9;border:1px solid #CBD5E1;color:#475569;font-size:13px;font-weight:600;border-radius:8px;padding:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;min-height:42px;}
 .btn-urgent-icon{flex-shrink:0;width:42px;height:42px;border-radius:8px;background:#FCEBEB;border:1px solid #E89999;color:#A32D2D;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;}
-.note-btn{background:none;border:none;color:#aaa;font-size:12px;cursor:pointer;text-align:left;padding:2px 0;display:flex;align-items:center;gap:5px;}
 .note-form{display:flex;flex-direction:column;gap:6px;}
 .note-input{width:100%;border:1px solid #ddd;border-radius:8px;padding:9px 12px;font-size:13px;font-family:inherit;color:#1a1a1a;resize:none;outline:none;}
 .note-row{display:flex;gap:6px;}
@@ -105,7 +101,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .btn-note-cancel{background:#f5f5f5;border:none;color:#888;border-radius:8px;padding:9px 14px;font-size:13px;cursor:pointer;}
 .note-sent-row{display:flex;align-items:center;justify-content:space-between;gap:8px;}
 .note-sent{font-size:12px;color:#27500A;display:flex;align-items:center;gap:5px;}
-.urgent-link{background:none;border:none;color:#C0392B;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:4px;padding:0;}
 .sheet-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:200;display:flex;align-items:flex-end;justify-content:center;}
 .sheet{background:#fff;border-radius:16px 16px 0 0;width:100%;max-width:420px;padding:20px 20px 36px;}
 .sheet-handle{width:36px;height:4px;background:#ddd;border-radius:2px;margin:0 auto 16px;}
@@ -182,7 +177,7 @@ const INSTRUCTOR_PHOTOS={
 };
 
 let students=[],changes=[],locations=[],assignments=[],allStaff=[],activeFilter='all',isOffline=false,urgentStudentId=null;
-let pickupContext=null; // tracks which student we're in the "child picked up" flow for
+let pickupContext=null;
 let {states,absentNotes,teamNotes,pickupTimes}=loadState();
 if(!pickupTimes)pickupTimes={};
 
@@ -192,66 +187,43 @@ function initials(n){return(n||'').split(' ').slice(0,2).map(w=>w[0]||'').join('
 function normDay(d){const s=(d||'').toLowerCase();if(s.startsWith('mo'))return'mon';if(s.startsWith('tu'))return'tue';if(s.startsWith('we'))return'wed';if(s.startsWith('th'))return'thu';if(s.startsWith('fr'))return'fri';return s.slice(0,3);}
 function parseSecondary(n){if(!n)return null;const m=n.match(/Also text[^\d]*?([\w\s]+?)\s+at\s+([\d\-\(\)\s]+)/i);if(!m)return null;return{name:m[1].trim().replace(/^(Dad|Mom|dad|mom)\s+/,''),phone:m[2].trim()};}
 
-function mapStudent(r, staff, t) {
-const f = r.fields || {};
-const rawDays = f['Enrolled Days'] || [];
-const studentDays = rawDays.map(d => normDay(d.name || d));
-const photos = f['Photo'] || [];
-const pickupLocs = f['Default Pickup Location'] || [];
-const matchedInstr = staff.find(st => {
-const sf = st.fields || {};
-const sd = (sf['Default Availability'] || []).map(d => normDay(d.name || d));
-return sd.includes(t) && studentDays.includes(t);
-});
-return {
-id: r.id,
-name: f['Name'] || 'Unknown',
-status: (f['Status']?.name || f['Status'] || 'Active'),
-days: rawDays,
-photo: photos[0]?.thumbnails?.small?.url || photos[0]?.url || null,
-pickupPhone: f['Pickup Contact Phone'] || '',
-pickupName: f['Pickup Contact Name'] || '',
-notes: f['Notes (Nice to Know)'] || '',
-teacher: f['Homeroom Teacher'] || '',
-grade: f['Grade']?.name || f['Grade'] || '',
-school: f['School']?.name || f['School'] || '',
-pickupLocation: pickupLocs[0]?.name || '',
-pickupLocationId: pickupLocs[0]?.id || pickupLocs[0] || '',
-instrName: matchedInstr?.fields?.['Name'] || '',
-instrDays: matchedInstr?.fields?.['Default Availability'] || [],
+function mapStudent(r,staff,t){
+const f=r.fields||{};
+const rawDays=f['Enrolled Days']||[];
+const photos=f['Photo']||[];
+const pickupLocs=f['Default Pickup Location']||[];
+return{
+id:r.id,
+name:f['Name']||'Unknown',
+status:(f['Status']?.name||f['Status']||'Active'),
+days:rawDays,
+photo:photos[0]?.thumbnails?.small?.url||photos[0]?.url||null,
+pickupPhone:f['Pickup Contact Phone']||'',
+pickupName:f['Pickup Contact Name']||'',
+notes:f['Notes (Nice to Know)']||'',
+teacher:f['Homeroom Teacher']||'',
+grade:f['Grade']?.name||f['Grade']||'',
+school:f['School']?.name||f['School']||'',
+pickupLocation:pickupLocs[0]?.name||'',
+pickupLocationId:pickupLocs[0]?.id||pickupLocs[0]||'',
+instrName:'',
 };
 }
 
-// Build a map of studentId → instructorName from today's Pickup Assignments
 function getTodayAssignmentMap(){
-  const todayISO=new Date().toISOString().slice(0,10);
-  const map={};
-  assignments.forEach(a=>{
-    const f=a.fields||{};
-    if(f['Date']!==todayISO)return;
-    const stuIds=(f['Student']||[]).map(s=>s.id||s);
-    const instArr=(f['Assigned Instructor']||[]);
-    // Support both expanded objects {id, name} and bare record ID strings
-    const instId=instArr.length?(instArr[0].id||instArr[0]):null;
-    const instName=instArr.length&&instArr[0].name?instArr[0].name:
-      (allStaff.find(st=>st.id===(instArr[0]?.id||instArr[0]))?.fields?.['Name']||'');
-    stuIds.forEach(sid=>{
-      if(instId)map[sid]={id:instId,name:instName};
-    });
-  });
-  return map;
-}
 const todayISO=new Date().toISOString().slice(0,10);
 const map={};
 assignments.forEach(a=>{
 const f=a.fields||{};
 if(f['Date']!==todayISO)return;
 const stuIds=(f['Student']||[]).map(s=>s.id||s);
-const instIds=(f['Assigned Instructor']||[]).map(s=>s.id||s);
-const instNames=(f['Assigned Instructor']||[]).map(s=>s.name||'');
+const instArr=(f['Assigned Instructor']||[]);
+const instId=instArr.length?(instArr[0].id||instArr[0]):null;
+const instName=instArr.length&&instArr[0].name
+  ?instArr[0].name
+  :(allStaff.find(st=>st.id===(instArr[0]&&instArr[0].id?instArr[0].id:instArr[0]))?.fields?.['Name']||'');
 stuIds.forEach(sid=>{
-if(instIds.length)map[sid]={id:instIds[0],name:instNames[0]||''};
-else map[sid]=map[sid]||null;
+if(instId)map[sid]={id:instId,name:instName};
 });
 });
 return map;
@@ -264,16 +236,13 @@ let list=students.filter(s=>{
 const days=(s.days||[]).map(d=>normDay(d.name||d));
 return days.includes(t)&&(s.status||'').toLowerCase().includes('active');
 });
-// Override instrName from real Pickup Assignment data
-list=list.map(s=>({...s,instrName:asnMap[s.id]?.name||s.instrName||''}));
+list=list.map(s=>({...s,instrName:asnMap[s.id]?.name||''}));
 if(activeFilter!=='all')list=list.filter(s=>s.instrName===activeFilter);
 return list;
 }
 
-// Active instructors with today's day in their default availability
 function getInstructors(){
 const t=normDay(todayShort);
-const tFull={mon:'monday',tue:'tuesday',wed:'wednesday',thu:'thursday',fri:'friday'}[t]||t;
 return allStaff.filter(st=>{
 const f=st.fields||{};
 const status=(f['Status']?.name||f['Status']||'').toLowerCase();
@@ -285,40 +254,26 @@ return avail.includes(t);
 }).map(st=>st.fields?.['Name']||'').filter(Boolean).sort();
 }
 
-// ============================================================
-//  STATE-CHANGE FLOW (new)
-// ============================================================
-
-// Called when instructor taps "En route to pickup"
 function startEnroute(id){
 const s=students.find(x=>x.id===id);
 if(!s)return;
 states[id]='enroute';
 saveState();
 render();
-// Open phone's text app with the "on the way" message
 openParentText(s,'enroute');
 }
 
-// Called when instructor taps "Child picked up"
 function startPickup(id){
 const s=students.find(x=>x.id===id);
 if(!s)return;
 pickupContext={studentId:id,studentName:s.name,phone:s.pickupPhone,parentName:s.pickupName};
-// Open the camera
 document.getElementById('cameraInput').click();
 }
 
-// Called when a photo is taken OR the camera was cancelled
 function handlePhotoTaken(event){
-const file=event.target.files && event.target.files[0];
-event.target.value=''; // reset so the same input works next time
-if(!file){
-// User cancelled the camera, ask if they want to send without photo
-showPhotoSheet();
-return;
-}
-// They took a photo. Mark as done, open text app, parent will manually attach photo.
+const file=event.target.files&&event.target.files[0];
+event.target.value='';
+if(!file){showPhotoSheet();return;}
 finishPickup(true);
 }
 
@@ -328,17 +283,8 @@ document.getElementById('photoSheetOverlay').style.display='flex';
 }
 
 function closePhotoSheet(e){if(e.target.id==='photoSheetOverlay')closePhotoSheetCancel();}
-
-function closePhotoSheetCancel(){
-document.getElementById('photoSheetOverlay').style.display='none';
-// Cancel the pickup, return to enroute state
-pickupContext=null;
-}
-
-function sendWithoutPhoto(){
-document.getElementById('photoSheetOverlay').style.display='none';
-finishPickup(false);
-}
+function closePhotoSheetCancel(){document.getElementById('photoSheetOverlay').style.display='none';pickupContext=null;}
+function sendWithoutPhoto(){document.getElementById('photoSheetOverlay').style.display='none';finishPickup(false);}
 
 function finishPickup(withPhoto){
 if(!pickupContext)return;
@@ -354,8 +300,8 @@ pickupContext=null;
 function openParentText(s,type,withPhoto){
 const parentFirst=(s.pickupName||'').split(' ')[0];
 const greeting=parentFirst?`Hi ${parentFirst}!`:'Hi there!';
-let body;
 const firstName=(s.name||'').split(' ')[0];
+let body;
 if(type==='enroute'){
 body=`${greeting} This is your instructor from The Afterschool Collective. I'm on my way to pick up ${firstName} right now. See you soon!`;
 }else{
@@ -366,10 +312,6 @@ body=withPhoto
 const phone=(s.pickupPhone||'').replace(/\D/g,'');
 window.open((phone?`sms:${phone}`:'sms:')+`?body=${encodeURIComponent(body)}`,'_self');
 }
-
-// ============================================================
-//  EXISTING ABSENT / NOTE / URGENT (unchanged behavior)
-// ============================================================
 
 function setAbsent(id){
 states[id]='absent';
@@ -422,13 +364,12 @@ await proxy('logIncident',{description:msg,type:'Missing Student',severity:'High
 function saveCache(data){try{sessionStorage.setItem(CACHE_KEY,JSON.stringify({ts:Date.now(),data}));}catch(e){}}
 function loadCache(){try{const c=sessionStorage.getItem(CACHE_KEY);if(c){const p=JSON.parse(c);if(Date.now()-p.ts<8*3600000)return p.data;}}catch(e){}return null;}
 
-// Parse "2:50-3:00pm" or "2:55pm" → minutes since midnight, for sorting bus stops by arrival time
 function parsePickupTime(t){
 if(!t)return 9999;
 const m=String(t).toLowerCase().match(/(\d+):(\d+)\s*(am|pm)?/);
 if(!m)return 9999;
 let h=parseInt(m[1]),min=parseInt(m[2]);
-const ap=m[3]||'pm'; // afternoon pickup default
+const ap=m[3]||'pm';
 if(ap==='pm'&&h<12)h+=12;
 if(ap==='am'&&h===12)h=0;
 return h*60+min;
@@ -455,10 +396,6 @@ const r=await fetch('/api/proxy',{method:'POST',headers:{'Content-Type':'applica
 return r.json();
 }
 
-// ============================================================
-//  RENDER
-// ============================================================
-
 function render(){
 const list=todayList();
 const allToday=students.filter(s=>{const t=normDay(todayShort);const days=(s.days||[]).map(d=>normDay(d.name||d));return days.includes(t)&&(s.status||'').toLowerCase().includes('active');});
@@ -475,7 +412,7 @@ ${isOffline?`<div class="offline-bar"><i class="ti ti-wifi-off"></i> Offline —
 <div class="stat"><div class="stat-n ${absentCount>0?'red':''}">${absentCount}</div><div class="stat-l">Absent</div></div>
 </div>
 ${todayChanges.length?`<div class="alert-box" style="margin:12px 16px 0"><div class="alert-hdr"><i class="ti ti-alert-triangle" style="font-size:16px;color:#A32D2D"></i><span class="alert-hdr-text">Changes today, read first</span></div>${todayChanges.map(c=>`<div class="alert-item"><div class="alert-name">${(c.fields||{})['Change Summary']||'Change logged'}</div></div>`).join('')}</div>`:`<div class="clear-bar"><i class="ti ti-circle-check" style="font-size:16px;color:#27500A"></i><span class="clear-text">All clear, no changes today</span></div>`}
-${instructors.length>=1?`<div class="filter-bar"><button class="filter-pill${activeFilter==='all'?' active':''}" onclick="setFilter('all')"><i class="ti ti-users" style="font-size:13px"></i> All</button>${instructors.map(name=>`<button class="filter-pill${activeFilter===name?' active':''}" onclick="setFilter('${name.replace(/'/g,"\\'")}')">${INSTRUCTOR_PHOTOS[name]?`<img src="${INSTRUCTOR_PHOTOS[name]}" alt="${name}" onerror="this.style.display='none'">`:''}${name.split(' ')[0]}</button>`).join('')}</div>`:'' }
+${instructors.length>=1?`<div class="filter-bar"><button class="filter-pill${activeFilter==='all'?' active':''}" onclick="setFilter('all')"><i class="ti ti-users" style="font-size:13px"></i> All</button>${instructors.map(name=>`<button class="filter-pill${activeFilter===name?' active':''}" onclick="setFilter('${name.replace(/'/g,"\\'")}')">${INSTRUCTOR_PHOTOS[name]?`<img src="${INSTRUCTOR_PHOTOS[name]}" alt="${name}" onerror="this.style.display='none'">`:''}${name.split(' ')[0]}</button>`).join('')}</div>`:''}
 <div class="section-hdr"><span class="section-title">${activeFilter==='all'?"Today's students":activeFilter.split(' ')[0]+"'s students"}</span><span class="count-chip">${list.length}</span></div>
 <div class="cards">
 ${list.length===0?`<div style="text-align:center;padding:40px 0;color:#888;font-size:14px">No students enrolled for ${todayFull}</div>`:
@@ -503,7 +440,7 @@ const an=absentNotes[s.id]||{};
 const tn=teamNotes[s.id]||{};
 const now=new Date();
 const timeStr=now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-const collapsed = st==='done' || (st==='absent' && an.sent);
+const collapsed=st==='done'||(st==='absent'&&an.sent);
 return`<div class="card ${st}" id="c-${s.id}">
 <div class="card-accent ${st}"></div>
 <div class="card-top" style="${collapsed?'padding-bottom:6px':''}">
@@ -511,14 +448,11 @@ return`<div class="card ${st}" id="c-${s.id}">
 <div style="flex:1;min-width:0">
 <div class="sname" style="${collapsed?'font-size:15px':''}">${s.name}</div>
 <div class="sstatus ${st}">${st==='done'?`<i class="ti ti-circle-check" style="font-size:14px;color:#27500A"></i>`:`<div class="sdot ${st}"></div>`}${st==='pending'?'Not started yet':st==='enroute'?'En route to pickup':st==='absent'?(an.sent?'Marked absent, note sent':'Marked absent'):`Picked up${pickupTimes[s.id]?' at '+pickupTimes[s.id]:''}`}</div>
-${collapsed?(s.school?`<div style="margin-top:3px"><div class="school-chip"><i class="ti ti-building" style="font-size:11px"></i>${s.school}</div></div>`:''):`<div class="info-row">
-${s.school?`<div class="school-chip"><i class="ti ti-building" style="font-size:11px"></i>${s.school}</div>`:''}
-</div>
-${s.teacher?`<div class="teacher-line">${s.teacher}${s.grade?' · '+s.grade:''}</div>`:''}`}
+${collapsed?(s.school?`<div style="margin-top:3px"><div class="school-chip"><i class="ti ti-building" style="font-size:11px"></i>${s.school}</div></div>`:''):`<div class="info-row">${s.school?`<div class="school-chip"><i class="ti ti-building" style="font-size:11px"></i>${s.school}</div>`:''}</div>${s.teacher?`<div class="teacher-line">${s.teacher}${s.grade?' · '+s.grade:''}</div>`:''}`}
 </div>
 ${instrPhoto&&activeFilter==='all'&&!collapsed?`<div class="instr-chip"><img src="${instrPhoto}" class="instr-photo" alt="${s.instrName||''}" onerror="this.style.display='none'"><span class="instr-name">${(s.instrName||'').split(' ')[0]}</span></div>`:''}
 </div>
-${(st!=='absent' && !collapsed)?`<div class="parent-row"><div class="parent-contacts">
+${(st!=='absent'&&!collapsed)?`<div class="parent-row"><div class="parent-contacts">
 <div class="parent-contact"><div><div class="parent-name">${s.pickupName||'Parent'}</div>${s.pickupPhone?`<div class="parent-phone">${s.pickupPhone}</div>`:`<div class="no-phone">Awaiting welcome email reply</div>`}</div></div>
 ${secondary?`<div class="parent-contact"><div><div class="parent-name">${secondary.name}</div><div class="parent-phone">${secondary.phone}</div></div></div>`:''}
 </div></div>`:''}
