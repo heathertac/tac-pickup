@@ -6,201 +6,220 @@ module.exports = async function handler(req, res) {
 
   const TOKEN = process.env.AIRTABLE_API_KEY;
   const BASE = 'appnWviGYgpWT2VPH';
-  const TASKS_BASE = 'appyftZnsFAKOT5SS';
 
-  const MASTER_SCHEDULE = {
-    'Ada McGuire|Monday':                  "Regina D'Soto",
-    'Adina LaSota|Monday':                 'Ricardo Marquez',
-    'Alice Huggins|Monday':                'Kevin Sims',
-    'Asher Davis|Monday':                  'Josue Hernandez',
-    'Asher Muller|Monday':                 "Regina D'Soto",
-    'Eden Arriola-Oks|Monday':             'Josue Hernandez',
-    'Ellis Scarlett|Monday':               'Kevin Sims',
-    'Gabriel Doolittle|Monday':            'Ricardo Marquez',
-    'Gaius LaSota|Monday':                 'Ricardo Marquez',
-    'Ilyaas Wower|Monday':                 'Kevin Sims',
-    'Lucas Martin Jaramillo|Monday':       'Rebecca Whittemore',
-    'Lucas Novak|Monday':                  'Rebecca Whittemore',
-    'Mikayla Kardon|Monday':               'Nicola Caminiti',
-    'Naoto Shiina|Monday':                 'Rebecca Whittemore',
-    'Nellie Dieterich|Monday':             'Josue Hernandez',
-    'Parker Corpuel|Monday':               "Regina D'Soto",
-    'Sadie Manas|Monday':                  "Regina D'Soto",
-    'Sebastian Doolittle|Monday':          'Ricardo Marquez',
-    'Simon Morales|Monday':                'Rebecca Whittemore',
-    'Sofia Salamanca|Monday':              'Nicola Caminiti',
-    'Steven Ross Ranev|Monday':            'Rebecca Whittemore',
-    'Sydney Matani|Monday':                'Ricardo Marquez',
-    'Tomoharu Takagi|Tuesday':             'Rebecca Whittemore',
-    'Abe Blath|Tuesday':                   'Rebecca Whittemore',
-    'Adam Cheung|Tuesday':                 'Josue Hernandez',
-    'Adina LaSota|Tuesday':                'Ricardo Marquez',
-    'Alfonso Cifuentes Baez|Tuesday':      "Regina D'Soto",
-    'Asher Muller|Tuesday':                "Regina D'Soto",
-    'Dylan Cheung|Tuesday':                'Josue Hernandez',
-    'Elea Kitur|Tuesday':                  'Rebecca Whittemore',
-    'Ellis Scarlett|Tuesday':              'Josue Hernandez',
-    'Eric Kielmanowicz|Tuesday':           "Regina D'Soto",
-    'Gabriel Doolittle|Tuesday':           'Ricardo Marquez',
-    'Gaius LaSota|Tuesday':                'Ricardo Marquez',
-    'Hal Takei|Tuesday':                   "Regina D'Soto",
-    'Ilyaas Wower|Tuesday':                'Josue Hernandez',
-    'Jemma Wong|Tuesday':                  'Rebecca Whittemore',
-    'Luca Passarelli|Tuesday':             "Regina D'Soto",
-    'Lucas Martin Jaramillo|Tuesday':      'Rebecca Whittemore',
-    'Mari Tamura|Tuesday':                 "Regina D'Soto",
-    'Nathaniel Dunham Welt|Tuesday':       'Ricardo Marquez',
-    'Philip Soung|Tuesday':                'Josue Hernandez',
-    'Remi Tobin|Tuesday':                  "Regina D'Soto",
-    'Sadie Manas|Tuesday':                 "Regina D'Soto",
-    'Sebastian Sverdlov|Tuesday':          'Rebecca Whittemore',
-    'Seth Lee|Tuesday':                    'Rebecca Whittemore',
-    'Shunto Matsubara|Tuesday':            "Regina D'Soto",
-    'Sofia Salamanca|Tuesday':             'Janet Chow',
-    'Spencer Haines|Tuesday':              'Rebecca Whittemore',
-    'Sydney Matani|Tuesday':               'Ricardo Marquez',
-    'Thomas Credali|Tuesday':              "Regina D'Soto",
-    'Wesley Wang|Tuesday':                 'Rebecca Whittemore',
-    'Asher Muller|Wednesday':              'Teresa',
-    'Augustus Glibbery|Wednesday':         'Rebecca Whittemore',
-    'Austen Jacobs|Wednesday':             'Teresa',
-    'Axel Glibbery|Wednesday':             'Rebecca Whittemore',
-    'Benjamin Bakhir|Wednesday':           'Rebecca Whittemore',
-    'Elea Kitur|Wednesday':                'Rebecca Whittemore',
-    'Ethan Owyang|Wednesday':              'Rebecca Whittemore',
-    'Hal Takei|Wednesday':                 'Teresa',
-    'Ilyaas Wower|Wednesday':              'Janet Chow',
-    'Leah Dunham Welt|Wednesday':          'Ricardo Marquez',
-    'Luca Passarelli|Wednesday':           'Teresa',
-    'Lucas Martin Jaramillo|Wednesday':    'Rebecca Whittemore',
-    'Nathaniel Dunham Welt|Wednesday':     'Ricardo Marquez',
-    'Philip Soung|Wednesday':              'Kevin Sims',
-    'Sebastian Doolittle|Wednesday':       'Ricardo Marquez',
-    'Seth Lee|Wednesday':                  'Rebecca Whittemore',
-    'Shunto Matsubara|Wednesday':          'Teresa',
-    'Sofia Salamanca|Wednesday':           'Janet Chow',
-    'Spencer Haines|Wednesday':            'Rebecca Whittemore',
-    'Steven Ross Ranev|Wednesday':         'Rebecca Whittemore',
-    'Sydney Matani|Wednesday':             'Ricardo Marquez',
-    'Benjamin Bakhir|Thursday':            'Rebecca Whittemore',
-    'Cobalt Sandal Miller|Thursday':       'Ricardo Marquez',
-    'Elea Kitur|Thursday':                 'Rebecca Whittemore',
-    'Ellis Scarlett|Thursday':             'Kevin Sims',
-    'Eric Kielmanowicz|Thursday':          'Nicola Caminiti',
-    'Ilyaas Wower|Thursday':               'Kevin Sims',
-    'Indigo Buran|Thursday':               'Nicola Caminiti',
-    'Leah Dunham Welt|Thursday':           'Ricardo Marquez',
-    'Luca Passarelli|Thursday':            'Nicola Caminiti',
-    'Lucas Martin Jaramillo|Thursday':     'Rebecca Whittemore',
-    'Mikayla Kardon|Thursday':             "Regina D'Soto",
-    'Nathaniel Dunham Welt|Thursday':      'Ricardo Marquez',
-    'Nellie Dieterich|Thursday':           'Rachel Bernstein',
-    'Parker Corpuel|Thursday':             'Nicola Caminiti',
-    'Remi Tobin|Thursday':                 'Nicola Caminiti',
-    'Seth Lee|Thursday':                   'Rebecca Whittemore',
-    'Sofia Salamanca|Thursday':            "Regina D'Soto",
-    'Sydney Matani|Thursday':              'Ricardo Marquez',
-    'Tolu Zawadzki|Thursday':              'Rachel Bernstein',
-    'Tiam Zawadzki|Thursday':              'Rachel Bernstein',
-    'Adam Cheung|Friday':                  'Ricardo Marquez',
-    'Adina LaSota|Friday':                 'Rebecca Whittemore',
-    'Asher Muller|Friday':                 'Teresa',
-    'Dylan Cheung|Friday':                 'Ricardo Marquez',
-    'Ethan Owyang|Friday':                 'Rebecca Whittemore',
-    'Gaius LaSota|Friday':                 'Rebecca Whittemore',
-    'Ilyaas Wower|Friday':                 'Ricardo Marquez',
-    'Nathaniel Dunham Welt|Friday':        'Rebecca Whittemore',
-    'Parker Corpuel|Friday':               'Teresa',
-    'Sebastian Doolittle|Friday':          'Rebecca Whittemore',
-    'Sydney Matani|Friday':                'Rebecca Whittemore',
-  };
-
-  const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-  function getTodayDayName() { return DAYS[new Date().getDay()]; }
-  function getMasterInstructor(studentName, dayName) {
-    return MASTER_SCHEDULE[`${studentName}|${dayName}`] || null;
-  }
-
-  async function get(base, table, params = '') {
-    const r = await fetch(`https://api.airtable.com/v0/${base}/${table}?${params}`, {
+  async function get(table, params = '') {
+    const r = await fetch(`https://api.airtable.com/v0/${BASE}/${table}?${params}`, {
       headers: { Authorization: `Bearer ${TOKEN}` }
     });
     return r.json();
   }
-  async function getAll(base, table, params = '') {
+
+  async function getAllRecords(table, params = '') {
     let records = [], offset = null;
     do {
-      const qs = offset ? `offset=${offset}${params ? '&' + params : ''}` : params;
-      const d = await get(base, table, qs);
+      const sep = params ? '&' : '';
+      const d = await get(table, offset ? `${params}${sep}offset=${offset}` : params);
       records = records.concat(d.records || []);
       offset = d.offset;
     } while (offset);
     return records;
   }
-  async function patch(base, table, records) {
-    const r = await fetch(`https://api.airtable.com/v0/${base}/${table}`, {
-      method: 'PATCH',
-      headers: { Authorization: `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ records })
-    });
-    return r.json();
+
+  function normDay(d) {
+    const s = (d || '').toLowerCase();
+    if (s.startsWith('mo')) return 'mon';
+    if (s.startsWith('tu')) return 'tue';
+    if (s.startsWith('we')) return 'wed';
+    if (s.startsWith('th')) return 'thu';
+    if (s.startsWith('fr')) return 'fri';
+    return s.slice(0, 3);
   }
-  async function post(base, table, records) {
-    const r = await fetch(`https://api.airtable.com/v0/${base}/${table}`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ records })
-    });
-    return r.json();
-  }
-  async function patchOne(base, table, id, fields) {
-    const r = await fetch(`https://api.airtable.com/v0/${base}/${table}/${id}`, {
-      method: 'PATCH',
-      headers: { Authorization: `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fields })
-    });
-    return r.json();
-  }
-  async function sendEmail(subject, body) {
-    const nodemailer = require('nodemailer');
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_PASS,
-      }
-    });
-    await transporter.sendMail({
-      from: `"TAC Pickup App" <${process.env.GMAIL_USER}>`,
-      to: 'heather@theafterschoolcollective.org, rebecca@theafterschoolcollective.org',
-      subject,
-      text: body,
-    });
-  }
+
+  // Master schedule — source of truth for instructor assignments
+  // Key: "FirstName_day" → instructor full name
+  const MASTER_SCHEDULE = {
+    // MONDAY
+    'Ethan Owyang_mon': 'Rebecca Whittemore',
+    'Adam Cheung_mon': 'Kevin Sims',
+    'Dylan Cheung_mon': 'Kevin Sims',
+    'Ada McGuire_mon': 'Kevin Sims',
+    'Alice Huggins_mon': 'Kevin Sims',
+    'Nellie Dieterich_mon': 'Kevin Sims',
+    // TUESDAY
+    'Ethan Owyang_tue': 'Rebecca Whittemore',
+    'Adam Cheung_tue': 'Ricardo Marquez',
+    'Dylan Cheung_tue': 'Ricardo Marquez',
+    'Ilyaas Wower_tue': 'Ricardo Marquez',
+    'Finn Rosenblatt_tue': 'Nicola Caminiti',
+    // WEDNESDAY
+    'Ethan Owyang_wed': 'Rebecca Whittemore',
+    'Adam Cheung_wed': 'Kevin Sims',
+    'Dylan Cheung_wed': 'Kevin Sims',
+    'Ilyaas Wower_wed': 'Kevin Sims',
+    'Ada McGuire_wed': 'Teresa',
+    'Alice Huggins_wed': 'Teresa',
+    // THURSDAY
+    'Ethan Owyang_thu': 'Rebecca Whittemore',
+    'Finn Rosenblatt_thu': 'Nicola Caminiti',
+    'Marisela Aguilar_thu': 'Janet Chow',
+    // FRIDAY
+    'Ethan Owyang_fri': 'Rebecca Whittemore',
+    'Adam Cheung_fri': 'Ricardo Marquez',
+    'Dylan Cheung_fri': 'Ricardo Marquez',
+    'Ilyaas Wower_fri': 'Ricardo Marquez',
+    'Asher Muller_fri': 'Teresa',
+    'Parker Corpuel_fri': 'Teresa',
+    'Adina LaSota_fri': 'Regina D\'Soto',
+    'Gaius LaSota_fri': 'Regina D\'Soto',
+    'Nathaniel Dunham Welt_fri': 'Regina D\'Soto',
+    'Sebastian Doolittle_fri': 'Regina D\'Soto',
+    'Sydney Matani_fri': 'Regina D\'Soto',
+  };
+
+  // Closed days — no pickup
+  const CLOSED_DATES = [
+    '2026-05-25', // Memorial Day
+    '2026-05-27',
+    '2026-06-04',
+    '2026-06-05',
+    '2026-06-19', // Juneteenth
+  ];
 
   try {
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
     const { action } = body || {};
 
-    if (action === 'getStudents') {
-      return res.status(200).json({ records: await getAll(BASE, 'tblJSQjtxq7yc29cY') });
+    // ── NEW: getTodayRoster ──────────────────────────────────────────────────
+    if (action === 'getTodayRoster') {
+      const today = new Date();
+      const todayISO = today.toISOString().slice(0, 10);
+      const days = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+      const todayDay = days[today.getDay()];
+
+      // Closed day check
+      if (CLOSED_DATES.includes(todayISO) || todayDay === 'sat' || todayDay === 'sun') {
+        return res.status(200).json({ roster: [] });
+      }
+
+      // Fetch students, staff, overrides in parallel
+      const [students, staff, overrides, locations] = await Promise.all([
+        getAllRecords('tblJSQjtxq7yc29cY'),
+        getAllRecords('tblWuCldxuiPhtUUC'),
+        getAllRecords('tblqX1tGUs6W5VGt4', `filterByFormula=DATESTR({Date})="${todayISO}"`),
+        getAllRecords('tblI5cwN5EIXqrdK2'),
+      ]);
+
+      // Build staff map: recordId → { name, photoUrl }
+      const staffMap = {};
+      staff.forEach(r => {
+        const f = r.fields || {};
+        const photos = f['fld5wi8dP8Av7Y02g'] || [];
+        const photoUrl = photos[0]?.thumbnails?.large?.url || photos[0]?.url || null;
+        staffMap[r.id] = { name: f['fldpTZVDA2K7wAfKq'] || '', photoUrl };
+      });
+
+      // Build override map: studentRecordId → { instructorName, instructorPhotoUrl, isOverride }
+      const overrideMap = {};
+      overrides.forEach(a => {
+        const f = a.fields || {};
+        const stuIds = (f['fldLUu6am3Wuz1dl2'] || []).map(x => x.id || x);
+        const instrArr = f['fldnbcjJYnszepnxK'] || [];
+        const instrId = instrArr.length ? (instrArr[0].id || instrArr[0]) : null;
+        const instrData = instrId ? staffMap[instrId] : null;
+        stuIds.forEach(sid => {
+          overrideMap[sid] = {
+            instructorName: instrData?.name || '',
+            instructorPhotoUrl: instrData?.photoUrl || null,
+            isOverride: true,
+          };
+        });
+      });
+
+      // Build location map: recordId → { name, time, type }
+      const locMap = {};
+      locations.forEach(l => {
+        const f = l.fields || {};
+        locMap[l.id] = {
+          name: f['fldJ4mods8J8uOJ8U'] || '',
+          time: f['fldbuAax0OY76Bk3X'] || '',
+          type: f['fldEOrHZFgF2Gu6Ym']?.name || f['fldEOrHZFgF2Gu6Ym'] || '',
+        };
+      });
+
+      // Filter to today's active students
+      const roster = [];
+      for (const r of students) {
+        const f = r.fields || {};
+        const status = (f['fldCg5jyD4lNtmXS6']?.name || f['fldCg5jyD4lNtmXS6'] || '').toLowerCase();
+        if (!status.includes('active')) continue;
+
+        const enrolledDays = (f['fldqiZE6x6xmkfTp6'] || []).map(d => normDay(d.name || d));
+        if (!enrolledDays.includes(todayDay)) continue;
+
+        const studentName = f['fldSxrnb5OVFoTXea'] || 'Unknown';
+        const photos = f['fldS1uncWbXSUnMjQ'] || [];
+        const pickupLocIds = f['fldQVHtMRmpemPtZE'] || [];
+        const pickupLocId = (pickupLocIds[0]?.id || pickupLocIds[0]) || null;
+        const pickupLocData = pickupLocId ? locMap[pickupLocId] : null;
+
+        // Instructor: check override first, then master schedule
+        let instructorName = '';
+        let instructorPhotoUrl = null;
+        let isOverride = false;
+
+        if (overrideMap[r.id]) {
+          instructorName = overrideMap[r.id].instructorName;
+          instructorPhotoUrl = overrideMap[r.id].instructorPhotoUrl;
+          isOverride = true;
+        } else {
+          const scheduleKey = `${studentName}_${todayDay}`;
+          instructorName = MASTER_SCHEDULE[scheduleKey] || '';
+          // Find instructor photo from staff
+          if (instructorName) {
+            const staffRecord = staff.find(s => (s.fields?.['fldpTZVDA2K7wAfKq'] || '') === instructorName);
+            if (staffRecord) {
+              const sp = staffRecord.fields?.['fld5wi8dP8Av7Y02g'] || [];
+              instructorPhotoUrl = sp[0]?.thumbnails?.large?.url || sp[0]?.url || null;
+            }
+          }
+        }
+
+        roster.push({
+          studentId: r.id,
+          studentName,
+          photo: photos[0]?.thumbnails?.small?.url || photos[0]?.url || null,
+          school: f['fldYKQp60pwoB7YFr']?.name || f['fldYKQp60pwoB7YFr'] || '',
+          grade: f['fldFbfzsmGPPBUAP3']?.name || f['fldFbfzsmGPPBUAP3'] || '',
+          teacher: f['fldTYrtOCYNOuGB1M'] || '',
+          pickupPhone: f['fldNrNE405tkGrmh8'] || '',
+          pickupName: f['fldXOFfMJuj4xK4YA'] || '',
+          notes: f['fldYTfbphzjOJLDZE'] || '',
+          pickupLocationId: pickupLocId || '',
+          pickupLocation: pickupLocData?.name || '',
+          instructorName,
+          instructorPhotoUrl,  // ← fresh URL from Airtable every load
+          isOverride,
+        });
+      }
+
+      return res.status(200).json({ roster });
     }
-    if (action === 'getStaff') {
-      const d = await get(BASE, 'tblWuCldxuiPhtUUC');
-      return res.status(200).json({ records: d.records || [] });
-    }
-    if (action === 'getChanges') {
-      const formula = encodeURIComponent(`IS_SAME({Affected Pickup Date}, TODAY(), 'day')`);
-      const d = await get(BASE, 'tblEdgjx4phKSj4wS', `filterByFormula=${formula}`);
-      return res.status(200).json({ records: d.records || [] });
-    }
+
+    // ── getLocations ─────────────────────────────────────────────────────────
     if (action === 'getLocations') {
-      const d = await get(BASE, 'tblI5cwN5EIXqrdK2');
+      const records = await getAllRecords('tblI5cwN5EIXqrdK2');
+      return res.status(200).json({ records });
+    }
+
+    // ── getChanges ───────────────────────────────────────────────────────────
+    if (action === 'getChanges') {
+      const todayISO = new Date().toISOString().slice(0, 10);
+      const d = await get('tblEdgjx4phKSj4wS',
+        `filterByFormula=DATESTR({Affected Pickup Date})="${todayISO}"`);
       return res.status(200).json({ records: d.records || [] });
     }
-    if (action === 'getAssignments') {
-      return res.status(200).json({ records: await getAll(BASE, 'tblqX1tGUs6W5VGt4') });
-    }
+
+    // ── logIncident ──────────────────────────────────────────────────────────
     if (action === 'logIncident') {
       const { description, type, severity } = body;
       const r = await fetch(`https://api.airtable.com/v0/${BASE}/tblBrZKAPGrg893o1`, {
@@ -209,192 +228,26 @@ module.exports = async function handler(req, res) {
         body: JSON.stringify({ records: [{ fields: {
           fldeXepi4JsJKPsWk: description,
           fldmgu6wxyuCiOZ48: type || 'Field Note',
-          fldVIfEohqez31Wmw: severity || 'Low'
+          fldVIfEohqez31Wmw: severity || 'Low',
+          fldw6vBAo2K3rI9ip: new Date().toISOString().slice(0, 10),
         }}]})
       });
-      const result = await r.json();
-      // Send email notification
-      try {
-        const isUrgent = severity === 'High' || type === 'Missing Student';
-        const subject = isUrgent
-          ? `🚨 URGENT — TAC Pickup Alert`
-          : `📋 TAC Pickup — Team Note`;
-        await sendEmail(subject, description);
-      } catch (emailErr) {
-        console.error('Email send failed:', emailErr.message);
-        // Don't fail the whole request if email fails
-      }
-      return res.status(200).json(result);
+      return res.status(200).json(await r.json());
     }
 
-    if (action === 'getTodayRoster') {
-      const dayName = getTodayDayName();
-      const studentRecords = await getAll(BASE, 'tblJSQjtxq7yc29cY');
-      const staffRecords = await get(BASE, 'tblWuCldxuiPhtUUC');
-      const staffPhotoMap = {};
-      for (const s of (staffRecords.records || [])) {
-        const name = s.fields?.['Name'] || '';
-        const photos = s.fields?.['Photo'] || [];
-        if (name && photos.length) {
-          staffPhotoMap[name] = photos[0]?.thumbnails?.large?.url || photos[0]?.url || null;
-        }
-      }
-
-      const studentByName = {};
-      for (const r of studentRecords) {
-        const name = (r.fields['Name'] || r.fields['Student Name'] || '').trim();
-        if (name) studentByName[name] = r;
-      }
-
-      const formula = encodeURIComponent(`IS_SAME({Date}, TODAY(), 'day')`);
-      const overrideRecords = await getAll(BASE, 'tblqX1tGUs6W5VGt4', `filterByFormula=${formula}`);
-
-      const overrideMap = {};
-      for (const r of overrideRecords) {
-        const f = r.fields || {};
-        const stuArr = f['Student'] || [];
-        const instrArr = f['Assigned Instructor'] || [];
-        const instrName = instrArr.length && instrArr[0].name ? instrArr[0].name : '';
-        const confirmed = !!f['1pm Confirmation'];
-        stuArr.forEach(s => {
-          const sid = s.id || s;
-          if (instrName) overrideMap[sid] = { instructorName: instrName, confirmed, recordId: r.id };
-        });
-      }
-
-      const roster = [];
-      const todayKeys = Object.keys(MASTER_SCHEDULE).filter(k => k.endsWith(`|${dayName}`));
-
-      for (const key of todayKeys) {
-        const studentName = key.replace(`|${dayName}`, '');
-        const masterInstructor = MASTER_SCHEDULE[key];
-        const record = studentByName[studentName];
-        if (!record) continue;
-
-        const f = record.fields || {};
-        const status = (f['Status']?.name || f['Status'] || '').toLowerCase();
-        if (status && !status.includes('active')) continue;
-
-        const override = overrideMap[record.id];
-        const instructorName = override?.instructorName || masterInstructor;
-        const confirmed = override?.confirmed || false;
-
-        roster.push({
-          studentId: record.id,
-          studentName,
-          instructorName,
-          confirmed,
-          overrideRecordId: override?.recordId || null,
-          isOverride: !!override,
-          pickupPhone: f['Pickup Contact Phone'] || '',
-          pickupName: f['Pickup Contact Name'] || '',
-          notes: f['Notes (Nice to Know)'] || '',
-          allergies: f['Allergies'] || '',
-          school: f['School']?.name || f['School'] || '',
-          grade: f['Grade']?.name || f['Grade'] || '',
-          teacher: f['Homeroom Teacher'] || '',
-          photo: (f['Photo'] || [])[0]?.thumbnails?.small?.url || '',
-          pickupLocationId: (f['Default Pickup Location'] || [])[0] || '',
-pickupLocation: '',
-        });
-      }
-
-      return res.status(200).json({ roster, dayName, staffPhotoMap });
-    }
-
-    if (action === 'confirmInstructor') {
-      const { recordIds } = body;
-      if (!recordIds || !recordIds.length) return res.status(400).json({ error: 'recordIds required' });
-      const updates = recordIds.map(id => ({ id, fields: { '1pm Confirmation': true } }));
-      const results = await patchBatch(BASE, 'tblqX1tGUs6W5VGt4', updates);
-      return res.status(200).json({ records: results });
-    }
-
-    if (action === 'logOverride') {
-      const { studentIds, date, instructorName, reason } = body;
-      if (!studentIds?.length || !date || !instructorName) {
-        return res.status(400).json({ error: 'studentIds, date, and instructorName required' });
-      }
-      const staffRecords = await get(BASE, 'tblWuCldxuiPhtUUC');
-      const staffRecord = (staffRecords.records || []).find(r =>
-        (r.fields?.['Name'] || '').toLowerCase() === instructorName.toLowerCase()
-      );
-      const staffId = staffRecord?.id;
-      const records = studentIds.map(sid => ({
-        fields: {
-          'Date': date,
-          'Student': [{ id: sid }],
-          ...(staffId ? { 'Assigned Instructor': [{ id: staffId }] } : {}),
-          'Notes': reason || 'Daily override',
-        }
-      }));
-      const results = [];
-      for (let i = 0; i < records.length; i += 10) {
-        const d = await post(BASE, 'tblqX1tGUs6W5VGt4', records.slice(i, i + 10));
-        results.push(...(d.records || []));
-      }
-      return res.status(200).json({ records: results });
-    }
-
-    if (action === 'getAssignmentsToday') {
-      const formula = encodeURIComponent(`IS_SAME({Date}, TODAY(), 'day')`);
-      const records = await getAll(BASE, 'tblqX1tGUs6W5VGt4', `filterByFormula=${formula}`);
+    // ── legacy actions (keep for backwards compat) ────────────────────────────
+    if (action === 'getStudents') {
+      const records = await getAllRecords('tblJSQjtxq7yc29cY');
       return res.status(200).json({ records });
     }
-    if (action === 'getChangesToday') {
-      const formula = encodeURIComponent(`IS_SAME({Affected Pickup Date}, TODAY(), 'day')`);
-      const d = await get(BASE, 'tblEdgjx4phKSj4wS', `filterByFormula=${formula}`);
+
+    if (action === 'getStaff') {
+      const d = await get('tblWuCldxuiPhtUUC');
       return res.status(200).json({ records: d.records || [] });
     }
-    if (action === 'getActiveStudents') {
-      const formula = encodeURIComponent(`{Status} = 'Active'`);
-      const records = await getAll(BASE, 'tblJSQjtxq7yc29cY', `filterByFormula=${formula}`);
-      return res.status(200).json({ records });
-    }
-    if (action === 'getTasks') {
-      const { assignee } = body;
-      let formula = `NOT({Status} = 'Done')`;
-      if (assignee) formula = `AND(${formula}, {Assigned To} = '${assignee}')`;
-      const records = await getAll(TASKS_BASE, 'tblSdeWTrFioxvpsR',
-        `filterByFormula=${encodeURIComponent(formula)}`);
-      return res.status(200).json({ records });
-    }
-    if (action === 'updateTask') {
-      const { recordId, status } = body;
-      const d = await patchOne(TASKS_BASE, 'tblSdeWTrFioxvpsR', recordId, { Status: status });
-      return res.status(200).json(d);
-    }
-    if (action === 'getNotes') {
-      const { userEmail } = body;
-      if (!userEmail) return res.status(400).json({ error: 'userEmail required' });
-      const formula = encodeURIComponent(`{User Email} = '${userEmail}'`);
-      const d = await get(TASKS_BASE, 'tblUserNotes', `filterByFormula=${formula}&maxRecords=1`);
-      const records = d.records || [];
-      if (records.length > 0) {
-        return res.status(200).json({ id: records[0].id, content: records[0].fields['Notes Content'] || '' });
-      }
-      return res.status(200).json({ id: null, content: '' });
-    }
-    if (action === 'saveNotes') {
-      const { userEmail, content, recordId } = body;
-      if (!userEmail) return res.status(400).json({ error: 'userEmail required' });
-      if (recordId) {
-        const d = await patchOne(TASKS_BASE, 'tblUserNotes', recordId, { 'Notes Content': content || '' });
-        return res.status(200).json({ id: d.id });
-      } else {
-        const d = await post(TASKS_BASE, 'tblUserNotes', [{ fields: { 'User Email': userEmail, 'Notes Content': content || '' } }]);
-        const created = (d.records || [])[0];
-        return res.status(200).json({ id: created?.id || null });
-      }
-    }
-    if (action === 'getPipeline') {
-      return res.status(200).json({ records: [] });
-    }
 
-    return res.status(400).json({ error: `Unknown action: ${action}` });
-
+    return res.status(400).json({ error: 'Unknown action' });
   } catch (e) {
-    console.error('Proxy error:', e);
     return res.status(500).json({ error: e.message });
   }
 };
