@@ -17,8 +17,7 @@ module.exports = async function handler(req, res) {
   async function getAllRecords(table, params = '') {
     let records = [], offset = null;
     do {
-      const sep = params ? '&' : '';
-      const d = await get(table, offset ? `${params}${sep}offset=${offset}` : params);
+      const d = await get(table, offset ? `${params}${params?'&':''}offset=${offset}` : params);
       records = records.concat(d.records || []);
       offset = d.offset;
     } while (offset);
@@ -35,115 +34,94 @@ module.exports = async function handler(req, res) {
     return s.slice(0, 3);
   }
 
-  // Master schedule — source of truth for instructor assignments
-  // Key: "FirstName_day" → instructor full name
-  const MASTER_SCHEDULE = {
-    // MONDAY
-    'Ethan Owyang_mon': 'Rebecca Whittemore',
-    'Adam Cheung_mon': 'Kevin Sims',
-    'Dylan Cheung_mon': 'Kevin Sims',
-    'Ada McGuire_mon': 'Kevin Sims',
-    'Alice Huggins_mon': 'Kevin Sims',
-    'Nellie Dieterich_mon': 'Kevin Sims',
-    // TUESDAY
-    'Ethan Owyang_tue': 'Rebecca Whittemore',
-    'Adam Cheung_tue': 'Ricardo Marquez',
-    'Dylan Cheung_tue': 'Ricardo Marquez',
-    'Ilyaas Wower_tue': 'Ricardo Marquez',
-    'Finn Rosenblatt_tue': 'Nicola Caminiti',
-    // WEDNESDAY
-    'Ethan Owyang_wed': 'Rebecca Whittemore',
-    'Adam Cheung_wed': 'Kevin Sims',
-    'Dylan Cheung_wed': 'Kevin Sims',
-    'Ilyaas Wower_wed': 'Kevin Sims',
-    'Ada McGuire_wed': 'Teresa',
-    'Alice Huggins_wed': 'Teresa',
-    // THURSDAY
-    'Ethan Owyang_thu': 'Rebecca Whittemore',
-    'Finn Rosenblatt_thu': 'Nicola Caminiti',
-    'Marisela Aguilar_thu': 'Janet Chow',
-    // FRIDAY
-    'Ethan Owyang_fri': 'Rebecca Whittemore',
-    'Adam Cheung_fri': 'Ricardo Marquez',
-    'Dylan Cheung_fri': 'Ricardo Marquez',
-    'Ilyaas Wower_fri': 'Ricardo Marquez',
-    'Asher Muller_fri': 'Teresa',
-    'Parker Corpuel_fri': 'Teresa',
-    'Adina LaSota_fri': 'Regina D\'Soto',
-    'Gaius LaSota_fri': 'Regina D\'Soto',
-    'Nathaniel Dunham Welt_fri': 'Regina D\'Soto',
-    'Sebastian Doolittle_fri': 'Regina D\'Soto',
-    'Sydney Matani_fri': 'Regina D\'Soto',
-  };
-
   // Closed days — no pickup
   const CLOSED_DATES = [
-    '2026-05-25', // Memorial Day
+    '2026-05-25',
     '2026-05-27',
     '2026-06-04',
     '2026-06-05',
-    '2026-06-19', // Juneteenth
+    '2026-06-19',
   ];
+
+  // Fallback master schedule used ONLY when no Pickup Assignment exists for a student today
+  // Key: studentName → { mon, tue, wed, thu, fri } → instructor full name
+  const MASTER_SCHEDULE = {
+    'Ethan Owyang':        { wed:'Rebecca Whittemore', fri:'Rebecca Whittemore' },
+    'Adam Cheung':         { tue:'Ricardo Marquez', fri:'Ricardo Marquez' },
+    'Dylan Cheung':        { tue:'Ricardo Marquez', fri:'Ricardo Marquez' },
+    'Ilyaas Wower':        { mon:'Kevin Sims', tue:'Ricardo Marquez', wed:'Kevin Sims', thu:'Kevin Sims', fri:'Ricardo Marquez' },
+    'Alice Huggins':       { mon:'Kevin Sims' },
+    'Ada McGuire':         { mon:'Kevin Sims' },
+    'Nellie Dieterich':    { mon:'Kevin Sims', thu:'Kevin Sims', fri:'Kevin Sims' },
+    'Asher Muller':        { mon:'Kevin Sims', tue:'Kevin Sims', wed:'Kevin Sims', fri:'Teresa' },
+    'Parker Corpuel':      { mon:'Kevin Sims', thu:'Kevin Sims', fri:'Teresa' },
+    'Adina LaSota':        { mon:'Nicola Caminiti', tue:'Nicola Caminiti', fri:"Regina D'Soto" },
+    'Gaius LaSota':        { mon:'Nicola Caminiti', tue:'Nicola Caminiti', fri:"Regina D'Soto" },
+    'Nathaniel Dunham Welt':{ thu:'Janet Chow', fri:"Regina D'Soto" },
+    'Sebastian Doolittle': { mon:'Kevin Sims', wed:'Kevin Sims', fri:"Regina D'Soto" },
+    'Sydney Matani':       { mon:'Nicola Caminiti', tue:'Nicola Caminiti', wed:'Nicola Caminiti', thu:'Nicola Caminiti', fri:"Regina D'Soto" },
+    'Jackson Cruz':        { fri:"Regina D'Soto" },
+  };
 
   try {
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
     const { action } = body || {};
 
-    // ── NEW: getTodayRoster ──────────────────────────────────────────────────
     if (action === 'getTodayRoster') {
       const today = new Date();
       const todayISO = today.toISOString().slice(0, 10);
       const days = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
       const todayDay = days[today.getDay()];
 
-      // Closed day check
       if (CLOSED_DATES.includes(todayISO) || todayDay === 'sat' || todayDay === 'sun') {
         return res.status(200).json({ roster: [] });
       }
 
-      // Fetch students, staff, overrides in parallel
-      const [students, staff, overrides, locations] = await Promise.all([
+      // Fetch everything in parallel
+      const [students, staff, assignments] = await Promise.all([
         getAllRecords('tblJSQjtxq7yc29cY'),
         getAllRecords('tblWuCldxuiPhtUUC'),
-        getAllRecords('tblqX1tGUs6W5VGt4', `filterByFormula=DATESTR({Date})="${todayISO}"`),
-        getAllRecords('tblI5cwN5EIXqrdK2'),
+        getAllRecords('tblqX1tGUs6W5VGt4',
+          `filterByFormula=DATESTR({Date})="${todayISO}"`),
       ]);
 
-      // Build staff map: recordId → { name, photoUrl }
-      const staffMap = {};
+      // Build staff map: id → { name, photoUrl }
+      const staffById = {};
       staff.forEach(r => {
         const f = r.fields || {};
         const photos = f['fld5wi8dP8Av7Y02g'] || [];
         const photoUrl = photos[0]?.thumbnails?.large?.url || photos[0]?.url || null;
-        staffMap[r.id] = { name: f['fldpTZVDA2K7wAfKq'] || '', photoUrl };
+        staffById[r.id] = { name: f['fldpTZVDA2K7wAfKq'] || '', photoUrl };
       });
 
-      // Build override map: studentRecordId → { instructorName, instructorPhotoUrl, isOverride }
-      const overrideMap = {};
-      overrides.forEach(a => {
+      // Build staff map: name → photoUrl (for master schedule fallback)
+      const staffByName = {};
+      staff.forEach(r => {
+        const f = r.fields || {};
+        const name = f['fldpTZVDA2K7wAfKq'] || '';
+        const photos = f['fld5wi8dP8Av7Y02g'] || [];
+        const photoUrl = photos[0]?.thumbnails?.large?.url || photos[0]?.url || null;
+        if (name) staffByName[name] = photoUrl;
+      });
+
+      // Build assignment map: studentId → { instructorName, instructorPhotoUrl, locationId }
+      const assignmentMap = {};
+      assignments.forEach(a => {
         const f = a.fields || {};
         const stuIds = (f['fldLUu6am3Wuz1dl2'] || []).map(x => x.id || x);
         const instrArr = f['fldnbcjJYnszepnxK'] || [];
-        const instrId = instrArr.length ? (instrArr[0].id || instrArr[0]) : null;
-        const instrData = instrId ? staffMap[instrId] : null;
+        const instrId = instrArr[0]?.id || instrArr[0] || null;
+        const instrData = instrId ? staffById[instrId] : null;
+        const locArr = f['fldypb0ELrWtH4Mlw'] || [];
+        const locationId = locArr[0]?.id || locArr[0] || null;
         stuIds.forEach(sid => {
-          overrideMap[sid] = {
+          assignmentMap[sid] = {
             instructorName: instrData?.name || '',
             instructorPhotoUrl: instrData?.photoUrl || null,
+            locationId,
             isOverride: true,
           };
         });
-      });
-
-      // Build location map: recordId → { name, time, type }
-      const locMap = {};
-      locations.forEach(l => {
-        const f = l.fields || {};
-        locMap[l.id] = {
-          name: f['fldJ4mods8J8uOJ8U'] || '',
-          time: f['fldbuAax0OY76Bk3X'] || '',
-          type: f['fldEOrHZFgF2Gu6Ym']?.name || f['fldEOrHZFgF2Gu6Ym'] || '',
-        };
       });
 
       // Filter to today's active students
@@ -158,30 +136,25 @@ module.exports = async function handler(req, res) {
 
         const studentName = f['fldSxrnb5OVFoTXea'] || 'Unknown';
         const photos = f['fldS1uncWbXSUnMjQ'] || [];
-        const pickupLocIds = f['fldQVHtMRmpemPtZE'] || [];
-        const pickupLocId = (pickupLocIds[0]?.id || pickupLocIds[0]) || null;
-        const pickupLocData = pickupLocId ? locMap[pickupLocId] : null;
+        const defaultLocIds = f['fldQVHtMRmpemPtZE'] || [];
+        const defaultLocId = defaultLocIds[0]?.id || defaultLocIds[0] || null;
 
-        // Instructor: check override first, then master schedule
+        // Instructor: use assignment if exists, else master schedule
         let instructorName = '';
         let instructorPhotoUrl = null;
+        let pickupLocationId = defaultLocId || '';
         let isOverride = false;
 
-        if (overrideMap[r.id]) {
-          instructorName = overrideMap[r.id].instructorName;
-          instructorPhotoUrl = overrideMap[r.id].instructorPhotoUrl;
-          isOverride = true;
+        if (assignmentMap[r.id]) {
+          instructorName = assignmentMap[r.id].instructorName;
+          instructorPhotoUrl = assignmentMap[r.id].instructorPhotoUrl;
+          pickupLocationId = assignmentMap[r.id].locationId || pickupLocationId;
+          isOverride = assignmentMap[r.id].isOverride;
         } else {
-          const scheduleKey = `${studentName}_${todayDay}`;
-          instructorName = MASTER_SCHEDULE[scheduleKey] || '';
-          // Find instructor photo from staff
-          if (instructorName) {
-            const staffRecord = staff.find(s => (s.fields?.['fldpTZVDA2K7wAfKq'] || '') === instructorName);
-            if (staffRecord) {
-              const sp = staffRecord.fields?.['fld5wi8dP8Av7Y02g'] || [];
-              instructorPhotoUrl = sp[0]?.thumbnails?.large?.url || sp[0]?.url || null;
-            }
-          }
+          // Fallback to master schedule
+          const sched = MASTER_SCHEDULE[studentName];
+          instructorName = sched?.[todayDay] || '';
+          instructorPhotoUrl = instructorName ? (staffByName[instructorName] || null) : null;
         }
 
         roster.push({
@@ -194,10 +167,10 @@ module.exports = async function handler(req, res) {
           pickupPhone: f['fldNrNE405tkGrmh8'] || '',
           pickupName: f['fldXOFfMJuj4xK4YA'] || '',
           notes: f['fldYTfbphzjOJLDZE'] || '',
-          pickupLocationId: pickupLocId || '',
-          pickupLocation: pickupLocData?.name || '',
+          pickupLocationId,
+          pickupLocation: '',
           instructorName,
-          instructorPhotoUrl,  // ← fresh URL from Airtable every load
+          instructorPhotoUrl,
           isOverride,
         });
       }
@@ -205,13 +178,11 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({ roster });
     }
 
-    // ── getLocations ─────────────────────────────────────────────────────────
     if (action === 'getLocations') {
       const records = await getAllRecords('tblI5cwN5EIXqrdK2');
       return res.status(200).json({ records });
     }
 
-    // ── getChanges ───────────────────────────────────────────────────────────
     if (action === 'getChanges') {
       const todayISO = new Date().toISOString().slice(0, 10);
       const d = await get('tblEdgjx4phKSj4wS',
@@ -219,7 +190,6 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({ records: d.records || [] });
     }
 
-    // ── logIncident ──────────────────────────────────────────────────────────
     if (action === 'logIncident') {
       const { description, type, severity } = body;
       const r = await fetch(`https://api.airtable.com/v0/${BASE}/tblBrZKAPGrg893o1`, {
@@ -235,7 +205,7 @@ module.exports = async function handler(req, res) {
       return res.status(200).json(await r.json());
     }
 
-    // ── legacy actions (keep for backwards compat) ────────────────────────────
+    // Legacy
     if (action === 'getStudents') {
       const records = await getAllRecords('tblJSQjtxq7yc29cY');
       return res.status(200).json({ records });
