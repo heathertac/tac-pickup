@@ -111,8 +111,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .sheet-sub{font-size:13px;color:#888;margin-bottom:18px;line-height:1.4;}
 .sheet-input{width:100%;border:1px solid #FFBDBD;border-radius:10px;padding:12px;font-size:14px;font-family:inherit;color:#1C1C1C;resize:none;outline:none;min-height:80px;background:#FFF5F5;}
 .sheet-actions{display:flex;gap:8px;margin-top:12px;}
+.sheet-actions.col{flex-direction:column;}
 .btn-confirm-enroute{flex:1;background:#E8420A;border:none;color:#fff;border-radius:10px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;}
-.btn-confirm-pickup{flex:1;background:#2E7D32;border:none;color:#fff;border-radius:10px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;}
+.btn-confirm-pickup{flex:1;background:#2E7D32;border:none;color:#fff;border-radius:10px;padding:14px;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;}
+.btn-confirm-pickup-nophoto{flex:1;background:#f5f5f5;border:1px solid #e5e5e5;color:#333;border-radius:10px;padding:14px;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;}
 .btn-urgent-send{flex:1;background:#C0392B;border:none;color:#fff;border-radius:10px;padding:13px;font-size:14px;font-weight:600;cursor:pointer;}
 .btn-sheet-confirm{flex:1;background:#2E7D32;border:none;color:#fff;border-radius:10px;padding:13px;font-size:14px;font-weight:600;cursor:pointer;}
 .btn-sheet-cancel{background:#f5f5f5;border:none;color:#555;border-radius:10px;padding:14px 18px;font-size:14px;font-weight:500;cursor:pointer;}
@@ -151,29 +153,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </div>
 </div>
 
-<!-- CONFIRM PICKUP SHEET -->
+<!-- CONFIRM PICKUP SHEET — two paths, no forced camera -->
 <div class="sheet-overlay" id="pickupSheet" style="display:none" onclick="closeSheetOnBg(event,'pickupSheet')">
 <div class="sheet">
 <div class="sheet-handle"></div>
 <div class="sheet-title">Child in your custody?</div>
 <div class="sheet-student" id="pickupStudentName"></div>
-<div class="sheet-sub">This will open your camera to take a photo, then text the parent confirming safe pickup. Only tap confirm if the child is with you right now.</div>
-<div class="sheet-actions">
-<button class="btn-sheet-cancel" onclick="closeSheet('pickupSheet')">Not yet</button>
-<button class="btn-confirm-pickup" onclick="confirmPickup()"><i class="ti ti-camera" style="font-size:15px"></i> Yes, child is with me</button>
-</div>
-</div>
-</div>
-
-<!-- SEND WITHOUT PHOTO SHEET -->
-<div class="sheet-overlay" id="photoSheetOverlay" style="display:none" onclick="closeSheetOnBg(event,'photoSheetOverlay')">
-<div class="sheet">
-<div class="sheet-handle"></div>
-<div class="sheet-title neutral">Send without photo?</div>
-<div class="sheet-sub" id="photoSheetSub">No photo was taken. You can still send the parent a text confirming pickup.</div>
-<div class="sheet-actions">
-<button class="btn-sheet-cancel" onclick="closePhotoSheetCancel()">Cancel</button>
-<button class="btn-sheet-confirm" onclick="sendWithoutPhoto()">Send without photo</button>
+<div class="sheet-sub">Send a text to the parent confirming safe pickup. Take a photo first or send now and attach your photo manually.</div>
+<div class="sheet-actions col">
+<button class="btn-confirm-pickup" onclick="confirmPickupWithPhoto()"><i class="ti ti-camera" style="font-size:15px"></i> Take photo, then send text</button>
+<button class="btn-confirm-pickup-nophoto" onclick="confirmPickupNoPhoto()"><i class="ti ti-send" style="font-size:15px"></i> Send text now, attach photo manually</button>
+<button class="btn-sheet-cancel" style="width:100%;text-align:center;" onclick="closeSheet('pickupSheet')">Not yet</button>
 </div>
 </div>
 </div>
@@ -198,20 +188,29 @@ const DAYS_FULL=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Sa
 const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const todayFull=DAYS_FULL[TODAY.getDay()];
 const todayStr=`${MONTHS[TODAY.getMonth()]} ${TODAY.getDate()}`;
-const CACHE_KEY=`tac_roster_v4_${TODAY.toDateString()}`;
+const CACHE_KEY=`tac_roster_v5_${TODAY.toDateString()}`;
 const STATE_KEY=`tac_states_${TODAY.toDateString()}`;
 const REBECCA_PHONE='7705471075';
 
+// Photo keys use both full names AND nicknames so roster matches work
 const INSTRUCTOR_PHOTOS={
 'Rebecca Whittemore':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/TxAMrQbSpLoiHDsvpULJOA/1St2g5ELC6xIR_RJf165eF8O7FWmXg3qM0R2Bl-fFJhEJooX0yS8gYl-PRK2Rrwh9wZBkomGkudLdBAxcjHN5bNPMloujsxPd5t2R3-0gOTvEkGCnvTInXOMYqzRd8RXr-DXmtVdDe2IYUyvlEgg/PEFkkFXtntjuNUffaeFa1fn_89pI_Sasp-A1k52mI_k',
+'Rebecca':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/TxAMrQbSpLoiHDsvpULJOA/1St2g5ELC6xIR_RJf165eF8O7FWmXg3qM0R2Bl-fFJhEJooX0yS8gYl-PRK2Rrwh9wZBkomGkudLdBAxcjHN5bNPMloujsxPd5t2R3-0gOTvEkGCnvTInXOMYqzRd8RXr-DXmtVdDe2IYUyvlEgg/PEFkkFXtntjuNUffaeFa1fn_89pI_Sasp-A1k52mI_k',
 'Kevin Sims':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/SqsjI-n1iZgN7W0D4aTVFA/cPaEEx0iSOVW_I-gTwozAKbtibr6L8E9rANffXJor1Y0227SkwuPGIZGLqL9jg6sXf7PgZbfaPqw5TqtOS7t-LEitFREVexj6QMG6vya5BjMDN4vV9Jm5aLIApKkI0MKiGJaMSdzoPUoLlp43sZC7g/ZG3XqGm7gY1CPvBnPTVo1DeQs9Q4wOSqmPODUUhcTDw',
-'Nicola Caminiti':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/dYK2H1feWBX2zGpNZntE2Q/xIuvw-qzw3eqfUPLoQY2tE0qpBV_F6ej0PAhXKpamVYeaFIhihTrV9nLFPmPZOY5YKlWYTXtKk-Vy5nzfAMtnUSo45XrX9OfS7Tofy33vGpMxxTiuWRXWW25_0FtEwsRiTClsua7xdPyhqQakyAE4Q/kKZoS55jQn6MJ5dhkbfhyY2cqntlokZLmDnA4wdPXf4',
+'Kevin':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/SqsjI-n1iZgN7W0D4aTVFA/cPaEEx0iSOVW_I-gTwozAKbtibr6L8E9rANffXJor1Y0227SkwuPGIZGLqL9jg6sXf7PgZbfaPqw5TqtOS7t-LEitFREVexj6QMG6vya5BjMDN4vV9Jm5aLIApKkI0MKiGJaMSdzoPUoLlp43sZC7g/ZG3XqGm7gY1CPvBnPTVo1DeQs9Q4wOSqmPODUUhcTDw',
+'Nicola Caminiti':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/dYK2H1feWBX2zGpNZntE2Q/xIuvw-qzw3eqfUPLoQY2tE0qpBV_F6ej0PAhXKpamVYeaFIhihTrV9nLFPmPZOY5YKlWYTXtKk-Vy5nzfAMtnUSo45XrX9OfS7Tofy33vGpMxxTiuWRXWW25_0FtEwsRiTClsua7xdPyhqQakyAE4Q/kCoZoS55jQn6MJ5dhkbfhyY2cqntlokZLmDnA4wdPXf4',
+'Nicola':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/dYK2H1feWBX2zGpNZntE2Q/xIuvw-qzw3eqfUPLoQY2tE0qpBV_F6ej0PAhXKpamVYeaFIhihTrV9nLFPmPZOY5YKlWYTXtKk-Vy5nzfAMtnUSo45XrX9OfS7Tofy33vGpMxxTiuWRXWW25_0FtEwsRiTClsua7xdPyhqQakyAE4Q/kCoZoS55jQn6MJ5dhkbfhyY2cqntlokZLmDnA4wdPXf4',
 'Rachel Bernstein':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/sebSApiZabDB3Kumn-LVaQ/25RPGa63MpsqzIzYPQaHH0bfXba2E4RHFecgF-iEs-BjGgtThA09WwNq-E5J08XTvabOegZ1-YLhfAheXWroT__cH4hvjyWBjfHPhlNMOOP4x-JYFQzmt49M6TNBmzdGNXLLir2BKQnBCJWuzY5aQA/lRaww2QMuSe_j51VYPyNcYQznu2yoLUvxk3gLZ42pUY',
+'Rachel':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/sebSApiZabDB3Kumn-LVaQ/25RPGa63MpsqzIzYPQaHH0bfXba2E4RHFecgF-iEs-BjGgtThA09WwNq-E5J08XTvabOegZ1-YLhfAheXWroT__cH4hvjyWBjfHPhlNMOOP4x-JYFQzmt49M6TNBmzdGNXLLir2BKQnBCJWuzY5aQA/lRaww2QMuSe_j51VYPyNcYQznu2yoLUvxk3gLZ42pUY',
 'Janet Chow':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/g_lKIPiMbgJJEQ1ebMNo4w/YfwuBSihBcBxvoamth7AgwNpcqe0p33zUa9qhMqPS41GizC-0XI2CLW4DrxgU1XdkT1gv2TtJVnDg1U2WW6KDyYwaLtQKRl1qSK2ro-0zOUJmdH1bfU1tVHAueySfHIyZsDSXWvcxsLNtJVk1VJpwQ/l0NUBS-nBa-Ecu-e74DG7Z5_87PMCLKfby0oHLrBTI8',
+'Janet':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/g_lKIPiMbgJJEQ1ebMNo4w/YfwuBSihBcBxvoamth7AgwNpcqe0p33zUa9qhMqPS41GizC-0XI2CLW4DrxgU1XdkT1gv2TtJVnDg1U2WW6KDyYwaLtQKRl1qSK2ro-0zOUJmdH1bfU1tVHAueySfHIyZsDSXWvcxsLNtJVk1VJpwQ/l0NUBS-nBa-Ecu-e74DG7Z5_87PMCLKfby0oHLrBTI8',
 'Ricardo Marquez':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/nPwkTwnGBYd94bd75l9TMw/Rsva16-LVXbkCcngRZPWlwbRbxaB4ye2H2lkA_R7mKijkt15nNBsXxlaa01IMjn7lz1c3nGp7BGdCv9apHnmeyWjMSzm7tHWjec7mWfsPkNYm6yswn8ev9z8-iRU-9MhMvQri2VKBxR4wrhqg5Icxw/u3AWjmHDERyvuWHfZsY0m73UrQar-kyR82ifJ3UFkQk',
+'Ricky':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/nPwkTwnGBYd94bd75l9TMw/Rsva16-LVXbkCcngRZPWlwbRbxaB4ye2H2lkA_R7mKijkt15nNBsXxlaa01IMjn7lz1c3nGp7BGdCv9apHnmeyWjMSzm7tHWjec7mWfsPkNYm6yswn8ev9z8-iRU-9MhMvQri2VKBxR4wrhqg5Icxw/u3AWjmHDERyvuWHfZsY0m73UrQar-kyR82ifJ3UFkQk',
 "Regina D'Soto":'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/LigiIrDMV63tpUsPQINRIA/3cjWxamjs0KzIg9G_avb1LmXJ9XXC72LKomR4sIncrraXQLmeJF6MSFAv3etRBoPWXHUBSExFfzVRXZMt2LMl5O_1xbMQtVi_5Q9Q4_Rsd_v3pSTi-n1MCcPNgndzevJAdqx13G0vxFzn66SKCm7_Q/J5vt7DoVAfmd21aNwykB_NEZ7jeJgED5adcPHe_6Bjg',
+'Gina':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/LigiIrDMV63tpUsPQINRIA/3cjWxamjs0KzIg9G_avb1LmXJ9XXC72LKomR4sIncrraXQLmeJF6MSFAv3etRBoPWXHUBSExFfzVRXZMt2LMl5O_1xbMQtVi_5Q9Q4_Rsd_v3pSTi-n1MCcPNgndzevJAdqx13G0vxFzn66SKCm7_Q/J5vt7DoVAfmd21aNwykB_NEZ7jeJgED5adcPHe_6Bjg',
 'Teresa':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/u5Ju62g0GMUWTQ6321YFVw/pQwRu5sMs2YKezjwuIphmuvA9gHzLgSosRDaR-qhhIT-5pOCqje87GMDsKlDky_vm1TKQiQAnHXeZ_XzvYxD3jJxh_4y2lF5iXxubc1utg5B_ERmJIfGjSHLyz-AdkHbatqQDXdLveH2ZVl9XPCeLw/nsY6z6JZ7atKh3t3PHEDtaBCrM7Z1iOdoS7PY7PElDc',
 'Josue Hernandez':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/5lxOnWnUPPkLWgc1vmbmLQ/MRM6NLz49v8G3nv_jmq2-GqYhzAmIAA5Cr_heXhEV51xlbg0dEkrl1sthUUEkFv-M-PZX5bCtzyp2GjOk0pooq6W7VdxAUPRyN_LeEN4lFikriGMFLgNTC5zwEB-oq0uRp3aHBJ6aXFjKwuNdm1ZG-BlSwYjkXTzFSlNfhz6wzQ/FXD2_iZFYDYrd2TJQ7PPIO9Z0R2Bh7e-we1g15ZtsvY',
+'Josue':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/5lxOnWnUPPkLWgc1vmbmLQ/MRM6NLz49v8G3nv_jmq2-GqYhzAmIAA5Cr_heXhEV51xlbg0dEkrl1sthUUEkFv-M-PZX5bCtzyp2GjOk0pooq6W7VdxAUPRyN_LeEN4lFikriGMFLgNTC5zwEB-oq0uRp3aHBJ6aXFjKwuNdm1ZG-BlSwYjkXTzFSlNfhz6wzQ/FXD2_iZFYDYrd2TJQ7PPIO9Z0R2Bh7e-we1g15ZtsvY',
 };
 
 let roster=[],locations=[],changes=[],activeFilter='all',isOffline=false,urgentStudentId=null;
@@ -264,6 +263,7 @@ return r.json();
 function closeSheet(id){document.getElementById(id).style.display='none';pendingActionId=null;}
 function closeSheetOnBg(e,id){if(e.target.classList.contains('sheet-overlay'))closeSheet(id);}
 
+// EN ROUTE FLOW
 function startEnroute(id){
 const s=roster.find(x=>x.studentId===id);
 if(!s)return;
@@ -281,11 +281,11 @@ if(states[id]==='enroute')return;
 const s=roster.find(x=>x.studentId===id);
 if(!s)return;
 states[id]='enroute';
-saveState();
-render();
+saveState();render();
 showUndoToast(id,s.studentName,'enroute',()=>openParentText(s,'enroute'));
 }
 
+// PICKUP FLOW — two paths
 function startPickup(id){
 const s=roster.find(x=>x.studentId===id);
 if(!s)return;
@@ -294,7 +294,8 @@ document.getElementById('pickupStudentName').textContent=s.studentName;
 document.getElementById('pickupSheet').style.display='flex';
 }
 
-function confirmPickup(){
+// Path A: take photo first, then send text
+function confirmPickupWithPhoto(){
 const id=pendingActionId;
 closeSheet('pickupSheet');
 if(!id)return;
@@ -304,20 +305,24 @@ pickupContext={studentId:id,studentName:s.studentName,phone:s.pickupPhone,parent
 document.getElementById('cameraInput').click();
 }
 
+// Path B: send text immediately, instructor attaches photo manually
+function confirmPickupNoPhoto(){
+const id=pendingActionId;
+closeSheet('pickupSheet');
+if(!id)return;
+const s=roster.find(x=>x.studentId===id);
+if(!s)return;
+states[id]='done';
+pickupTimes[id]=new Date().toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
+saveState();render();
+openParentText(s,'done',false);
+}
+
 function handlePhotoTaken(event){
 const file=event.target.files&&event.target.files[0];
 event.target.value='';
-if(!file){showPhotoSheet();return;}
-finishPickup(true);
+finishPickup(!!file);
 }
-
-function showPhotoSheet(){
-document.getElementById('photoSheetSub').textContent=`No photo was taken for ${pickupContext?.studentName||'this child'}. You can still send the parent a text confirming pickup.`;
-document.getElementById('photoSheetOverlay').style.display='flex';
-}
-
-function closePhotoSheetCancel(){document.getElementById('photoSheetOverlay').style.display='none';pickupContext=null;}
-function sendWithoutPhoto(){document.getElementById('photoSheetOverlay').style.display='none';finishPickup(false);}
 
 function finishPickup(withPhoto){
 if(!pickupContext)return;
@@ -337,9 +342,7 @@ let body;
 if(type==='enroute'){
 body=`${greeting} This is your instructor from The Afterschool Collective. I'm on my way to pick up ${firstName} right now. See you soon!`;
 }else{
-body=withPhoto
-?`${greeting} ${firstName} has been safely picked up and is on the way back to the studio.`
-:`${greeting} ${firstName} has been safely picked up and is on the way back to the studio. See you at pickup time!`;
+body=`${greeting} ${firstName} has been safely picked up and is on the way back to the studio. See you at pickup time!`;
 }
 const phone=(s.pickupPhone||'').replace(/\D/g,'');
 window.open((phone?`sms:${phone}`:'sms:')+`?body=${encodeURIComponent(body)}`,'_self');
