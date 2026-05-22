@@ -116,7 +116,6 @@ module.exports = async function handler(req, res) {
   };
 
   const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-
   function getTodayDayName() { return DAYS[new Date().getDay()]; }
   function getMasterInstructor(studentName, dayName) {
     return MASTER_SCHEDULE[`${studentName}|${dayName}`] || null;
@@ -128,7 +127,6 @@ module.exports = async function handler(req, res) {
     });
     return r.json();
   }
-
   async function getAll(base, table, params = '') {
     let records = [], offset = null;
     do {
@@ -139,7 +137,6 @@ module.exports = async function handler(req, res) {
     } while (offset);
     return records;
   }
-
   async function patch(base, table, records) {
     const r = await fetch(`https://api.airtable.com/v0/${base}/${table}`, {
       method: 'PATCH',
@@ -148,7 +145,6 @@ module.exports = async function handler(req, res) {
     });
     return r.json();
   }
-
   async function post(base, table, records) {
     const r = await fetch(`https://api.airtable.com/v0/${base}/${table}`, {
       method: 'POST',
@@ -157,7 +153,6 @@ module.exports = async function handler(req, res) {
     });
     return r.json();
   }
-
   async function patchOne(base, table, id, fields) {
     const r = await fetch(`https://api.airtable.com/v0/${base}/${table}/${id}`, {
       method: 'PATCH',
@@ -166,12 +161,10 @@ module.exports = async function handler(req, res) {
     });
     return r.json();
   }
-
   async function patchBatch(base, table, updates) {
     const results = [];
     for (let i = 0; i < updates.length; i += 10) {
-      const batch = updates.slice(i, i + 10);
-      const d = await patch(base, table, batch);
+      const d = await patch(base, table, updates.slice(i, i + 10));
       results.push(...(d.records || []));
     }
     return results;
@@ -215,40 +208,56 @@ module.exports = async function handler(req, res) {
 
     if (action === 'getTodayRoster') {
       const dayName = getTodayDayName();
+
+      // Get all students from Airtable
       const studentRecords = await getAll(BASE, 'tblJSQjtxq7yc29cY');
+
+      // Build a name→record map
+      const studentByName = {};
+      for (const r of studentRecords) {
+        const name = (r.fields['Name'] || r.fields['Student Name'] || '').trim();
+        if (name) studentByName[name] = r;
+      }
+
+      // Get today's overrides from Pickup Assignments
       const formula = encodeURIComponent(`IS_SAME({Date}, TODAY(), 'day')`);
       const overrideRecords = await getAll(BASE, 'tblqX1tGUs6W5VGt4', `filterByFormula=${formula}`);
 
+      // Build override map: studentId → {instructorName, confirmed, recordId}
       const overrideMap = {};
       for (const r of overrideRecords) {
         const f = r.fields || {};
         const stuArr = f['Student'] || [];
         const instrArr = f['Assigned Instructor'] || [];
-        const instrName = instrArr.length && instrArr[0].name
-          ? instrArr[0].name
-          : (allStaff && allStaff.find ? '' : '');
+        const instrName = instrArr.length && instrArr[0].name ? instrArr[0].name : '';
         const confirmed = !!f['1pm Confirmation'];
         stuArr.forEach(s => {
           const sid = s.id || s;
-          overrideMap[sid] = { instructorName: instrName, confirmed, recordId: r.id };
+          if (instrName) overrideMap[sid] = { instructorName: instrName, confirmed, recordId: r.id };
         });
       }
 
+      // Build roster from master schedule — no dependency on Enrolled Days
       const roster = [];
-      for (const r of studentRecords) {
-        const f = r.fields || {};
-        const name = f['Name'] || f['Student Name'] || '';
-        const status = f['Status']?.name || f['Status'] || '';
-        if (!status.toLowerCase().includes('active')) continue;
-        const enrolledDays = (f['Enrolled Days'] || []).map(d => d.name || d);
-        if (!enrolledDays.some(d => d.toLowerCase() === dayName.toLowerCase())) continue;
-        const override = overrideMap[r.id];
-        const masterInstructor = getMasterInstructor(name, dayName);
-        const instructorName = override?.instructorName || masterInstructor || '';
+      const todayKeys = Object.keys(MASTER_SCHEDULE).filter(k => k.endsWith(`|${dayName}`));
+
+      for (const key of todayKeys) {
+        const studentName = key.replace(`|${dayName}`, '');
+        const masterInstructor = MASTER_SCHEDULE[key];
+        const record = studentByName[studentName];
+        if (!record) continue; // Student not in Airtable yet
+
+        const f = record.fields || {};
+        const status = (f['Status']?.name || f['Status'] || '').toLowerCase();
+        if (status && !status.includes('active')) continue;
+
+        const override = overrideMap[record.id];
+        const instructorName = override?.instructorName || masterInstructor;
         const confirmed = override?.confirmed || false;
+
         roster.push({
-          studentId: r.id,
-          studentName: name,
+          studentId: record.id,
+          studentName,
           instructorName,
           confirmed,
           overrideRecordId: override?.recordId || null,
@@ -265,14 +274,13 @@ module.exports = async function handler(req, res) {
           pickupLocation: (f['Default Pickup Location'] || [])[0]?.name || '',
         });
       }
+
       return res.status(200).json({ roster, dayName });
     }
 
     if (action === 'confirmInstructor') {
       const { recordIds } = body;
-      if (!recordIds || !recordIds.length) {
-        return res.status(400).json({ error: 'recordIds required' });
-      }
+      if (!recordIds || !recordIds.length) return res.status(400).json({ error: 'recordIds required' });
       const updates = recordIds.map(id => ({ id, fields: { '1pm Confirmation': true } }));
       const results = await patchBatch(BASE, 'tblqX1tGUs6W5VGt4', updates);
       return res.status(200).json({ records: results });
