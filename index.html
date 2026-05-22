@@ -224,6 +224,23 @@ instrDays: matchedInstr?.fields?.['Default Availability'] || [],
 
 // Build a map of studentId → instructorName from today's Pickup Assignments
 function getTodayAssignmentMap(){
+  const todayISO=new Date().toISOString().slice(0,10);
+  const map={};
+  assignments.forEach(a=>{
+    const f=a.fields||{};
+    if(f['Date']!==todayISO)return;
+    const stuIds=(f['Student']||[]).map(s=>s.id||s);
+    const instArr=(f['Assigned Instructor']||[]);
+    // Support both expanded objects {id, name} and bare record ID strings
+    const instId=instArr.length?(instArr[0].id||instArr[0]):null;
+    const instName=instArr.length&&instArr[0].name?instArr[0].name:
+      (allStaff.find(st=>st.id===(instArr[0]?.id||instArr[0]))?.fields?.['Name']||'');
+    stuIds.forEach(sid=>{
+      if(instId)map[sid]={id:instId,name:instName};
+    });
+  });
+  return map;
+}
 const todayISO=new Date().toISOString().slice(0,10);
 const map={};
 assignments.forEach(a=>{
