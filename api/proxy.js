@@ -131,8 +131,9 @@ module.exports = async function handler(req, res) {
         const status = (f['fldCg5jyD4lNtmXS6']?.name || f['fldCg5jyD4lNtmXS6'] || '').toLowerCase();
         if (!status.includes('active')) continue;
 
-        const enrolledDays = (f['fldqiZE6x6xmkfTp6'] || []).map(d => normDay(d.name || d));
-        if (!enrolledDays.includes(todayDay)) continue;
+        const rawDays = f['fldqiZE6x6xmkfTp6'] || [];
+const enrolledDays = rawDays.map(d => normDay(d.name || d));
+if (!enrolledDays.includes(todayDay)) continue;
 
         const studentName = f['fldSxrnb5OVFoTXea'] || 'Unknown';
         const photos = f['fldS1uncWbXSUnMjQ'] || [];
@@ -175,7 +176,7 @@ module.exports = async function handler(req, res) {
         });
       }
 
-      return res.status(200).json({ roster, debug: {todayISO, todayDay, studentCount: students.length, fridayCount: roster.length} });
+      return res.status(200).json({ roster, debug: {todayISO, todayDay, studentCount: students.length, fridayCount: roster.length, sampleDays: (students[0]?.fields?.['fldqiZE6x6xmkfTp6'] || 'MISSING')} });
       return res.status(200).json({ roster });
     }
 
