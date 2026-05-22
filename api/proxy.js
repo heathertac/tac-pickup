@@ -102,13 +102,13 @@ module.exports = async function handler(req, res) {
     'Sydney Matani|Thursday':              'Ricardo Marquez',
     'Tolu Zawadzki|Thursday':              'Rachel Bernstein',
     'Tiam Zawadzki|Thursday':              'Rachel Bernstein',
-    'Adam Cheung|Friday':                  'Kevin Sims',
+    'Adam Cheung|Friday':                  'Ricardo Marquez',
     'Adina LaSota|Friday':                 'Rebecca Whittemore',
     'Asher Muller|Friday':                 'Teresa',
-    'Dylan Cheung|Friday':                 'Kevin Sims',
+    'Dylan Cheung|Friday':                 'Ricardo Marquez',
     'Ethan Owyang|Friday':                 'Rebecca Whittemore',
     'Gaius LaSota|Friday':                 'Rebecca Whittemore',
-    'Ilyaas Wower|Friday':                 'Kevin Sims',
+    'Ilyaas Wower|Friday':                 'Ricardo Marquez',
     'Nellie Dieterich|Friday':             'Ricardo Marquez',
     'Parker Corpuel|Friday':               'Teresa',
     'Sebastian Doolittle|Friday':          'Rebecca Whittemore',
@@ -208,22 +208,17 @@ module.exports = async function handler(req, res) {
 
     if (action === 'getTodayRoster') {
       const dayName = getTodayDayName();
-
-      // Get all students from Airtable
       const studentRecords = await getAll(BASE, 'tblJSQjtxq7yc29cY');
 
-      // Build a name→record map
       const studentByName = {};
       for (const r of studentRecords) {
         const name = (r.fields['Name'] || r.fields['Student Name'] || '').trim();
         if (name) studentByName[name] = r;
       }
 
-      // Get today's overrides from Pickup Assignments
       const formula = encodeURIComponent(`IS_SAME({Date}, TODAY(), 'day')`);
       const overrideRecords = await getAll(BASE, 'tblqX1tGUs6W5VGt4', `filterByFormula=${formula}`);
 
-      // Build override map: studentId → {instructorName, confirmed, recordId}
       const overrideMap = {};
       for (const r of overrideRecords) {
         const f = r.fields || {};
@@ -237,7 +232,6 @@ module.exports = async function handler(req, res) {
         });
       }
 
-      // Build roster from master schedule — no dependency on Enrolled Days
       const roster = [];
       const todayKeys = Object.keys(MASTER_SCHEDULE).filter(k => k.endsWith(`|${dayName}`));
 
@@ -245,7 +239,7 @@ module.exports = async function handler(req, res) {
         const studentName = key.replace(`|${dayName}`, '');
         const masterInstructor = MASTER_SCHEDULE[key];
         const record = studentByName[studentName];
-        if (!record) continue; // Student not in Airtable yet
+        if (!record) continue;
 
         const f = record.fields || {};
         const status = (f['Status']?.name || f['Status'] || '').toLowerCase();
