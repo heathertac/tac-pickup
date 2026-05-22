@@ -109,7 +109,7 @@ module.exports = async function handler(req, res) {
     'Ethan Owyang|Friday':                 'Rebecca Whittemore',
     'Gaius LaSota|Friday':                 'Rebecca Whittemore',
     'Ilyaas Wower|Friday':                 'Ricardo Marquez',
-    'Nellie Dieterich|Friday':             'Ricardo Marquez',
+    'Nathaniel Dunham Welt|Friday':        'Rebecca Whittemore',
     'Parker Corpuel|Friday':               'Teresa',
     'Sebastian Doolittle|Friday':          'Rebecca Whittemore',
     'Sydney Matani|Friday':                'Rebecca Whittemore',
