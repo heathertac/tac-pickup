@@ -230,6 +230,15 @@ module.exports = async function handler(req, res) {
     if (action === 'getTodayRoster') {
       const dayName = getTodayDayName();
       const studentRecords = await getAll(BASE, 'tblJSQjtxq7yc29cY');
+      const staffRecords = await get(BASE, 'tblWuCldxuiPhtUUC');
+      const staffPhotoMap = {};
+      for (const s of (staffRecords.records || [])) {
+        const name = s.fields?.['Name'] || '';
+        const photos = s.fields?.['Photo'] || [];
+        if (name && photos.length) {
+          staffPhotoMap[name] = photos[0]?.thumbnails?.large?.url || photos[0]?.url || null;
+        }
+      }
 
       const studentByName = {};
       for (const r of studentRecords) {
@@ -290,7 +299,7 @@ module.exports = async function handler(req, res) {
         });
       }
 
-      return res.status(200).json({ roster, dayName });
+      return res.status(200).json({ roster, dayName, staffPhotoMap });
     }
 
     if (action === 'confirmInstructor') {
