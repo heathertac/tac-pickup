@@ -294,8 +294,8 @@ module.exports = async function handler(req, res) {
           grade: f['Grade']?.name || f['Grade'] || '',
           teacher: f['Homeroom Teacher'] || '',
           photo: (f['Photo'] || [])[0]?.thumbnails?.small?.url || '',
-          pickupLocationId: (f['Default Pickup Location'] || [])[0]?.id || '',
-          pickupLocation: (f['Default Pickup Location'] || [])[0]?.name || '',
+          pickupLocationId: (f['Default Pickup Location'] || [])[0] || '',
+pickupLocation: '',
         });
       }
 
