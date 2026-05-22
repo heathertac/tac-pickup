@@ -9,10 +9,9 @@
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f5;min-height:100vh;}
 .app{max-width:420px;margin:0 auto;background:#fff;min-height:100vh;}
-.header{background:#fff;border-bottom:3px solid #E8420A;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;}
-.brand-name{font-size:16px;font-weight:600;color:#1C1C1C;letter-spacing:-0.3px;line-height:1;}
-.brand-sub{font-size:9px;letter-spacing:0.22em;color:#999;text-transform:uppercase;margin-top:1px;}
-.brand-tag{font-size:11px;color:#E8420A;margin-top:3px;}
+.header{background:#fff;border-bottom:3px solid #E8420A;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;}
+.header-logo{height:44px;width:auto;object-fit:contain;}
+.header-logo-fallback{display:none;}
 .day-pill{background:#f5f5f5;color:#555;font-size:12px;font-weight:500;padding:5px 14px;border-radius:999px;border:1px solid #e5e5e5;white-space:nowrap;}
 .emergency-bar{display:flex;align-items:center;justify-content:center;gap:6px;background:#f5f5f5;color:#555;font-size:11px;font-weight:500;padding:5px 16px;text-decoration:none;letter-spacing:0.02em;width:100%;border-bottom:0.5px solid #e5e5e5;}
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:12px 16px 0;}
@@ -106,18 +105,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .sheet-handle{width:36px;height:4px;background:#ddd;border-radius:2px;margin:0 auto 16px;}
 .sheet-title{font-size:17px;font-weight:700;color:#1C1C1C;margin-bottom:6px;}
 .sheet-title.danger{color:#C0392B;}
-.sheet-title.neutral{color:#1C1C1C;}
 .sheet-student{font-size:15px;color:#E8420A;font-weight:600;margin-bottom:4px;}
 .sheet-sub{font-size:13px;color:#888;margin-bottom:18px;line-height:1.4;}
 .sheet-input{width:100%;border:1px solid #FFBDBD;border-radius:10px;padding:12px;font-size:14px;font-family:inherit;color:#1C1C1C;resize:none;outline:none;min-height:80px;background:#FFF5F5;}
 .sheet-actions{display:flex;gap:8px;margin-top:12px;}
 .sheet-actions.col{flex-direction:column;}
 .btn-confirm-enroute{flex:1;background:#E8420A;border:none;color:#fff;border-radius:10px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;}
-.btn-confirm-pickup{flex:1;background:#2E7D32;border:none;color:#fff;border-radius:10px;padding:14px;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;}
-.btn-confirm-pickup-nophoto{flex:1;background:#f5f5f5;border:1px solid #e5e5e5;color:#333;border-radius:10px;padding:14px;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;}
+.btn-confirm-pickup{width:100%;background:#2E7D32;border:none;color:#fff;border-radius:10px;padding:14px;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;}
+.btn-confirm-pickup-nophoto{width:100%;background:#f5f5f5;border:1px solid #e5e5e5;color:#333;border-radius:10px;padding:14px;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;}
 .btn-urgent-send{flex:1;background:#C0392B;border:none;color:#fff;border-radius:10px;padding:13px;font-size:14px;font-weight:600;cursor:pointer;}
 .btn-sheet-confirm{flex:1;background:#2E7D32;border:none;color:#fff;border-radius:10px;padding:13px;font-size:14px;font-weight:600;cursor:pointer;}
-.btn-sheet-cancel{background:#f5f5f5;border:none;color:#555;border-radius:10px;padding:14px 18px;font-size:14px;font-weight:500;cursor:pointer;}
+.btn-sheet-cancel{width:100%;background:#f5f5f5;border:none;color:#555;border-radius:10px;padding:12px 18px;font-size:14px;font-weight:500;cursor:pointer;text-align:center;}
 .undo-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1C1C1C;color:#fff;border-radius:10px;padding:12px 18px;font-size:13px;display:flex;align-items:center;gap:12px;z-index:300;box-shadow:0 4px 20px rgba(0,0,0,0.25);white-space:nowrap;}
 .undo-toast-text{flex:1;}
 .undo-toast-btn{background:#E8420A;border:none;color:#fff;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;}
@@ -147,7 +145,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="sheet-student" id="enrouteStudentName"></div>
 <div class="sheet-sub">This will text the parent that you're on your way. Make sure you're actually leaving now.</div>
 <div class="sheet-actions">
-<button class="btn-sheet-cancel" onclick="closeSheet('enrouteSheet')">Not yet</button>
+<button class="btn-sheet-cancel" style="width:auto;padding:14px 18px;" onclick="closeSheet('enrouteSheet')">Not yet</button>
 <button class="btn-confirm-enroute" onclick="confirmEnroute()"><i class="ti ti-walk" style="font-size:15px"></i> Yes, I'm on my way</button>
 </div>
 </div>
@@ -159,11 +157,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="sheet-handle"></div>
 <div class="sheet-title">Child in your custody?</div>
 <div class="sheet-student" id="pickupStudentName"></div>
-<div class="sheet-sub">Send a text to the parent confirming safe pickup. Take a photo first or send now and attach your photo manually.</div>
+<div class="sheet-sub">Choose how to send the pickup confirmation to the parent.</div>
 <div class="sheet-actions col">
 <button class="btn-confirm-pickup" onclick="confirmPickupWithPhoto()"><i class="ti ti-camera" style="font-size:15px"></i> Take photo, then send text</button>
 <button class="btn-confirm-pickup-nophoto" onclick="confirmPickupNoPhoto()"><i class="ti ti-send" style="font-size:15px"></i> Send text now, attach photo manually</button>
-<button class="btn-sheet-cancel" style="width:100%;text-align:center;" onclick="closeSheet('pickupSheet')">Not yet</button>
+<button class="btn-sheet-cancel" onclick="closeSheet('pickupSheet')">Not yet</button>
 </div>
 </div>
 </div>
@@ -176,7 +174,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="sheet-sub" id="urgentSub"></div>
 <textarea class="sheet-input" id="urgentText" placeholder="Describe what's happening so the team can act immediately…"></textarea>
 <div class="sheet-actions">
-<button class="btn-sheet-cancel" onclick="closeUrgentSheet()">Cancel</button>
+<button class="btn-sheet-cancel" style="width:auto;padding:13px 18px;" onclick="closeUrgentSheet()">Cancel</button>
 <button class="btn-urgent-send" onclick="sendUrgent()">Send alert now</button>
 </div>
 </div>
@@ -191,8 +189,9 @@ const todayStr=`${MONTHS[TODAY.getMonth()]} ${TODAY.getDate()}`;
 const CACHE_KEY=`tac_roster_v5_${TODAY.toDateString()}`;
 const STATE_KEY=`tac_states_${TODAY.toDateString()}`;
 const REBECCA_PHONE='7705471075';
+const LOGO_URL='https://static.wixstatic.com/media/7e1448_415a7686f7774d038fce84f0816a76b2~mv2.png/v1/fill/w_320,h_125,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/ASC%20LOGO.png';
 
-// Photo keys use both full names AND nicknames so roster matches work
+// All instructors keyed by every name variant the roster might return
 const INSTRUCTOR_PHOTOS={
 'Rebecca Whittemore':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/TxAMrQbSpLoiHDsvpULJOA/1St2g5ELC6xIR_RJf165eF8O7FWmXg3qM0R2Bl-fFJhEJooX0yS8gYl-PRK2Rrwh9wZBkomGkudLdBAxcjHN5bNPMloujsxPd5t2R3-0gOTvEkGCnvTInXOMYqzRd8RXr-DXmtVdDe2IYUyvlEgg/PEFkkFXtntjuNUffaeFa1fn_89pI_Sasp-A1k52mI_k',
 'Rebecca':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/TxAMrQbSpLoiHDsvpULJOA/1St2g5ELC6xIR_RJf165eF8O7FWmXg3qM0R2Bl-fFJhEJooX0yS8gYl-PRK2Rrwh9wZBkomGkudLdBAxcjHN5bNPMloujsxPd5t2R3-0gOTvEkGCnvTInXOMYqzRd8RXr-DXmtVdDe2IYUyvlEgg/PEFkkFXtntjuNUffaeFa1fn_89pI_Sasp-A1k52mI_k',
@@ -209,9 +208,20 @@ const INSTRUCTOR_PHOTOS={
 "Regina D'Soto":'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/LigiIrDMV63tpUsPQINRIA/3cjWxamjs0KzIg9G_avb1LmXJ9XXC72LKomR4sIncrraXQLmeJF6MSFAv3etRBoPWXHUBSExFfzVRXZMt2LMl5O_1xbMQtVi_5Q9Q4_Rsd_v3pSTi-n1MCcPNgndzevJAdqx13G0vxFzn66SKCm7_Q/J5vt7DoVAfmd21aNwykB_NEZ7jeJgED5adcPHe_6Bjg',
 'Gina':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/LigiIrDMV63tpUsPQINRIA/3cjWxamjs0KzIg9G_avb1LmXJ9XXC72LKomR4sIncrraXQLmeJF6MSFAv3etRBoPWXHUBSExFfzVRXZMt2LMl5O_1xbMQtVi_5Q9Q4_Rsd_v3pSTi-n1MCcPNgndzevJAdqx13G0vxFzn66SKCm7_Q/J5vt7DoVAfmd21aNwykB_NEZ7jeJgED5adcPHe_6Bjg',
 'Teresa':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/u5Ju62g0GMUWTQ6321YFVw/pQwRu5sMs2YKezjwuIphmuvA9gHzLgSosRDaR-qhhIT-5pOCqje87GMDsKlDky_vm1TKQiQAnHXeZ_XzvYxD3jJxh_4y2lF5iXxubc1utg5B_ERmJIfGjSHLyz-AdkHbatqQDXdLveH2ZVl9XPCeLw/nsY6z6JZ7atKh3t3PHEDtaBCrM7Z1iOdoS7PY7PElDc',
+'Teresa Ramos':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/u5Ju62g0GMUWTQ6321YFVw/pQwRu5sMs2YKezjwuIphmuvA9gHzLgSosRDaR-qhhIT-5pOCqje87GMDsKlDky_vm1TKQiQAnHXeZ_XzvYxD3jJxh_4y2lF5iXxubc1utg5B_ERmJIfGjSHLyz-AdkHbatqQDXdLveH2ZVl9XPCeLw/nsY6z6JZ7atKh3t3PHEDtaBCrM7Z1iOdoS7PY7PElDc',
 'Josue Hernandez':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/5lxOnWnUPPkLWgc1vmbmLQ/MRM6NLz49v8G3nv_jmq2-GqYhzAmIAA5Cr_heXhEV51xlbg0dEkrl1sthUUEkFv-M-PZX5bCtzyp2GjOk0pooq6W7VdxAUPRyN_LeEN4lFikriGMFLgNTC5zwEB-oq0uRp3aHBJ6aXFjKwuNdm1ZG-BlSwYjkXTzFSlNfhz6wzQ/FXD2_iZFYDYrd2TJQ7PPIO9Z0R2Bh7e-we1g15ZtsvY',
 'Josue':'https://v5.airtableusercontent.com/v3/u/53/53/1779256800000/5lxOnWnUPPkLWgc1vmbmLQ/MRM6NLz49v8G3nv_jmq2-GqYhzAmIAA5Cr_heXhEV51xlbg0dEkrl1sthUUEkFv-M-PZX5bCtzyp2GjOk0pooq6W7VdxAUPRyN_LeEN4lFikriGMFLgNTC5zwEB-oq0uRp3aHBJ6aXFjKwuNdm1ZG-BlSwYjkXTzFSlNfhz6wzQ/FXD2_iZFYDYrd2TJQ7PPIO9Z0R2Bh7e-we1g15ZtsvY',
 };
+
+// Helper: look up photo by name, trying progressively shorter matches
+function getInstrPhoto(name){
+if(!name)return null;
+if(INSTRUCTOR_PHOTOS[name])return INSTRUCTOR_PHOTOS[name];
+// Try first name only
+const first=name.split(' ')[0];
+if(INSTRUCTOR_PHOTOS[first])return INSTRUCTOR_PHOTOS[first];
+return null;
+}
 
 let roster=[],locations=[],changes=[],activeFilter='all',isOffline=false,urgentStudentId=null;
 let pendingActionId=null;
@@ -263,7 +273,6 @@ return r.json();
 function closeSheet(id){document.getElementById(id).style.display='none';pendingActionId=null;}
 function closeSheetOnBg(e,id){if(e.target.classList.contains('sheet-overlay'))closeSheet(id);}
 
-// EN ROUTE FLOW
 function startEnroute(id){
 const s=roster.find(x=>x.studentId===id);
 if(!s)return;
@@ -285,7 +294,6 @@ saveState();render();
 showUndoToast(id,s.studentName,'enroute',()=>openParentText(s,'enroute'));
 }
 
-// PICKUP FLOW — two paths
 function startPickup(id){
 const s=roster.find(x=>x.studentId===id);
 if(!s)return;
@@ -294,7 +302,6 @@ document.getElementById('pickupStudentName').textContent=s.studentName;
 document.getElementById('pickupSheet').style.display='flex';
 }
 
-// Path A: take photo first, then send text
 function confirmPickupWithPhoto(){
 const id=pendingActionId;
 closeSheet('pickupSheet');
@@ -305,7 +312,6 @@ pickupContext={studentId:id,studentName:s.studentName,phone:s.pickupPhone,parent
 document.getElementById('cameraInput').click();
 }
 
-// Path B: send text immediately, instructor attaches photo manually
 function confirmPickupNoPhoto(){
 const id=pendingActionId;
 closeSheet('pickupSheet');
@@ -356,7 +362,7 @@ const toast=document.createElement('div');
 toast.className='undo-toast';
 toast.id='undoToast';
 const firstName=name.split(' ')[0];
-const label=action==='enroute'?`Texting ${firstName}'s parent…`:`Pickup confirmed for ${firstName}`;
+const label=`Texting ${firstName}'s parent…`;
 toast.innerHTML=`<span class="undo-toast-text">${label}</span><button class="undo-toast-btn" onclick="undoAction('${id}','${action}')">Undo</button><div class="undo-toast-bar"></div>`;
 document.body.appendChild(toast);
 undoTimer=setTimeout(()=>{toast.remove();onCommit();},5000);
@@ -367,7 +373,6 @@ clearTimeout(undoTimer);
 const toast=document.getElementById('undoToast');
 if(toast)toast.remove();
 if(action==='enroute'){delete states[id];}
-else if(action==='done'){states[id]='enroute';delete pickupTimes[id];}
 saveState();render();
 }
 
@@ -428,7 +433,11 @@ const todayChanges=changes.filter(c=>(c.fields||{})['Change Summary']);
 const instructors=getInstructors();
 document.getElementById('app').innerHTML=`
 ${isOffline?`<div class="offline-bar"><i class="ti ti-wifi-off"></i> Offline — showing cached roster</div>`:''}
-<div class="header"><div><div class="brand-name">AFTERSCHOOL</div><div class="brand-sub">Collective</div><div class="brand-tag">Pickup — ${todayStr}</div></div><div class="day-pill">${todayFull}</div></div>
+<div class="header">
+<img src="${LOGO_URL}" class="header-logo" alt="Afterschool Collective" onerror="this.style.display='none';document.querySelector('.header-logo-fallback').style.display='block'">
+<div class="header-logo-fallback" style="display:none"><div class="brand-name" style="font-size:16px;font-weight:600;color:#1C1C1C">AFTERSCHOOL</div><div style="font-size:9px;letter-spacing:0.22em;color:#999;text-transform:uppercase">Collective</div><div style="font-size:11px;color:#E8420A;margin-top:3px">Pickup — ${todayStr}</div></div>
+<div style="text-align:right"><div class="day-pill">${todayFull}</div><div style="font-size:10px;color:#999;margin-top:5px;text-align:center">Pickup — ${todayStr}</div></div>
+</div>
 <a href="tel:${REBECCA_PHONE}" class="emergency-bar"><i class="ti ti-phone" style="font-size:13px"></i> Emergency: Rebecca (770) 547-1075</a>
 <div class="stats">
 <div class="stat"><div class="stat-n">${roster.length}</div><div class="stat-l">Expected</div></div>
@@ -436,7 +445,7 @@ ${isOffline?`<div class="offline-bar"><i class="ti ti-wifi-off"></i> Offline —
 <div class="stat"><div class="stat-n ${absentCount>0?'red':''}">${absentCount}</div><div class="stat-l">Absent</div></div>
 </div>
 ${todayChanges.length?`<div class="alert-box" style="margin:12px 16px 0"><div class="alert-hdr"><i class="ti ti-alert-triangle" style="font-size:16px;color:#A32D2D"></i><span class="alert-hdr-text">Changes today, read first</span></div>${todayChanges.map(c=>`<div class="alert-item"><div class="alert-name">${(c.fields||{})['Change Summary']||'Change logged'}</div></div>`).join('')}</div>`:`<div class="clear-bar"><i class="ti ti-circle-check" style="font-size:16px;color:#2E7D32"></i><span class="clear-text">All clear, no changes today</span></div>`}
-${instructors.length>=1?`<div class="filter-bar"><button class="filter-pill${activeFilter==='all'?' active':''}" onclick="setFilter('all')"><i class="ti ti-users" style="font-size:13px"></i> All</button>${instructors.map(name=>`<button class="filter-pill${activeFilter===name?' active':''}" onclick="setFilter('${name.replace(/'/g,"\\'")}')">  ${INSTRUCTOR_PHOTOS[name]?`<img src="${INSTRUCTOR_PHOTOS[name]}" alt="${name}" onerror="this.style.display='none'">`:''}${name.split(' ')[0]}</button>`).join('')}</div>`:''}
+${instructors.length>=1?`<div class="filter-bar"><button class="filter-pill${activeFilter==='all'?' active':''}" onclick="setFilter('all')"><i class="ti ti-users" style="font-size:13px"></i> All</button>${instructors.map(name=>{const photo=getInstrPhoto(name);return`<button class="filter-pill${activeFilter===name?' active':''}" onclick="setFilter('${name.replace(/'/g,"\\'")}')">  ${photo?`<img src="${photo}" alt="${name}" onerror="this.style.display='none'">`:''}${name.split(' ')[0]}</button>`;}).join('')}</div>`:''}
 <div class="section-hdr"><span class="section-title">${activeFilter==='all'?"Today's students":activeFilter.split(' ')[0]+"'s students"}</span><span class="count-chip">${list.length}</span></div>
 <div class="cards">
 ${list.length===0?`<div style="text-align:center;padding:40px 0;color:#888;font-size:14px">No students enrolled for ${todayFull}</div>`:
@@ -460,7 +469,7 @@ function renderCard(s){
 const id=s.studentId;
 const st=states[id]||'pending';
 const secondary=parseSecondary(s.notes);
-const instrPhoto=INSTRUCTOR_PHOTOS[s.instructorName]||null;
+const instrPhoto=getInstrPhoto(s.instructorName);
 const an=absentNotes[id]||{};
 const tn=teamNotes[id]||{};
 const now=new Date();
