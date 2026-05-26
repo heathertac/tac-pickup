@@ -191,9 +191,6 @@ const STATE_KEY=`tac_states_${TODAY.toDateString()}`;
 const REBECCA_PHONE='7705471075';
 const LOGO_URL='https://static.wixstatic.com/media/7e1448_415a7686f7774d038fce84f0816a76b2~mv2.png/v1/fill/w_320,h_125,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/ASC%20LOGO.png';
 
-// Instructor photos come fresh from the proxy roster — no hardcoding needed.
-// This map is only used for the filter pills (to show photo next to name).
-// It gets populated dynamically from the roster after load.
 const INSTRUCTOR_PHOTO_CACHE = {};
 
 function getInstrPhoto(name){
@@ -244,6 +241,10 @@ const locId=s.pickupLocationId||'__none__';
 const loc=locById[locId]||{name:s.pickupLocation||'No pickup location set',time:'',type:''};
 if(!groups[locId])groups[locId]={id:locId,name:loc.name,time:loc.time,type:loc.type,students:[]};
 groups[locId].students.push(s);
+});
+// Sort students within each stop alphabetically by first name
+Object.values(groups).forEach(g=>{
+g.students.sort((a,b)=>a.studentName.localeCompare(b.studentName));
 });
 return Object.values(groups).sort((a,b)=>{
 if(a.id==='__none__')return 1;if(b.id==='__none__')return -1;
