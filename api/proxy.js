@@ -39,24 +39,6 @@ module.exports = async function handler(req, res) {
     '2026-05-25','2026-05-27','2026-06-04','2026-06-05','2026-06-19',
   ];
 
-  const MASTER_SCHEDULE = {
-    'Ethan Owyang':          { wed:'Rebecca Whittemore', fri:'Rebecca Whittemore' },
-    'Adam Cheung':           { tue:'Ricardo Marquez', fri:'Ricardo Marquez' },
-    'Dylan Cheung':          { tue:'Ricardo Marquez', fri:'Ricardo Marquez' },
-    'Ilyaas Wower':          { mon:'Kevin Sims', tue:'Ricardo Marquez', wed:'Kevin Sims', thu:'Kevin Sims', fri:'Ricardo Marquez' },
-    'Alice Huggins':         { mon:'Kevin Sims' },
-    'Ada McGuire':           { mon:'Kevin Sims' },
-    'Nellie Dieterich':      { mon:'Kevin Sims', thu:'Kevin Sims' },
-    'Asher Muller':          { mon:'Kevin Sims', tue:'Kevin Sims', wed:'Kevin Sims', fri:'Teresa' },
-    'Parker Corpuel':        { mon:'Kevin Sims', thu:'Kevin Sims', fri:'Teresa' },
-    'Adina LaSota':          { mon:'Nicola Caminiti', tue:'Nicola Caminiti', fri:"Regina D'Soto" },
-    'Gaius LaSota':          { mon:'Nicola Caminiti', tue:'Nicola Caminiti', fri:"Regina D'Soto" },
-    'Nathaniel Dunham Welt': { thu:'Janet Chow', fri:"Regina D'Soto" },
-    'Sebastian Doolittle':   { mon:'Kevin Sims', wed:'Kevin Sims', fri:"Regina D'Soto" },
-    'Sydney Matani':         { mon:'Nicola Caminiti', tue:'Nicola Caminiti', wed:'Nicola Caminiti', thu:'Nicola Caminiti' },
-    'Jackson Cruz':          { fri:"Regina D'Soto" },
-  };
-
   try {
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
     const { action } = body || {};
@@ -78,39 +60,56 @@ module.exports = async function handler(req, res) {
           `filterByFormula=DATESTR({Date})="${todayISO}"`),
       ]);
 
-      // Staff maps — raw API uses field NAMES as keys
+      // Build staff lookup by record ID
       const staffById = {};
-      const staffByName = {};
       staff.forEach(r => {
         const f = r.fields || {};
         const name = f['Name'] || '';
         const photos = f['Photo'] || [];
         const photoUrl = photos[0]?.thumbnails?.large?.url || photos[0]?.url || null;
         staffById[r.id] = { name, photoUrl };
-        if (name) staffByName[name] = photoUrl;
       });
 
-      // Assignment map — raw API uses field NAMES
+      // Build assignment map keyed by student record ID
+      // The REST API returns linked record fields as arrays of plain record ID strings
       const assignmentMap = {};
       assignments.forEach(a => {
         const f = a.fields || {};
-        const stuIds = (f['Student'] || []).map(x => x.id || x);
+
+        // Student field: array of record ID strings e.g. ["recABC123"]
+        const stuIds = (f['Student'] || []).map(x => (typeof x === 'string' ? x : x.id));
+
+        // Assigned Instructor: array of record ID strings e.g. ["rec5hPamO5JRaCPu8"]
         const instrArr = f['Assigned Instructor'] || [];
-        const instrId = instrArr[0]?.id || null;
+        const instrId = typeof instrArr[0] === 'string' ? instrArr[0] : instrArr[0]?.id || null;
         const instrData = instrId ? staffById[instrId] : null;
+
+        // Pickup Location: array of record ID strings
         const locArr = f['Pickup Location'] || [];
-        const locationId = locArr[0]?.id || null;
+        const locationId = typeof locArr[0] === 'string' ? locArr[0] : locArr[0]?.id || null;
+
+        // Bus Arrival Time
+        const busTime = f['Bus Arrival Time'] || '';
+
+        // Notes
+        const notes = f['Notes'] || '';
+
+        // EOD Location
+        const eodLoc = f['EOD Location']?.name || f['EOD Location'] || '';
+
         stuIds.forEach(sid => {
           assignmentMap[sid] = {
             instructorName: instrData?.name || '',
             instructorPhotoUrl: instrData?.photoUrl || null,
             locationId,
-            isOverride: true,
+            busTime,
+            notes,
+            eodLoc,
           };
         });
       });
 
-      // Build roster — raw API uses field NAMES
+      // Build roster
       const roster = [];
       for (const r of students) {
         const f = r.fields || {};
@@ -123,23 +122,16 @@ module.exports = async function handler(req, res) {
         const studentName = f['Name'] || 'Unknown';
         const photos = f['Photo'] || [];
         const defaultLocIds = f['Default Pickup Location'] || [];
-        const defaultLocId = defaultLocIds[0]?.id || null;
+        const defaultLocId = typeof defaultLocIds[0] === 'string'
+          ? defaultLocIds[0]
+          : defaultLocIds[0]?.id || null;
 
-        let instructorName = '';
-        let instructorPhotoUrl = null;
-        let pickupLocationId = defaultLocId || '';
-        let isOverride = false;
+        const assignment = assignmentMap[r.id];
+        const hasAssignment = !!assignment;
 
-        if (assignmentMap[r.id]) {
-          instructorName = assignmentMap[r.id].instructorName;
-          instructorPhotoUrl = assignmentMap[r.id].instructorPhotoUrl;
-          pickupLocationId = assignmentMap[r.id].locationId || pickupLocationId;
-          isOverride = true;
-        } else {
-          const sched = MASTER_SCHEDULE[studentName];
-          instructorName = sched?.[todayDay] || '';
-          instructorPhotoUrl = instructorName ? (staffByName[instructorName] || null) : null;
-        }
+        const instructorName = assignment?.instructorName || '';
+        const instructorPhotoUrl = assignment?.instructorPhotoUrl || null;
+        const pickupLocationId = assignment?.locationId || defaultLocId || '';
 
         roster.push({
           studentId: r.id,
@@ -155,7 +147,7 @@ module.exports = async function handler(req, res) {
           pickupLocation: '',
           instructorName,
           instructorPhotoUrl,
-          isOverride,
+          isOverride: false, // removed — "Sub" badge was misleading
         });
       }
 
