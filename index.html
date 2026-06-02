@@ -207,6 +207,7 @@ function buildPhotoCache(){
 }
 
 let roster=[],locations=[],changes=[],activeFilter='all',isOffline=false,urgentStudentId=null;
+let noPickupToday=[];
 let pendingActionId=null;
 let pickupContext=null;
 let undoTimer=null;
@@ -455,6 +456,18 @@ ${g.students.map(s=>renderCard(s)).join('')}
 function renderCard(s){
 const id=s.studentId;
 const st=states[id]||'pending';
+if(st==='pending'&&noPickupToday.includes(id)){
+return`<div class="card absent" id="c-${id}" style="opacity:0.6">
+<div class="card-accent absent"></div>
+<div class="card-top" style="padding-bottom:12px">
+<div class="av absent small">${s.photo?`<img src="${s.photo}" alt="${s.studentName}" onerror="this.style.display='none';this.parentNode.textContent='${initials(s.studentName)}'">`:initials(s.studentName)}</div>
+<div style="flex:1;min-width:0">
+<div class="sname" style="font-size:15px">${s.studentName}</div>
+<div class="sstatus absent"><i class="ti ti-calendar-off" style="font-size:13px"></i> No pickup needed today</div>
+</div>
+</div>
+</div>`;
+}
 const secondary=parseSecondary(s.notes);
 const instrPhoto=s.instructorPhotoUrl||getInstrPhoto(s.instructorName);
 const an=absentNotes[id]||{};
@@ -494,7 +507,7 @@ ${tn.sent?`<div class="note-sent-row"><span class="note-sent"><i class="ti ti-ci
 
 async function init(){
 const cached=loadCache();
-if(cached){roster=cached.roster||[];locations=cached.locations||[];changes=cached.changes||[];buildPhotoCache();isOffline=false;render();}
+if(cached){roster=cached.roster||[];locations=cached.locations||[];changes=cached.changes||[];noPickupToday=cached.noPickupToday||[];buildPhotoCache();isOffline=false;render();}
 try{
 const [rosterRes,locRes,changeRes]=await Promise.all([
 proxy('getTodayRoster'),
@@ -504,8 +517,9 @@ proxy('getChanges'),
 roster=rosterRes.roster||[];
 locations=locRes.records||[];
 changes=changeRes.records||[];
+noPickupToday=changeRes.noPickupStudentIds||[];
 buildPhotoCache();
-saveCache({roster,locations,changes});
+saveCache({roster,locations,changes,noPickupToday});
 isOffline=false;
 }catch(e){
 if(!cached){isOffline=true;roster=[];locations=[];changes=[];}
