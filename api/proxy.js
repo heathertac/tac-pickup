@@ -163,7 +163,24 @@ module.exports = async function handler(req, res) {
       const todayISO = new Date().toISOString().slice(0, 10);
       const d = await get('tblEdgjx4phKSj4wS',
         `filterByFormula=DATESTR({Affected Pickup Date})="${todayISO}"`);
-      return res.status(200).json({ records: d.records || [] });
+      const records = d.records || [];
+
+      // Build a simple list of students who need NO PICKUP today.
+      // Linked student fields come back as arrays of record ID strings.
+      const noPickupStudentIds = [];
+      records.forEach(rec => {
+        const f = rec.fields || {};
+        const type = f['Change Type']?.name || f['Change Type'] || '';
+        if (type === 'No Pickup Needed') {
+          const linked = f['Linked Student'] || [];
+          linked.forEach(x => {
+            const sid = (typeof x === 'string') ? x : (x && x.id) ? x.id : null;
+            if (sid) noPickupStudentIds.push(sid);
+          });
+        }
+      });
+
+      return res.status(200).json({ records, noPickupStudentIds });
     }
 
     if (action === 'logIncident') {
