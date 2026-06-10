@@ -97,6 +97,11 @@ module.exports = async function handler(req, res) {
         // EOD Location
         const eodLoc = f['EOD Location']?.name || f['EOD Location'] || '';
 
+        // Parent drop-off: any assignment field whose value starts with "Parent drop"
+        const parentDropoff = Object.values(f).some(
+          v => typeof v === 'string' && v.trim().toLowerCase().startsWith('parent drop')
+        );
+
         stuIds.forEach(sid => {
           assignmentMap[sid] = {
             instructorName: instrData?.name || '',
@@ -105,6 +110,7 @@ module.exports = async function handler(req, res) {
             busTime,
             notes,
             eodLoc,
+            parentDropoff,
           };
         });
       });
@@ -147,6 +153,7 @@ module.exports = async function handler(req, res) {
           pickupLocation: '',
           instructorName,
           instructorPhotoUrl,
+          parentDropoff: assignment?.parentDropoff || false,
           isOverride: false, // removed — "Sub" badge was misleading
         });
       }
