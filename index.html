@@ -312,7 +312,14 @@ saveState();render();
 openParentText(s,'done',false);
 }
 
-function handlePhotoTaken(event){
+function confirmDroppedOff(id){
+const s=roster.find(x=>x.studentId===id);
+if(!s)return;
+states[id]='done';
+pickupTimes[id]=new Date().toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
+saveState();render();
+openParentText(s,'dropoff');
+}
 const file=event.target.files&&event.target.files[0];
 event.target.value='';
 finishPickup(!!file);
@@ -333,7 +340,9 @@ const parentFirst=(s.pickupName||'').split(' ')[0];
 const greeting=parentFirst?`Hi ${parentFirst}!`:'Hi there!';
 const firstName=(s.studentName||'').split(' ')[0];
 let body;
-if(type==='enroute'){
+if(type==='dropoff'){
+body=`${greeting} ${firstName} is checked in at The Afterschool Collective. See you at pickup time!`;
+}else if(type==='enroute'){
 body=`${greeting} This is your instructor from The Afterschool Collective. I'm on my way to pick up ${firstName} right now. I'll send a confirmation as soon as I have them!`;
 }else{
 body=`${greeting} ${firstName} has been safely picked up and is on the way back to the studio. See you at pickup time!`;
@@ -491,7 +500,7 @@ ${(st!=='absent'&&!collapsed)?`<div class="parent-row"><div class="parent-contac
 ${secondary?`<div class="parent-contact"><div><div class="parent-name">${secondary.name}</div><div class="parent-phone">${secondary.phone}</div></div></div>`:''}
 </div></div>`:''}
 ${!collapsed?`<div class="card-actions">
-${st==='pending'?`<button class="btn-action btn-enroute" onclick="startEnroute('${id}')"><i class="ti ti-walk" style="font-size:15px"></i>En route to pickup</button>`
+${st==='pending'?(s.parentDropoff?`<button class="btn-action btn-picked" onclick="confirmDroppedOff('${id}')"><i class="ti ti-building" style="font-size:15px"></i>Dropped off — check in</button>`:`<button class="btn-action btn-enroute" onclick="startEnroute('${id}')"><i class="ti ti-walk" style="font-size:15px"></i>En route to pickup</button>`)
 :st==='enroute'?`<button class="btn-action btn-picked" onclick="startPickup('${id}')"><i class="ti ti-camera" style="font-size:15px"></i>Child picked up</button><button class="btn-action btn-absent" onclick="setAbsent('${id}')" style="max-width:110px"><i class="ti ti-user-x" style="font-size:14px"></i>Not there</button>`
 :''}
 </div>`:''}
