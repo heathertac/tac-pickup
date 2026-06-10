@@ -209,6 +209,7 @@ function buildPhotoCache(){
 let roster=[],locations=[],changes=[],activeFilter='all',isOffline=false,urgentStudentId=null;
 let noPickupToday=[];
 let pendingActionId=null;
+let arrivalMode=false;
 let pickupContext=null;
 let undoTimer=null;
 let {states,absentNotes,teamNotes,pickupTimes}=loadState();
@@ -285,6 +286,16 @@ showUndoToast(id,s.studentName,'enroute',()=>openParentText(s,'enroute'));
 function startPickup(id){
 const s=roster.find(x=>x.studentId===id);
 if(!s)return;
+arrivalMode=false;
+pendingActionId=id;
+document.getElementById('pickupStudentName').textContent=s.studentName;
+document.getElementById('pickupSheet').style.display='flex';
+}
+
+function startArrival(id){
+const s=roster.find(x=>x.studentId===id);
+if(!s)return;
+arrivalMode=true;
 pendingActionId=id;
 document.getElementById('pickupStudentName').textContent=s.studentName;
 document.getElementById('pickupSheet').style.display='flex';
@@ -309,7 +320,8 @@ if(!s)return;
 states[id]='done';
 pickupTimes[id]=new Date().toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
 saveState();render();
-openParentText(s,'done',false);
+openParentText(s,arrivalMode?'dropoff':'done',false);
+arrivalMode=false;
 }
 
 function confirmDroppedOff(id){
@@ -333,7 +345,8 @@ const s=roster.find(x=>x.studentId===pickupContext.studentId);
 states[pickupContext.studentId]='done';
 pickupTimes[pickupContext.studentId]=new Date().toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
 saveState();render();
-if(s)openParentText(s,'done',withPhoto);
+if(s)openParentText(s,arrivalMode?'dropoff':'done',withPhoto);
+arrivalMode=false;
 pickupContext=null;
 }
 
@@ -343,7 +356,7 @@ const greeting=parentFirst?`Hi ${parentFirst}!`:'Hi there!';
 const firstName=(s.studentName||'').split(' ')[0];
 let body;
 if(type==='dropoff'){
-body=`${greeting} ${firstName} is checked in at The Afterschool Collective. See you at pickup time!`;
+body=`${greeting} ${firstName} has arrived safely at The Afterschool Collective and is checked in. See you at pickup time!`;
 }else if(type==='enroute'){
 body=`${greeting} This is your instructor from The Afterschool Collective. I'm on my way to pick up ${firstName} right now. I'll send a confirmation as soon as I have them!`;
 }else{
@@ -464,6 +477,14 @@ ${g.students.map(s=>renderCard(s)).join('')}
 </div>`;
 }
 
+function isLabDrop(s){
+const loc=locations.find(l=>l.id===s.pickupLocationId);
+if(!loc)return false;
+const nm=(loc.fields?.['Name']||'').toLowerCase();
+const tp=loc.fields?.['Type']?.name||loc.fields?.['Type']||'';
+return tp==='Studio'||nm.includes('steam lab');
+}
+
 function renderCard(s){
 const id=s.studentId;
 const st=states[id]||'pending';
@@ -502,7 +523,7 @@ ${(st!=='absent'&&!collapsed)?`<div class="parent-row"><div class="parent-contac
 ${secondary?`<div class="parent-contact"><div><div class="parent-name">${secondary.name}</div><div class="parent-phone">${secondary.phone}</div></div></div>`:''}
 </div></div>`:''}
 ${!collapsed?`<div class="card-actions">
-${st==='pending'?(s.parentDropoff?`<button class="btn-action btn-picked" onclick="confirmDroppedOff('${id}')"><i class="ti ti-building" style="font-size:15px"></i>Dropped off — check in</button>`:`<button class="btn-action btn-enroute" onclick="startEnroute('${id}')"><i class="ti ti-walk" style="font-size:15px"></i>En route to pickup</button>`)
+${st==='pending'?((s.parentDropoff||isLabDrop(s))?`<button class="btn-action btn-picked" onclick="startArrival('${id}')"><i class="ti ti-building" style="font-size:15px"></i>Arrived — check in</button>`:`<button class="btn-action btn-enroute" onclick="startEnroute('${id}')"><i class="ti ti-walk" style="font-size:15px"></i>En route to pickup</button>`)
 :st==='enroute'?`<button class="btn-action btn-picked" onclick="startPickup('${id}')"><i class="ti ti-camera" style="font-size:15px"></i>Child picked up</button><button class="btn-action btn-absent" onclick="setAbsent('${id}')" style="max-width:110px"><i class="ti ti-user-x" style="font-size:14px"></i>Not there</button>`
 :''}
 </div>`:''}
