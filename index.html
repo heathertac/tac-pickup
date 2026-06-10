@@ -186,7 +186,7 @@ const DAYS_FULL=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Sa
 const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const todayFull=DAYS_FULL[TODAY.getDay()];
 const todayStr=`${MONTHS[TODAY.getMonth()]} ${TODAY.getDate()}`;
-const CACHE_KEY=`tac_roster_v5_${TODAY.toDateString()}`;
+const CACHE_KEY=`tac_roster_v6_${TODAY.toDateString()}`;
 const STATE_KEY=`tac_states_${TODAY.toDateString()}`;
 const REBECCA_PHONE='7705471075';
 const LOGO_URL='https://static.wixstatic.com/media/7e1448_415a7686f7774d038fce84f0816a76b2~mv2.png/v1/fill/w_320,h_125,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/ASC%20LOGO.png';
@@ -320,6 +320,8 @@ pickupTimes[id]=new Date().toLocaleTimeString([],{hour:'numeric',minute:'2-digit
 saveState();render();
 openParentText(s,'dropoff');
 }
+
+function handlePhotoTaken(event){
 const file=event.target.files&&event.target.files[0];
 event.target.value='';
 finishPickup(!!file);
