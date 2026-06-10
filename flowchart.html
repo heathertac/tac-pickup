@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TAC — Company Role &amp; Flow Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1c2530;--ink-soft:#5a6473;--line:#e2e5ea;--paper:#f5f6f8;--card:#ffffff;
+    --accent:#2f5a8f;
+    --h:#2f5a8f;--j:#9a564f;--r:#2f7d5f;--k:#8a6326;--n:#76589f;
+    --h-b:#eaf1f8;--j-b:#f8ecec;--r-b:#e9f4ef;--k-b:#f8f1e1;--n-b:#f1ecf8;
+    --shift-b:#fff8e6;--shift-t:#8a6326;--shift-br:#ead9b5;
+    --new-b:#f1ecf8;--new-t:#5d4380;--new-br:#d8c9ec;
+    --shadow:0 1px 2px rgba(28,37,48,0.06),0 1px 3px rgba(28,37,48,0.04);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Inter',system-ui,sans-serif;color:var(--ink);background:var(--paper);
+    min-height:100vh;padding:40px 20px 64px;-webkit-font-smoothing:antialiased;line-height:1.5;}
+  .wrap{max-width:1100px;margin:0 auto;}
+
+  header{margin-bottom:22px;border-bottom:1px solid var(--line);padding-bottom:20px;}
+  .kicker{font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:8px;}
+  h1{font-weight:700;font-size:28px;letter-spacing:-0.01em;margin-bottom:8px;}
+  .lede{font-size:15px;color:var(--ink-soft);max-width:760px;}
+
+  .principles{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:22px 0 30px;}
+  @media(max-width:860px){.principles{grid-template-columns:repeat(2,1fr);}}
+  .principle{background:var(--card);border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow);padding:12px 14px;}
+  .principle .who{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:3px;}
+  .principle .rule{font-size:13px;color:var(--ink-soft);}
+  .principle.ph .who{color:var(--h);} .principle.pj .who{color:var(--j);}
+  .principle.pr .who{color:var(--r);} .principle.pk .who{color:var(--k);}
+
+  .sec{font-weight:600;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);
+    margin:26px 0 12px;padding-bottom:7px;border-bottom:1px solid var(--line);}
+
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  @media(max-width:860px){.grid{grid-template-columns:1fr;}}
+  .person{background:var(--card);border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow);padding:16px 18px;}
+  .phead{display:flex;align-items:baseline;gap:10px;margin-bottom:2px;}
+  .pname{font-size:16px;font-weight:700;}
+  .ptitle{font-size:12px;color:var(--ink-soft);font-weight:500;}
+  .pbar{height:3px;border-radius:2px;margin:8px 0 12px;}
+  .person.h .pbar{background:var(--h);} .person.j .pbar{background:var(--j);}
+  .person.r .pbar{background:var(--r);} .person.k .pbar{background:var(--k);}
+  .person.n .pbar{background:var(--n);}
+
+  .gh{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-soft);margin:12px 0 6px;}
+  .duty{font-size:13.5px;padding:6px 10px;border-radius:6px;margin-bottom:5px;border:1px solid var(--line);
+    background:#fbfcfd;display:flex;justify-content:space-between;align-items:center;gap:8px;}
+  .duty .t{flex:1;}
+  .tag{font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;border-radius:4px;
+    padding:2px 7px;white-space:nowrap;border:1px solid;}
+  .tag.in{background:var(--shift-b);color:var(--shift-t);border-color:var(--shift-br);}
+  .tag.out{background:var(--new-b);color:var(--new-t);border-color:var(--new-br);}
+
+  .person.n{border-style:dashed;border-color:#c9bce0;}
+  .openq{font-size:12.5px;color:var(--ink-soft);margin-top:10px;padding-top:10px;border-top:1px solid var(--line);}
+  .openq b{color:var(--ink);font-weight:600;}
+
+  .chain{background:var(--card);border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow);
+    padding:14px 18px;margin-bottom:10px;}
+  .chain .cname{font-size:13px;font-weight:600;margin-bottom:8px;}
+  .flow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;}
+  .step{font-size:12.5px;font-weight:500;padding:6px 11px;border-radius:6px;border:1px solid var(--line);}
+  .step.sh{background:var(--h-b);} .step.sj{background:var(--j-b);}
+  .step.sr{background:var(--r-b);} .step.sk{background:var(--k-b);} .step.sn{background:var(--n-b);}
+  .arr{color:var(--ink-soft);font-size:13px;}
+
+  footer{margin-top:26px;padding-top:16px;border-top:1px solid var(--line);font-size:12.5px;color:var(--ink-soft);line-height:1.7;}
+  footer b{color:var(--ink);font-weight:600;}
+  .notebox{width:100%;margin-top:10px;font-family:inherit;font-size:13px;color:var(--ink);
+    background:#fffdf2;border:1px dashed #d8c98f;border-radius:6px;padding:8px 10px;min-height:44px;resize:vertical;}
+  .notebox:focus{outline:none;border-color:var(--accent);border-style:solid;}
+  .notebox::placeholder{color:#a89f7e;}
+  @media print{.notebox:placeholder-shown{display:none;}}
+  @media print{body{background:#fff;padding:0;font-size:11.5px;}.person,.chain,.principle{box-shadow:none;break-inside:avoid;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="kicker">The Afterschool Collective</div>
+    <h1>Company Role &amp; Flow Map</h1>
+    <p class="lede">Every function the company needs, assigned to a role. Reflects Jessica's June 9 role adjustments. One open item is flagged for discussion: pickup coordination timing.</p>
+  </header>
+
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin:18px 0 6px;">
+    <button onclick="copyNotes()" style="font-family:inherit;font-weight:600;font-size:14px;border-radius:6px;padding:9px 16px;cursor:pointer;background:var(--accent);color:#fff;border:1px solid var(--accent);" id="copybtn">Copy my notes</button>
+    <button onclick="window.print()" style="font-family:inherit;font-weight:600;font-size:14px;border-radius:6px;padding:9px 16px;cursor:pointer;background:#fff;color:var(--ink);border:1px solid var(--line);">Print / Save as PDF</button>
+    <span style="font-size:12.5px;color:var(--ink-soft);align-self:center;">Type notes on any card below; they save automatically in your browser. When done, click Copy my notes and paste into your reply.</span>
+  </div>
+
+  <div class="principles">
+    <div class="principle ph"><div class="who">Heather</div><div class="rule">Anything financial, enrollment, or system-level is Heather's.</div></div>
+    <div class="principle pj"><div class="who">Jessica</div><div class="rule">Growth: sales, partnerships, HR, payroll.</div></div>
+    <div class="principle pr"><div class="who">Rebecca</div><div class="rule">Runs the lab: scheduling, training, pickup, the floor.</div></div>
+    <div class="principle pk"><div class="who">Kevin</div><div class="rule">Supplies, third-party programs, lab support &amp; upkeep.</div></div>
+  </div>
+
+  <div class="sec">Current Roles</div>
+  <div class="grid">
+
+    <div class="person h">
+      <div class="phead"><span class="pname">Heather</span><span class="ptitle">Administrative Director — families, money, systems</span></div>
+      <div class="pbar"></div>
+      <div class="gh">Families &amp; enrollment</div>
+      <div class="duty"><span class="t">Family inquiries, student onboarding &amp; welcome</span></div>
+      <div class="duty"><span class="t">End-of-semester re-registration wind-down</span></div>
+      <div class="duty"><span class="t">Homeschool program</span></div>
+      <div class="duty"><span class="t">Birthday party booking &amp; staffing</span></div>
+      <div class="gh">Money</div>
+      <div class="duty"><span class="t">All billing, credits, refunds (org-wide carve-out)</span></div>
+      <div class="duty"><span class="t">DOE contracts: PO &rarr; invoice &rarr; payment</span></div>
+      <div class="gh">Staff paperwork</div>
+      <div class="duty"><span class="t">Onboarding document flow (W-9, Checkr, file completeness)</span><span class="tag in">In, from Jessica</span></div>
+      <div class="gh">Systems</div>
+      <div class="duty"><span class="t">Airtable architecture, pickup app, automations, template library</span></div>
+      <div class="duty"><span class="t">Homebase shift-entry SOP (author; knowledge holder)</span></div>
+    </div>
+
+    <div class="person j">
+      <div class="phead"><span class="pname">Jessica</span><span class="ptitle">Owner — growth, sales, HR &amp; pay</span></div>
+      <div class="pbar"></div>
+      <div class="gh">Growth</div>
+      <div class="duty"><span class="t">Partnership / contract sales (schools, orgs, DOE work orders)</span></div>
+      <div class="duty"><span class="t">Quotes &amp; work orders (hands to Heather at the PO)</span></div>
+      <div class="duty"><span class="t">Client check-ins on contract success</span><span class="tag in">Interim, w/ Kevin</span></div>
+      <div class="gh">HR (managing for now)</div>
+      <div class="duty"><span class="t">Interviewing, hiring, onboarding, evaluations</span><span class="tag in">Per Jun 9 email</span></div>
+      <div class="duty"><span class="t">Payroll run (Rebecca feeds verified hours Wednesdays)</span></div>
+      <div class="gh">Finance</div>
+      <div class="duty"><span class="t">Year-end closeout, 1099s</span></div>
+      <div class="duty"><span class="t">Gift cards / promo codes</span></div>
+    </div>
+
+    <div class="person r">
+      <div class="phead"><span class="pname">Rebecca</span><span class="ptitle">Studio Manager — runs the lab</span></div>
+      <div class="pbar"></div>
+      <div class="gh">Scheduling &amp; hours</div>
+      <div class="duty"><span class="t">Scheduling of the STEAM Lab: afterschool &amp; camps (Homebase)</span><span class="tag in">Confirmed Jun 9</span></div>
+      <div class="duty"><span class="t">Confirming hours worked (Wednesdays) &rarr; feeds payroll</span></div>
+      <div class="gh">Pickup</div>
+      <div class="duty"><span class="t">Pickup coordination &amp; daily pickup ops (live now, with Heather)</span><span class="tag out">Timing flagged</span></div>
+      <div class="duty"><span class="t">Absence &amp; change requests (lab)</span></div>
+      <div class="gh">Camp &amp; people</div>
+      <div class="duty"><span class="t">Camp curriculum selection &amp; instructor emails</span><span class="tag in">Confirmed Jun 9</span></div>
+      <div class="duty"><span class="t">Intern liaison</span><span class="tag in">Confirmed Jun 9</span></div>
+      <div class="duty"><span class="t">Onboarding &amp; training for STEAM Lab employees + org-wide standard</span><span class="tag in">Confirmed Jun 9</span></div>
+      <div class="duty"><span class="t">Incident / injury handling + the instructor standard for it</span></div>
+      <div class="duty"><span class="t">Floor authority: staff, kids, in-person parents, the space</span></div>
+      <div class="gh">Communication &amp; admin</div>
+      <div class="duty"><span class="t">Lab phone (best-effort; floor first)</span></div>
+      <div class="duty"><span class="t">ClassDojo: third-party posts &amp; parent replies</span></div>
+      <div class="duty"><span class="t">Safety policies: compile &rarr; Becky &rarr; Heather</span></div>
+      <div class="duty"><span class="t">Space rental walkthrough &middot; Square reader (early/late days)</span></div>
+      <div class="duty"><span class="t">Open the lab &middot; close on Fridays only</span><span class="tag out">Close &rarr; Kevin M-Th</span></div>
+      <div class="duty"><span class="t">Supply &amp; snack basics, high-level inventory eye</span></div>
+    </div>
+
+    <div class="person k">
+      <div class="phead"><span class="pname">Kevin</span><span class="ptitle">Operations Support — supplies, third-party, lab upkeep</span></div>
+      <div class="pbar"></div>
+      <div class="gh">Priority focus</div>
+      <div class="duty"><span class="t">Summer supply readiness (defined list of what's operable in the lab)</span><span class="tag in">Sole focus, Jun 9</span></div>
+      <div class="gh">Weekly lab support</div>
+      <div class="duty"><span class="t">Tuesdays: support Gina's Make &amp; Take — photos + co-manage students</span><span class="tag in">New, Jun 9</span></div>
+      <div class="duty"><span class="t">Wednesdays: support Teresa's Robotics — photos + co-manage students</span><span class="tag in">New, Jun 9</span></div>
+      <div class="duty"><span class="t">End-of-day studio tidy-up (except Fridays) — return lab to opening state</span><span class="tag in">From Rebecca</span></div>
+      <div class="gh">Third-party &amp; upkeep</div>
+      <div class="duty"><span class="t">Manage 3rd party supplies &amp; curriculum</span></div>
+      <div class="duty"><span class="t">Manage third-party substitutes</span></div>
+      <div class="duty"><span class="t">Lab handyman</span></div>
+      <div class="openq"><b>Holding until the new role is filled:</b> client &amp; instructor contract check-ins, QC, birthday party supplies, curriculum management, subs. <b>Curriculum oversight:</b> Rebecca for lab/camp curriculum; the new role for third-party (Jessica interim, since she knows what each contract promised). Not Heather, by design.</div>
+    </div>
+
+  </div>
+
+  <div class="sec">Open Roles &amp; Projects</div>
+  <div class="grid">
+
+    <div class="person n">
+      <div class="phead"><span class="pname">New Role (name TBD)</span><span class="ptitle">Customer Success / Third-Party Coordinator — Kevin holding until filled</span></div>
+      <div class="pbar"></div>
+      <div class="gh">Customer success</div>
+      <div class="duty"><span class="t">Client check-ins: contract guidelines met, quality control</span></div>
+      <div class="duty"><span class="t">Instructor check-ins: guidelines, quality, supplies in good order &amp; stored</span></div>
+      <div class="gh">Third-party contracts</div>
+      <div class="duty"><span class="t">3rd party supplies incl. birthday parties</span></div>
+      <div class="duty"><span class="t">Curriculum management</span></div>
+      <div class="duty"><span class="t">Substitutes</span></div>
+      <div class="openq"><b>Per Jessica:</b> distinct skill sets in here may suit different people. Define the gaps at the next mgmt call before offering internally or looking outside.</div>
+    </div>
+
+    <div class="person n">
+      <div class="phead"><span class="pname">Contractor Project</span><span class="ptitle">Inventory Management System — Josue pending</span></div>
+      <div class="pbar"></div>
+      <div class="duty"><span class="t">Track inventory in studio, checked out to staff, deployed offsite</span></div>
+      <div class="duty"><span class="t">Return dates, damaged/missing materials</span></div>
+      <div class="duty"><span class="t">QR-code check-in/check-out, mobile-friendly for instructors</span></div>
+      <div class="openq"><b>Goal:</b> reduce summer camp chaos, org-wide visibility. Full scope in Jessica's Jun 9 attachment.</div>
+    </div>
+
+  </div>
+
+  <div class="sec">How work flows between roles</div>
+
+  <div class="chain">
+    <div class="cname">The hiring chain</div>
+    <div class="flow">
+      <span class="step sj">Jessica: interview, hire, evaluate</span><span class="arr">&rarr;</span>
+      <span class="step sh">Heather: papers (W-9, Checkr, files)</span><span class="arr">&rarr;</span>
+      <span class="step sr">Rebecca: trains lab staff, sets the standard</span><span class="arr">&rarr;</span>
+      <span class="step sk">Kevin: third-party staff follow that standard</span>
+    </div>
+  </div>
+
+  <div class="chain">
+    <div class="cname">The contract chain</div>
+    <div class="flow">
+      <span class="step sj">Jessica sells &amp; quotes (work order)</span><span class="arr">&rarr;</span>
+      <span class="step sk">Kevin: supplies, subs, third-party logistics</span><span class="arr">&rarr;</span>
+      <span class="step sn">New role: client &amp; instructor check-ins, QC</span><span class="arr">&rarr;</span>
+      <span class="step sh">Heather invoices the PO &rarr; payment</span>
+    </div>
+  </div>
+
+  <div class="chain">
+    <div class="cname">The payroll chain</div>
+    <div class="flow">
+      <span class="step sr">Rebecca confirms hours (Wednesdays)</span><span class="arr">&rarr;</span>
+      <span class="step sj">Jessica runs payroll (Homebase &rarr; QBO)</span>
+    </div>
+  </div>
+
+  <div class="chain">
+    <div class="cname">The family chain</div>
+    <div class="flow">
+      <span class="step sh">Heather enrolls &amp; onboards the family</span><span class="arr">&rarr;</span>
+      <span class="step sr">Rebecca runs their daily experience at the lab</span><span class="arr">&rarr;</span>
+      <span class="step sh">Anything money/enrollment returns to Heather</span>
+    </div>
+  </div>
+
+  <div class="chain">
+    <div class="cname">The content chain</div>
+    <div class="flow">
+      <span class="step sk">Kevin photos Tue/Wed classes</span><span class="arr">&rarr;</span>
+      <span class="step sr">Rebecca: ClassDojo voice &amp; third-party posts</span><span class="arr">&rarr;</span>
+      <span class="step sj">Dilia publishes social</span>
+    </div>
+  </div>
+
+  <footer>
+    <b>Reflects Jessica's June 9 decisions:</b> Kevin supports Tue/Wed classes with photos, owns end-of-day tidy-up except Fridays, and focuses on summer supply readiness; Jessica manages HR; the new role is Customer Success / Third-Party Coordination (Kevin holding); the inventory system is a contractor project (Josue pending). <b>One item flagged for discussion, not yet matched:</b> pickup coordination is shown as live now with Rebecca and Heather rather than starting next semester.
+  </footer>
+
+</div>
+
+<div class="wrap" style="margin-top:6px;">
+  <div class="sec">General comments</div>
+  <textarea class="notebox" id="note-general" placeholder="Anything else — overall thoughts, the new role, timing..." style="min-height:80px;"></textarea>
+</div>
+<script>
+(function(){
+  var cards=document.querySelectorAll('.person, .chain');
+  cards.forEach(function(c,i){
+    var label=c.querySelector('.pname, .cname');
+    var id='note-'+(label?label.textContent.trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').slice(0,40):('card-'+i));
+    var t=document.createElement('textarea');
+    t.className='notebox'; t.id=id;
+    t.placeholder='Jessica\'s notes on this...';
+    c.appendChild(t);
+  });
+  var boxes=document.querySelectorAll('.notebox');
+  try{
+    boxes.forEach(function(b){
+      var s=localStorage.getItem('tacmap_'+b.id); if(s) b.value=s;
+      b.addEventListener('input',function(){try{localStorage.setItem('tacmap_'+b.id,b.value);}catch(e){}});
+    });
+  }catch(e){}
+  window.copyNotes=function(){
+    var out='NOTES ON THE TAC ROLE & FLOW MAP\n\n';
+    document.querySelectorAll('.notebox').forEach(function(b){
+      if(b.value.trim()){
+        var card=b.closest('.person, .chain');
+        var label=card?card.querySelector('.pname, .cname'):null;
+        var name=label?label.textContent.trim():(b.id==='note-general'?'General comments':'Note');
+        out+=name.toUpperCase()+'\n'+b.value.trim()+'\n\n';
+      }
+    });
+    if(out.trim()==='NOTES ON THE TAC ROLE & FLOW MAP'){out+='(no notes typed yet)\n';}
+    navigator.clipboard.writeText(out).then(function(){
+      var btn=document.getElementById('copybtn'); var o=btn.textContent;
+      btn.textContent='Copied!'; setTimeout(function(){btn.textContent=o;},1600);
+    },function(){alert('Copy failed, select and copy manually.');});
+  };
+})();
+</script>
+</body>
+</html>
