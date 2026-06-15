@@ -5,11 +5,7 @@
       "maxDuration": 30
     }
   },
-  "routes": [
-    { "src": "/flowchart", "dest": "/flowchart.html" },
-    { "src": "/(.*)", "dest": "/$1" }
+  "rewrites": [
+    { "source": "/flowchart", "destination": "/flowchart.html" }
   ]
 }
-
-
-Allow flowchart route
