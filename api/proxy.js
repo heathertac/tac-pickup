@@ -154,6 +154,7 @@ module.exports = async function handler(req, res) {
           instructorName,
           instructorPhotoUrl,
           parentDropoff: assignment?.parentDropoff || false,
+          labArrivalTime: f['Lab Arrival Time'] || '',
           isOverride: false, // removed — "Sub" badge was misleading
         });
       }
