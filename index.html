@@ -364,7 +364,13 @@ body=`${greeting} This is your instructor from The Afterschool Collective. I'm o
 body=`${greeting} ${firstName} has been safely picked up and is on the way back to the studio. See you at pickup time!`;
 }
 const phone=(s.pickupPhone||'').replace(/\D/g,'');
-window.open((phone?`sms:${phone}`:'sms:')+`?body=${encodeURIComponent(body)}`,'_self');
+const smsUrl=(phone?`sms:${phone}`:'sms:')+`?body=${encodeURIComponent(body)}`;
+const a=document.createElement('a');
+a.href=smsUrl;
+a.style.display='none';
+document.body.appendChild(a);
+a.click();
+document.body.removeChild(a);
 }
 
 function showUndoToast(id,name,action,onCommit){
@@ -431,7 +437,12 @@ const text=document.getElementById('urgentText').value.trim();
 const s=roster.find(x=>x.studentId===urgentStudentId);
 closeUrgentSheet();
 const msg=`🚨 URGENT — ${s?.studentName||'Student'} situation at pickup. ${text} [${todayStr}]`;
-window.open(`sms:${REBECCA_PHONE}?body=${encodeURIComponent(msg)}`,'_self');
+const a=document.createElement('a');
+a.href=`sms:${REBECCA_PHONE}?body=${encodeURIComponent(msg)}`;
+a.style.display='none';
+document.body.appendChild(a);
+a.click();
+document.body.removeChild(a);
 await proxy('logIncident',{description:msg,type:'Missing Student',severity:'High'});
 }
 
@@ -442,6 +453,9 @@ function render(){
 const list=todayList();
 const doneCount=Object.values(states).filter(s=>s==='done').length;
 const absentCount=Object.values(states).filter(s=>s==='absent').length;
+const normalTotal=roster.length;
+const noPickupCount=roster.filter(s=>noPickupToday.includes(s.studentId)).length;
+const expectedToday=normalTotal-noPickupCount;
 const todayChanges=changes.filter(c=>(c.fields||{})['Change Summary']);
 const instructors=getInstructors();
 document.getElementById('app').innerHTML=`
@@ -453,7 +467,7 @@ ${isOffline?`<div class="offline-bar"><i class="ti ti-wifi-off"></i> Offline —
 </div>
 <a href="tel:${REBECCA_PHONE}" class="emergency-bar"><i class="ti ti-phone" style="font-size:13px"></i> Emergency: Rebecca (770) 547-1075</a>
 <div class="stats">
-<div class="stat"><div class="stat-n">${roster.length}</div><div class="stat-l">Expected</div></div>
+<div class="stat"><div class="stat-n">${noPickupCount>0?`${expectedToday} <span style="font-size:13px;color:#888;font-weight:500">of ${normalTotal}</span>`:normalTotal}</div><div class="stat-l">Expected${noPickupCount>0?` (${noPickupCount} out)`:''}</div></div>
 <div class="stat"><div class="stat-n green">${doneCount}</div><div class="stat-l">Picked up</div></div>
 <div class="stat"><div class="stat-n ${absentCount>0?'red':''}">${absentCount}</div><div class="stat-l">Absent</div></div>
 </div>
