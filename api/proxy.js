@@ -214,6 +214,7 @@ module.exports = async function handler(req, res) {
           school: f['School']?.name || f['School'] || '',
           grade: f['Grade']?.name || f['Grade'] || '',
           teacher: f['Homeroom Teacher'] || '',
+          classroom: f['Classroom'] || '',
           pickupPhone,
           pickupName: f['Pickup Contact Name'] || '',
           notes: f['Notes (Nice to Know)'] || '',
