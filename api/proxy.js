@@ -7,6 +7,18 @@ module.exports = async function handler(req, res) {
   const TOKEN = process.env.AIRTABLE_API_KEY;
   const BASE = 'appnWviGYgpWT2VPH';
 
+  // ---------------------------------------------------------------------
+  // TEST MODE
+  // Activated ONLY by a ?testdate=YYYY-MM-DD parameter on the app URL,
+  // which index.html forwards here. There is no button and no UI for it.
+  // When active:
+  //   - the semester window and closure list are ignored, so any date works
+  //   - every parent phone is replaced with TEST_PHONE below
+  //   - nothing is written to the Incidents table
+  // Remove nothing here to "go live" — with no parameter, this code is inert.
+  // ---------------------------------------------------------------------
+  const TEST_PHONE = '8036032328'; // Heather's mobile
+
   async function get(table, params='') {
     const r = await fetch(`https://api.airtable.com/v0/${BASE}/${table}?${params}`, {
       headers: { Authorization: `Bearer ${TOKEN}` }
@@ -33,6 +45,13 @@ module.exports = async function handler(req, res) {
     if (s.startsWith('th')) return 'thu';
     if (s.startsWith('fr')) return 'fri';
     return s.slice(0, 3);
+  }
+
+  // Weekday for an ISO date string, computed in UTC so it can never drift
+  // by a day depending on where the server happens to be running.
+  function isoWeekday(iso) {
+    const p = String(iso).split('-');
+    return new Date(Date.UTC(+p[0], +p[1] - 1, +p[2])).getUTCDay();
   }
 
   // Semester windows. Outside every window the roster comes back EMPTY —
@@ -75,18 +94,27 @@ module.exports = async function handler(req, res) {
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
     const { action } = body || {};
 
+    // Only an exact YYYY-MM-DD string turns test mode on. Anything else is ignored.
+    const testDate =
+      body && typeof body.testdate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(body.testdate)
+        ? body.testdate
+        : null;
+
     if (action === 'getTodayRoster') {
-      const today = new Date();
-      const todayISO = today.toISOString().slice(0, 10);
       const days = ['sun','mon','tue','wed','thu','fri','sat'];
-      const todayDay = days[today.getDay()];
+      const today = new Date();
+      const todayISO = testDate || today.toISOString().slice(0, 10);
+      const todayDay = testDate ? days[isoWeekday(testDate)] : days[today.getDay()];
 
-      if (!inSemester(todayISO)) {
-        return res.status(200).json({ roster: [], closedReason: 'Between semesters' });
-      }
-
-      if (CLOSED_DATES.includes(todayISO) || todayDay === 'sat' || todayDay === 'sun') {
-        return res.status(200).json({ roster: [] });
+      // Live behaviour only. In test mode every date is allowed through so the
+      // screen can be walked before the semester opens.
+      if (!testDate) {
+        if (!inSemester(todayISO)) {
+          return res.status(200).json({ roster: [], closedReason: 'Between semesters' });
+        }
+        if (CLOSED_DATES.includes(todayISO) || todayDay === 'sat' || todayDay === 'sun') {
+          return res.status(200).json({ roster: [] });
+        }
       }
 
       const [students, staff, assignments] = await Promise.all([
@@ -175,6 +203,10 @@ module.exports = async function handler(req, res) {
         const instructorPhotoUrl = assignment?.instructorPhotoUrl || null;
         const pickupLocationId = assignment?.locationId || defaultLocId || '';
 
+        // In test mode every text goes to Heather, never to a family.
+        const realPhone = f['Pickup Contact Phone'] || '';
+        const pickupPhone = testDate ? (realPhone ? TEST_PHONE : '') : realPhone;
+
         roster.push({
           studentId: r.id,
           studentName,
@@ -182,7 +214,7 @@ module.exports = async function handler(req, res) {
           school: f['School']?.name || f['School'] || '',
           grade: f['Grade']?.name || f['Grade'] || '',
           teacher: f['Homeroom Teacher'] || '',
-          pickupPhone: f['Pickup Contact Phone'] || '',
+          pickupPhone,
           pickupName: f['Pickup Contact Name'] || '',
           notes: f['Notes (Nice to Know)'] || '',
           pickupLocationId,
@@ -195,7 +227,7 @@ module.exports = async function handler(req, res) {
         });
       }
 
-      return res.status(200).json({ roster });
+      return res.status(200).json({ roster, testMode: !!testDate, testDate: testDate || null });
     }
 
     if (action === 'getLocations') {
@@ -204,7 +236,7 @@ module.exports = async function handler(req, res) {
     }
 
     if (action === 'getChanges') {
-      const todayISO = new Date().toISOString().slice(0, 10);
+      const todayISO = testDate || new Date().toISOString().slice(0, 10);
       const d = await get('tblEdgjx4phKSj4wS',
         `filterByFormula=DATESTR({Affected Pickup Date})="${todayISO}"`);
       const records = d.records || [];
@@ -228,6 +260,10 @@ module.exports = async function handler(req, res) {
     }
 
     if (action === 'logIncident') {
+      // Test mode never writes to the audit log.
+      if (testDate) {
+        return res.status(200).json({ skipped: true, testMode: true });
+      }
       const { description, type, severity } = body;
       const r = await fetch(`https://api.airtable.com/v0/${BASE}/tblBrZKAPGrg893o1`, {
         method: 'POST',
