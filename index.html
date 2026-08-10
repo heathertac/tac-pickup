@@ -1,581 +1,259 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>TAC Pickup</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
-<style>
-*{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f5;min-height:100vh;}
-.app{max-width:420px;margin:0 auto;background:#fff;min-height:100vh;}
-.header{background:#fff;border-bottom:3px solid #E8420A;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;}
-.header-logo{height:44px;width:auto;object-fit:contain;}
-.header-logo-fallback{display:none;}
-.day-pill{background:#f5f5f5;color:#555;font-size:12px;font-weight:500;padding:5px 14px;border-radius:999px;border:1px solid #e5e5e5;white-space:nowrap;}
-.emergency-bar{display:flex;align-items:center;justify-content:center;gap:6px;background:#f5f5f5;color:#555;font-size:11px;font-weight:500;padding:5px 16px;text-decoration:none;letter-spacing:0.02em;width:100%;border-bottom:0.5px solid #e5e5e5;}
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:12px 16px 0;}
-.stat{background:#f5f5f5;border-radius:8px;padding:10px 12px;}
-.stat-n{font-size:22px;font-weight:600;color:#1C1C1C;}
-.stat-n.green{color:#2E7D32;}
-.stat-n.red{color:#C0392B;}
-.stat-l{font-size:10px;color:#888;margin-top:2px;}
-.alert-box{margin:12px 16px 0;border-radius:12px;overflow:hidden;border:1px solid #F09595;}
-.alert-hdr{background:#FCEBEB;padding:10px 14px;display:flex;align-items:center;gap:8px;}
-.alert-hdr-text{font-size:12px;font-weight:600;color:#A32D2D;}
-.alert-item{background:#fff;border-top:1px solid #F09595;padding:10px 14px;}
-.alert-name{font-size:14px;font-weight:500;color:#1C1C1C;}
-.clear-bar{margin:12px 16px 0;background:#E8F5E9;border:1px solid #A5D6A7;border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:8px;}
-.clear-text{font-size:13px;color:#2E7D32;font-weight:500;}
-.filter-bar{padding:12px 16px 0;display:flex;gap:6px;flex-wrap:wrap;}
-.filter-pill{background:#f5f5f5;border:1px solid #e5e5e5;color:#555;font-size:12px;font-weight:500;padding:5px 12px;border-radius:999px;cursor:pointer;display:flex;align-items:center;gap:5px;white-space:nowrap;}
-.filter-pill.active{background:#E8420A;border-color:#E8420A;color:#fff;}
-.filter-pill img{width:20px;height:20px;border-radius:50%;object-fit:cover;}
-.section-hdr{padding:14px 16px 8px;display:flex;align-items:center;justify-content:space-between;}
-.section-title{font-size:12px;font-weight:600;color:#E8420A;letter-spacing:0.05em;text-transform:uppercase;}
-.count-chip{font-size:11px;color:#888;background:#f5f5f5;padding:2px 8px;border-radius:999px;}
-.cards{padding:0 16px 80px;display:flex;flex-direction:column;gap:10px;}
-.stop-group{margin-top:14px;}
-.stop-group:first-child{margin-top:0;}
-.stop-hdr{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#2B5CE6;border-radius:10px;margin-bottom:8px;}
-.stop-hdr-icon{flex-shrink:0;width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,0.15);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;}
-.stop-hdr-text{flex:1;min-width:0;}
-.stop-hdr-name{font-size:14px;font-weight:500;color:#fff;line-height:1.2;}
-.stop-hdr-time{font-size:12px;color:rgba(255,255,255,0.75);font-weight:500;margin-top:1px;}
-.stop-hdr-count{flex-shrink:0;font-size:12px;color:#fff;background:rgba(255,255,255,0.15);padding:3px 10px;border-radius:999px;font-weight:500;}
-.stop-group .cards-inner{display:flex;flex-direction:column;gap:10px;}
-.card{background:#fff;border:1px solid #e5e5e5;border-radius:12px;overflow:hidden;}
-.card.enroute{border-color:#D4840A;border-width:2px;background:#FEF3DC;}
-.card.done{border-color:#2E7D32;border-width:2px;background:#E8F5E9;}
-.card.absent{border-color:#64748B;border-width:2px;background:#F1F5F9;opacity:0.95;}
-.card-accent{height:3px;background:#E8420A;}
-.card-accent.enroute{background:#D4840A;}
-.card-accent.done{background:#2E7D32;}
-.card-accent.absent{background:#64748B;}
-.card-top{padding:14px 14px 10px;display:flex;align-items:center;gap:12px;}
-.av{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;flex-shrink:0;overflow:hidden;border:2px solid #e5e5e5;background:#f5f5f5;color:#333;}
-.av.small{width:40px;height:40px;font-size:14px;}
-.av img{width:100%;height:100%;object-fit:cover;}
-.av.enroute{border-color:#D4840A;background:#FEF3DC;}
-.av.done{border-color:#2E7D32;background:#E8F5E9;color:#2E7D32;}
-.av.absent{border-color:#64748B;background:#F1F5F9;color:#64748B;}
-.sname{font-size:16px;font-weight:600;color:#1C1C1C;}
-.sstatus{font-size:12px;color:#888;margin-top:2px;display:flex;align-items:center;gap:5px;}
-.sstatus.enroute{color:#92540A;font-weight:500;}
-.sstatus.done{color:#2E7D32;font-weight:600;}
-.sstatus.absent{color:#64748B;}
-.sdot{width:6px;height:6px;border-radius:50%;background:#E8420A;flex-shrink:0;}
-.sdot.enroute{background:#D4840A;}
-.sdot.done{background:#2E7D32;}
-.sdot.absent{background:#64748B;}
-.info-row{display:flex;align-items:center;gap:6px;margin-top:4px;flex-wrap:wrap;}
-.school-chip{display:inline-flex;align-items:center;gap:4px;background:#EEF2FF;border:1px solid #C7D2FE;border-radius:6px;padding:2px 8px;font-size:11px;color:#2B5CE6;}
-.time-chip{display:inline-flex;align-items:center;gap:4px;background:#FEF3DC;border:1px solid #F0C97A;border-radius:6px;padding:2px 8px;font-size:11px;color:#92540A;font-weight:600;}
-.teacher-line{font-size:11px;color:#aaa;margin-top:2px;}
-.instr-chip{display:flex;align-items:center;gap:5px;background:#f5f5f5;border:1px solid #e5e5e5;border-radius:999px;padding:3px 10px 3px 4px;flex-shrink:0;}
-.instr-photo{width:24px;height:24px;border-radius:50%;object-fit:cover;}
-.instr-name{font-size:11px;color:#333;font-weight:500;}
-.parent-row{margin:0 14px 6px;padding:8px 12px;background:#f5f5f5;border-radius:8px;}
-.parent-contacts{display:flex;flex-direction:column;gap:6px;}
-.parent-contact{display:flex;align-items:center;justify-content:space-between;gap:8px;}
-.parent-name{font-size:12px;color:#666;}
-.parent-phone{font-size:11px;color:#888;font-family:monospace;opacity:0.8;}
-.no-phone{font-size:11px;color:#aaa;font-style:italic;}
-.card-actions{padding:0 14px 10px;display:flex;gap:8px;}
-.btn-action{flex:1;padding:11px;border-radius:8px;border:1px solid #e5e5e5;background:#f5f5f5;color:#333;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;}
-.btn-enroute{border-color:#E8420A;background:#E8420A;color:#fff;}
-.btn-picked{border-color:#2E7D32;background:#2E7D32;color:#fff;}
-.btn-absent{border-color:#94A3B8;background:#F1F5F9;color:#475569;font-size:12px;}
-.absent-note{margin:0 14px 12px;}
-.absent-note-label{font-size:11px;color:#64748B;font-weight:500;margin-bottom:5px;display:flex;align-items:center;gap:4px;}
-.absent-input{width:100%;border:1px solid #CBD5E1;border-radius:8px;padding:9px 12px;font-size:13px;font-family:inherit;color:#1C1C1C;resize:none;outline:none;background:#F8FAFC;}
-.btn-absent-send{flex:1;background:#475569;border:none;color:#fff;border-radius:8px;padding:9px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;}
-.post-pickup{padding:0 14px 12px;}
-.note-row-wrap{display:flex;gap:8px;align-items:stretch;}
-.btn-note-main{flex:1;background:#F1F5F9;border:1px solid #CBD5E1;color:#475569;font-size:13px;font-weight:600;border-radius:8px;padding:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;min-height:42px;}
-.btn-urgent-icon{flex-shrink:0;width:42px;height:42px;border-radius:8px;background:#FCEBEB;border:1px solid #E89999;color:#A32D2D;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;}
-.note-form{display:flex;flex-direction:column;gap:6px;}
-.note-input{width:100%;border:1px solid #ddd;border-radius:8px;padding:9px 12px;font-size:13px;font-family:inherit;color:#1C1C1C;resize:none;outline:none;}
-.note-row{display:flex;gap:6px;}
-.btn-note-send{flex:1;background:#E8420A;border:none;color:#fff;border-radius:8px;padding:9px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;}
-.btn-note-cancel{background:#f5f5f5;border:none;color:#888;border-radius:8px;padding:9px 14px;font-size:13px;cursor:pointer;}
-.note-sent-row{display:flex;align-items:center;justify-content:space-between;gap:8px;}
-.note-sent{font-size:12px;color:#2E7D32;display:flex;align-items:center;gap:5px;}
-.sheet-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;display:flex;align-items:flex-end;justify-content:center;}
-.sheet{background:#fff;border-radius:16px 16px 0 0;width:100%;max-width:420px;padding:20px 20px 36px;}
-.sheet-handle{width:36px;height:4px;background:#ddd;border-radius:2px;margin:0 auto 16px;}
-.sheet-title{font-size:17px;font-weight:700;color:#1C1C1C;margin-bottom:6px;}
-.sheet-title.danger{color:#C0392B;}
-.sheet-student{font-size:15px;color:#E8420A;font-weight:600;margin-bottom:4px;}
-.sheet-sub{font-size:13px;color:#888;margin-bottom:18px;line-height:1.4;}
-.sheet-input{width:100%;border:1px solid #FFBDBD;border-radius:10px;padding:12px;font-size:14px;font-family:inherit;color:#1C1C1C;resize:none;outline:none;min-height:80px;background:#FFF5F5;}
-.sheet-actions{display:flex;gap:8px;margin-top:12px;}
-.sheet-actions.col{flex-direction:column;}
-.btn-confirm-enroute{flex:1;background:#E8420A;border:none;color:#fff;border-radius:10px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;}
-.btn-confirm-pickup{width:100%;background:#2E7D32;border:none;color:#fff;border-radius:10px;padding:14px;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;}
-.btn-confirm-pickup-nophoto{width:100%;background:#f5f5f5;border:1px solid #e5e5e5;color:#333;border-radius:10px;padding:14px;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;}
-.btn-urgent-send{flex:1;background:#C0392B;border:none;color:#fff;border-radius:10px;padding:13px;font-size:14px;font-weight:600;cursor:pointer;}
-.btn-sheet-confirm{flex:1;background:#2E7D32;border:none;color:#fff;border-radius:10px;padding:13px;font-size:14px;font-weight:600;cursor:pointer;}
-.btn-sheet-cancel{width:100%;background:#f5f5f5;border:none;color:#555;border-radius:10px;padding:12px 18px;font-size:14px;font-weight:500;cursor:pointer;text-align:center;}
-.undo-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1C1C1C;color:#fff;border-radius:10px;padding:12px 18px;font-size:13px;display:flex;align-items:center;gap:12px;z-index:300;box-shadow:0 4px 20px rgba(0,0,0,0.25);white-space:nowrap;}
-.undo-toast-text{flex:1;}
-.undo-toast-btn{background:#E8420A;border:none;color:#fff;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;}
-.undo-toast-bar{position:absolute;bottom:0;left:0;height:3px;background:#E8420A;border-radius:0 0 10px 10px;animation:shrink 5s linear forwards;}
-@keyframes shrink{from{width:100%;}to{width:0%;}}
-.override-badge{display:inline-flex;align-items:center;gap:3px;background:#FEF3C7;border:1px solid #F59E0B;border-radius:4px;padding:1px 6px;font-size:10px;color:#92400E;margin-left:6px;}
-.offline-bar{background:#FEF3DC;border-bottom:1px solid #D4840A;padding:6px 16px;font-size:11px;color:#92540A;display:flex;align-items:center;gap:6px;}
-.loading{padding:60px 16px;text-align:center;}
-.spin{display:inline-block;width:28px;height:28px;border:3px solid #f5f5f5;border-top-color:#E8420A;border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:14px;}
-@keyframes spin{to{transform:rotate(360deg);}}
-.loading-t{font-size:14px;color:#888;}
-.hidden-camera{display:none;}
-</style>
-</head>
-<body>
-<div class="app" id="app">
-<div class="loading"><div class="spin"></div><div class="loading-t">Loading today's roster…</div></div>
-</div>
+module.exports = async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') return res.status(200).end();
 
-<input type="file" accept="image/*" capture="environment" id="cameraInput" class="hidden-camera" onchange="handlePhotoTaken(event)">
+  const TOKEN = process.env.AIRTABLE_API_KEY;
+  const BASE = 'appnWviGYgpWT2VPH';
 
-<!-- CONFIRM EN ROUTE SHEET -->
-<div class="sheet-overlay" id="enrouteSheet" style="display:none" onclick="closeSheetOnBg(event,'enrouteSheet')">
-<div class="sheet">
-<div class="sheet-handle"></div>
-<div class="sheet-title">Heading to pickup?</div>
-<div class="sheet-student" id="enrouteStudentName"></div>
-<div class="sheet-sub">This will text the parent that you're on your way. Make sure you're actually leaving now.</div>
-<div class="sheet-actions">
-<button class="btn-sheet-cancel" style="width:auto;padding:14px 18px;" onclick="closeSheet('enrouteSheet')">Not yet</button>
-<button class="btn-confirm-enroute" onclick="confirmEnroute()"><i class="ti ti-walk" style="font-size:15px"></i> Yes, I'm on my way</button>
-</div>
-</div>
-</div>
+  async function get(table, params='') {
+    const r = await fetch(`https://api.airtable.com/v0/${BASE}/${table}?${params}`, {
+      headers: { Authorization: `Bearer ${TOKEN}` }
+    });
+    return r.json();
+  }
 
-<!-- CONFIRM PICKUP SHEET — two paths, no forced camera -->
-<div class="sheet-overlay" id="pickupSheet" style="display:none" onclick="closeSheetOnBg(event,'pickupSheet')">
-<div class="sheet">
-<div class="sheet-handle"></div>
-<div class="sheet-title">Child in your custody?</div>
-<div class="sheet-student" id="pickupStudentName"></div>
-<div class="sheet-sub">Choose how to send the pickup confirmation to the parent.</div>
-<div class="sheet-actions col">
-<button class="btn-confirm-pickup" onclick="confirmPickupWithPhoto()"><i class="ti ti-camera" style="font-size:15px"></i> Take photo, then send text</button>
-<button class="btn-confirm-pickup-nophoto" onclick="confirmPickupNoPhoto()"><i class="ti ti-send" style="font-size:15px"></i> Send text now, attach photo manually</button>
-<button class="btn-sheet-cancel" onclick="closeSheet('pickupSheet')">Not yet</button>
-</div>
-</div>
-</div>
+  async function getAllRecords(table, params='') {
+    let records = [], offset = null;
+    do {
+      const p = offset ? `${params}${params?'&':''}offset=${offset}` : params;
+      const d = await get(table, p);
+      records = records.concat(d.records || []);
+      offset = d.offset;
+    } while (offset);
+    return records;
+  }
 
-<!-- URGENT SHEET -->
-<div class="sheet-overlay" id="urgentOverlay" style="display:none" onclick="closeSheetOnBg(event,'urgentOverlay')">
-<div class="sheet">
-<div class="sheet-handle"></div>
-<div class="sheet-title danger">🚨 Urgent alert</div>
-<div class="sheet-sub" id="urgentSub"></div>
-<textarea class="sheet-input" id="urgentText" placeholder="Describe what's happening so the team can act immediately…"></textarea>
-<div class="sheet-actions">
-<button class="btn-sheet-cancel" style="width:auto;padding:13px 18px;" onclick="closeUrgentSheet()">Cancel</button>
-<button class="btn-urgent-send" onclick="sendUrgent()">Send alert now</button>
-</div>
-</div>
-</div>
+  function normDay(d) {
+    const s = (d || '').toLowerCase();
+    if (s.startsWith('mo')) return 'mon';
+    if (s.startsWith('tu')) return 'tue';
+    if (s.startsWith('we')) return 'wed';
+    if (s.startsWith('th')) return 'thu';
+    if (s.startsWith('fr')) return 'fri';
+    return s.slice(0, 3);
+  }
 
-<script>
-const TODAY=new Date();
-const DAYS_FULL=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-const todayFull=DAYS_FULL[TODAY.getDay()];
-const todayStr=`${MONTHS[TODAY.getMonth()]} ${TODAY.getDate()}`;
-const CACHE_KEY=`tac_roster_v6_${TODAY.toDateString()}`;
-const STATE_KEY=`tac_states_${TODAY.toDateString()}`;
-const REBECCA_PHONE='7705471075';
-const LOGO_URL='https://static.wixstatic.com/media/7e1448_415a7686f7774d038fce84f0816a76b2~mv2.png/v1/fill/w_320,h_125,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/ASC%20LOGO.png';
+  // Semester windows. Outside every window the roster comes back EMPTY —
+  // no program is running, so no cards, no stops. Add the spring term here
+  // when its dates are set, and the winter gap closes itself.
+  const SEMESTERS = [
+    { label: 'Fall 2026', start: '2026-09-06', end: '2026-12-26' },
+    // { label: 'Spring 2027', start: '2027-MM-DD', end: '2027-MM-DD' },
+  ];
 
-const INSTRUCTOR_PHOTO_CACHE = {};
+  function inSemester(iso) {
+    return SEMESTERS.some(s => iso >= s.start && iso <= s.end);
+  }
 
-function getInstrPhoto(name){
-  if(!name)return null;
-  return INSTRUCTOR_PHOTO_CACHE[name]||null;
-}
+  // Fall 2026 semester: week of Sep 6 through week of Dec 20, 2026.
+  // Source: TAC semester schedule (the closures parents see when purchasing).
+  // Weekends are already excluded below, so only weekdays are listed here.
+  // WARNING: a date wrongly listed here returns an EMPTY roster that day.
+  const CLOSED_DATES = [
+    // September — school year starts Thu Sep 10
+    '2026-09-07', // Labor Day
+    '2026-09-08',
+    '2026-09-09',
+    '2026-09-21', // Yom Kippur
+    '2026-09-30',
+    // October
+    '2026-10-12', // Italian Heritage / Indigenous Peoples' Day
+    // November
+    '2026-11-03', // Election Day
+    '2026-11-05',
+    '2026-11-11', // Veterans Day
+    '2026-11-26', // Thanksgiving
+    '2026-11-27',
+    // December — fall semester ends Wed Dec 23
+    '2026-12-24',
+    '2026-12-25',
+  ];
 
-function buildPhotoCache(){
-  roster.forEach(s=>{
-    if(s.instructorName&&s.instructorPhotoUrl){
-      INSTRUCTOR_PHOTO_CACHE[s.instructorName]=s.instructorPhotoUrl;
+  try {
+    const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+    const { action } = body || {};
+
+    if (action === 'getTodayRoster') {
+      const today = new Date();
+      const todayISO = today.toISOString().slice(0, 10);
+      const days = ['sun','mon','tue','wed','thu','fri','sat'];
+      const todayDay = days[today.getDay()];
+
+      if (!inSemester(todayISO)) {
+        return res.status(200).json({ roster: [], closedReason: 'Between semesters' });
+      }
+
+      if (CLOSED_DATES.includes(todayISO) || todayDay === 'sat' || todayDay === 'sun') {
+        return res.status(200).json({ roster: [] });
+      }
+
+      const [students, staff, assignments] = await Promise.all([
+        getAllRecords('tblJSQjtxq7yc29cY'),
+        getAllRecords('tblWuCldxuiPhtUUC'),
+        getAllRecords('tblqX1tGUs6W5VGt4',
+          `filterByFormula=DATESTR({Date})="${todayISO}"`),
+      ]);
+
+      // Build staff lookup by record ID
+      const staffById = {};
+      staff.forEach(r => {
+        const f = r.fields || {};
+        const name = f['Name'] || '';
+        const photos = f['Photo'] || [];
+        const photoUrl = photos[0]?.thumbnails?.large?.url || photos[0]?.url || null;
+        staffById[r.id] = { name, photoUrl };
+      });
+
+      // Build assignment map keyed by student record ID
+      // The REST API returns linked record fields as arrays of plain record ID strings
+      const assignmentMap = {};
+      assignments.forEach(a => {
+        const f = a.fields || {};
+
+        // Student field: array of record ID strings e.g. ["recABC123"]
+        const stuIds = (f['Student'] || []).map(x => (typeof x === 'string' ? x : x.id));
+
+        // Assigned Instructor: array of record ID strings e.g. ["rec5hPamO5JRaCPu8"]
+        const instrArr = f['Assigned Instructor'] || [];
+        const instrId = typeof instrArr[0] === 'string' ? instrArr[0] : instrArr[0]?.id || null;
+        const instrData = instrId ? staffById[instrId] : null;
+
+        // Pickup Location: array of record ID strings
+        const locArr = f['Pickup Location'] || [];
+        const locationId = typeof locArr[0] === 'string' ? locArr[0] : locArr[0]?.id || null;
+
+        // Bus Arrival Time
+        const busTime = f['Bus Arrival Time'] || '';
+
+        // Notes
+        const notes = f['Notes'] || '';
+
+        // EOD Location
+        const eodLoc = f['EOD Location']?.name || f['EOD Location'] || '';
+
+        // Parent drop-off: any assignment field whose value starts with "Parent drop"
+        const parentDropoff = Object.values(f).some(
+          v => typeof v === 'string' && v.trim().toLowerCase().startsWith('parent drop')
+        );
+
+        stuIds.forEach(sid => {
+          assignmentMap[sid] = {
+            instructorName: instrData?.name || '',
+            instructorPhotoUrl: instrData?.photoUrl || null,
+            locationId,
+            busTime,
+            notes,
+            eodLoc,
+            parentDropoff,
+          };
+        });
+      });
+
+      // Build roster
+      const roster = [];
+      for (const r of students) {
+        const f = r.fields || {};
+        const status = (f['Status']?.name || f['Status'] || '').toLowerCase();
+        if (!status.includes('active')) continue;
+
+        const enrolledDays = (f['Enrolled Days'] || []).map(d => normDay(d.name || d));
+        if (!enrolledDays.includes(todayDay)) continue;
+
+        const studentName = f['Name'] || 'Unknown';
+        const photos = f['Photo'] || [];
+        const defaultLocIds = f['Default Pickup Location'] || [];
+        const defaultLocId = typeof defaultLocIds[0] === 'string'
+          ? defaultLocIds[0]
+          : defaultLocIds[0]?.id || null;
+
+        const assignment = assignmentMap[r.id];
+        const hasAssignment = !!assignment;
+
+        const instructorName = assignment?.instructorName || '';
+        const instructorPhotoUrl = assignment?.instructorPhotoUrl || null;
+        const pickupLocationId = assignment?.locationId || defaultLocId || '';
+
+        roster.push({
+          studentId: r.id,
+          studentName,
+          photo: photos[0]?.thumbnails?.small?.url || photos[0]?.url || null,
+          school: f['School']?.name || f['School'] || '',
+          grade: f['Grade']?.name || f['Grade'] || '',
+          teacher: f['Homeroom Teacher'] || '',
+          pickupPhone: f['Pickup Contact Phone'] || '',
+          pickupName: f['Pickup Contact Name'] || '',
+          notes: f['Notes (Nice to Know)'] || '',
+          pickupLocationId,
+          pickupLocation: '',
+          instructorName,
+          instructorPhotoUrl,
+          parentDropoff: assignment?.parentDropoff || false,
+          labArrivalTime: f['Lab Arrival Time'] || '',
+          isOverride: false, // removed — "Sub" badge was misleading
+        });
+      }
+
+      return res.status(200).json({ roster });
     }
-  });
-}
 
-let roster=[],locations=[],changes=[],activeFilter='all',isOffline=false,urgentStudentId=null;
-let noPickupToday=[];
-let pendingActionId=null;
-let arrivalMode=false;
-let pickupContext=null;
-let undoTimer=null;
-let {states,absentNotes,teamNotes,pickupTimes}=loadState();
-if(!pickupTimes)pickupTimes={};
+    if (action === 'getLocations') {
+      const records = await getAllRecords('tblI5cwN5EIXqrdK2');
+      return res.status(200).json({ records });
+    }
 
-function loadState(){try{const s=localStorage.getItem(STATE_KEY);return s?JSON.parse(s):{states:{},absentNotes:{},teamNotes:{},pickupTimes:{}};}catch(e){return{states:{},absentNotes:{},teamNotes:{},pickupTimes:{}};}}
-function saveState(){try{localStorage.setItem(STATE_KEY,JSON.stringify({states,absentNotes,teamNotes,pickupTimes}));}catch(e){}}
-function initials(n){return(n||'').split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase();}
-function parseSecondary(n){if(!n)return null;const m=n.match(/Also text[^\d]*?([\w\s]+?)\s+at\s+([\d\-\(\)\s]+)/i);if(!m)return null;return{name:m[1].trim().replace(/^(Dad|Mom|dad|mom)\s+/,''),phone:m[2].trim()};}
+    if (action === 'getChanges') {
+      const todayISO = new Date().toISOString().slice(0, 10);
+      const d = await get('tblEdgjx4phKSj4wS',
+        `filterByFormula=DATESTR({Affected Pickup Date})="${todayISO}"`);
+      const records = d.records || [];
 
-function getInstructors(){return[...new Set(roster.map(s=>s.instructorName).filter(Boolean))].sort();}
-function todayList(){let list=[...roster];if(activeFilter!=='all')list=list.filter(s=>s.instructorName===activeFilter);return list;}
+      // Build a simple list of students who need NO PICKUP today.
+      // Linked student fields come back as arrays of record ID strings.
+      const noPickupStudentIds = [];
+      records.forEach(rec => {
+        const f = rec.fields || {};
+        const type = f['Change Type']?.name || f['Change Type'] || '';
+        if (type === 'No Pickup Needed') {
+          const linked = f['Linked Student'] || [];
+          linked.forEach(x => {
+            const sid = (typeof x === 'string') ? x : (x && x.id) ? x.id : null;
+            if (sid) noPickupStudentIds.push(sid);
+          });
+        }
+      });
 
-function parsePickupTime(t){
-if(!t)return 9999;
-const m=String(t).toLowerCase().match(/(\d+):(\d+)\s*(am|pm)?/);
-if(!m)return 9999;
-let h=parseInt(m[1]),min=parseInt(m[2]);
-const ap=m[3]||'pm';
-if(ap==='pm'&&h<12)h+=12;
-if(ap==='am'&&h===12)h=0;
-return h*60+min;
-}
+      return res.status(200).json({ records, noPickupStudentIds });
+    }
 
-function groupByLocation(list){
-const locById={};
-locations.forEach(l=>{locById[l.id]={name:l.fields?.['Name']||'',time:l.fields?.['Default Bus Arrival Time']||'',type:l.fields?.['Type']?.name||l.fields?.['Type']||''};});
-const groups={};
-list.forEach(s=>{
-const locId=s.pickupLocationId||'__none__';
-const loc=locById[locId]||{name:s.pickupLocation||'No pickup location set',time:'',type:''};
-if(!groups[locId])groups[locId]={id:locId,name:loc.name,time:loc.time,type:loc.type,students:[]};
-groups[locId].students.push(s);
-});
-// Sort students within each stop alphabetically by first name
-Object.values(groups).forEach(g=>{
-g.students.sort((a,b)=>a.studentName.localeCompare(b.studentName));
-});
-return Object.values(groups).sort((a,b)=>{
-if(a.id==='__none__')return 1;if(b.id==='__none__')return -1;
-return parsePickupTime(a.time)-parsePickupTime(b.time);
-});
-}
+    if (action === 'logIncident') {
+      const { description, type, severity } = body;
+      const r = await fetch(`https://api.airtable.com/v0/${BASE}/tblBrZKAPGrg893o1`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ records: [{ fields: {
+          fldeXepi4JsJKPsWk: description,
+          fldmgu6wxyuCiOZ48: type || 'Field Note',
+          fldVIfEohqez31Wmw: severity || 'Low',
+          fldw6vBAo2K3rI9ip: new Date().toISOString().slice(0, 10),
+        }}]})
+      });
+      return res.status(200).json(await r.json());
+    }
 
-async function proxy(action,extra={}){
-const r=await fetch('/api/proxy',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,...extra})});
-return r.json();
-}
+    if (action === 'getStudents') {
+      const records = await getAllRecords('tblJSQjtxq7yc29cY');
+      return res.status(200).json({ records });
+    }
 
-function closeSheet(id){document.getElementById(id).style.display='none';pendingActionId=null;}
-function closeSheetOnBg(e,id){if(e.target.classList.contains('sheet-overlay'))closeSheet(id);}
+    if (action === 'getStaff') {
+      const d = await get('tblWuCldxuiPhtUUC');
+      return res.status(200).json({ records: d.records || [] });
+    }
 
-function startEnroute(id){
-const s=roster.find(x=>x.studentId===id);
-if(!s)return;
-pendingActionId=id;
-document.getElementById('enrouteStudentName').textContent=s.studentName;
-document.getElementById('enrouteSheet').style.display='flex';
-}
-
-function confirmEnroute(){
-const id=pendingActionId;
-pendingActionId=null;
-closeSheet('enrouteSheet');
-if(!id)return;
-if(states[id]==='enroute')return;
-const s=roster.find(x=>x.studentId===id);
-if(!s)return;
-states[id]='enroute';
-saveState();render();
-showUndoToast(id,s.studentName,'enroute',()=>openParentText(s,'enroute'));
-}
-
-function startPickup(id){
-const s=roster.find(x=>x.studentId===id);
-if(!s)return;
-arrivalMode=false;
-pendingActionId=id;
-document.getElementById('pickupStudentName').textContent=s.studentName;
-document.getElementById('pickupSheet').style.display='flex';
-}
-
-function startArrival(id){
-const s=roster.find(x=>x.studentId===id);
-if(!s)return;
-arrivalMode=true;
-pendingActionId=id;
-document.getElementById('pickupStudentName').textContent=s.studentName;
-document.getElementById('pickupSheet').style.display='flex';
-}
-
-function confirmPickupWithPhoto(){
-const id=pendingActionId;
-closeSheet('pickupSheet');
-if(!id)return;
-const s=roster.find(x=>x.studentId===id);
-if(!s)return;
-pickupContext={studentId:id,studentName:s.studentName,phone:s.pickupPhone,parentName:s.pickupName};
-document.getElementById('cameraInput').click();
-}
-
-function confirmPickupNoPhoto(){
-const id=pendingActionId;
-closeSheet('pickupSheet');
-if(!id)return;
-const s=roster.find(x=>x.studentId===id);
-if(!s)return;
-states[id]='done';
-pickupTimes[id]=new Date().toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
-saveState();render();
-openParentText(s,arrivalMode?'dropoff':'done',false);
-arrivalMode=false;
-}
-
-function confirmDroppedOff(id){
-const s=roster.find(x=>x.studentId===id);
-if(!s)return;
-states[id]='done';
-pickupTimes[id]=new Date().toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
-saveState();render();
-openParentText(s,'dropoff');
-}
-
-function handlePhotoTaken(event){
-const file=event.target.files&&event.target.files[0];
-event.target.value='';
-finishPickup(!!file);
-}
-
-function finishPickup(withPhoto){
-if(!pickupContext)return;
-const s=roster.find(x=>x.studentId===pickupContext.studentId);
-states[pickupContext.studentId]='done';
-pickupTimes[pickupContext.studentId]=new Date().toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
-saveState();render();
-if(s)openParentText(s,arrivalMode?'dropoff':'done',withPhoto);
-arrivalMode=false;
-pickupContext=null;
-}
-
-function openParentText(s,type,withPhoto){
-const parentFirst=(s.pickupName||'').split(' ')[0];
-const greeting=parentFirst?`Hi ${parentFirst}!`:'Hi there!';
-const firstName=(s.studentName||'').split(' ')[0];
-let body;
-if(type==='dropoff'){
-body=`${greeting} ${firstName} has arrived safely at The Afterschool Collective and is checked in. See you at pickup time!`;
-}else if(type==='enroute'){
-body=`${greeting} This is your instructor from The Afterschool Collective. I'm on my way to pick up ${firstName} right now. I'll send a confirmation as soon as I have them!`;
-}else{
-body=`${greeting} ${firstName} has been safely picked up and is on the way back to the studio. See you at pickup time!`;
-}
-const phone=(s.pickupPhone||'').replace(/\D/g,'');
-const smsUrl=(phone?`sms:${phone}`:'sms:')+`?body=${encodeURIComponent(body)}`;
-const a=document.createElement('a');
-a.href=smsUrl;
-a.style.display='none';
-document.body.appendChild(a);
-a.click();
-document.body.removeChild(a);
-}
-
-function showUndoToast(id,name,action,onCommit){
-clearTimeout(undoTimer);
-const existing=document.getElementById('undoToast');
-if(existing)existing.remove();
-const toast=document.createElement('div');
-toast.className='undo-toast';
-toast.id='undoToast';
-const firstName=name.split(' ')[0];
-const label=`Texting ${firstName}'s parent…`;
-toast.innerHTML=`<span class="undo-toast-text">${label}</span><button class="undo-toast-btn" onclick="undoAction('${id}','${action}')">Undo</button><div class="undo-toast-bar"></div>`;
-document.body.appendChild(toast);
-undoTimer=setTimeout(()=>{toast.remove();onCommit();},5000);
-}
-
-function undoAction(id,action){
-clearTimeout(undoTimer);
-const toast=document.getElementById('undoToast');
-if(toast)toast.remove();
-if(action==='enroute'){delete states[id];}
-saveState();render();
-}
-
-function setAbsent(id){
-states[id]='absent';
-absentNotes[id]=absentNotes[id]||{open:true,sent:false};
-saveState();render();
-}
-
-function setFilter(f){activeFilter=f;render();}
-function toggleTeamNote(id){teamNotes[id]=teamNotes[id]||{};teamNotes[id].open=!teamNotes[id].open;saveState();render();}
-
-async function sendAbsentNote(id){
-const s=roster.find(x=>x.studentId===id);
-const el=document.getElementById(`absent-${id}`);
-const text=el?el.value.trim():'';
-if(!text)return;
-absentNotes[id]={sent:true,open:false};saveState();render();
-await proxy('logIncident',{description:`ABSENT — ${s?.studentName||id}: ${text} [${todayStr}]`,type:'Field Note',severity:'Low'});
-}
-
-async function sendTeamNote(id){
-const s=roster.find(x=>x.studentId===id);
-const el=document.getElementById(`note-${id}`);
-const text=el?el.value.trim():'';
-if(!text)return;
-teamNotes[id]={sent:true,open:false};saveState();render();
-await proxy('logIncident',{description:`${text} [Student: ${s?.studentName||id}, Date: ${todayStr}]`,type:'Field Note',severity:'Low'});
-}
-
-function openUrgent(id){
-const s=roster.find(x=>x.studentId===id);
-urgentStudentId=id;
-document.getElementById('urgentSub').textContent=`Student: ${s?.studentName||''}`;
-document.getElementById('urgentText').value='';
-document.getElementById('urgentOverlay').style.display='flex';
-}
-
-function closeUrgentSheet(){document.getElementById('urgentOverlay').style.display='none';urgentStudentId=null;}
-
-async function sendUrgent(){
-const text=document.getElementById('urgentText').value.trim();
-const s=roster.find(x=>x.studentId===urgentStudentId);
-closeUrgentSheet();
-const msg=`🚨 URGENT — ${s?.studentName||'Student'} situation at pickup. ${text} [${todayStr}]`;
-const a=document.createElement('a');
-a.href=`sms:${REBECCA_PHONE}?body=${encodeURIComponent(msg)}`;
-a.style.display='none';
-document.body.appendChild(a);
-a.click();
-document.body.removeChild(a);
-await proxy('logIncident',{description:msg,type:'Missing Student',severity:'High'});
-}
-
-function saveCache(data){try{sessionStorage.setItem(CACHE_KEY,JSON.stringify({ts:Date.now(),data}));}catch(e){}}
-function loadCache(){try{const c=sessionStorage.getItem(CACHE_KEY);if(c){const p=JSON.parse(c);if(Date.now()-p.ts<8*3600000)return p.data;}}catch(e){}return null;}
-
-function render(){
-const list=todayList();
-const doneCount=Object.values(states).filter(s=>s==='done').length;
-const absentCount=Object.values(states).filter(s=>s==='absent').length;
-const normalTotal=roster.length;
-const noPickupCount=roster.filter(s=>noPickupToday.includes(s.studentId)).length;
-const expectedToday=normalTotal-noPickupCount;
-const todayChanges=changes.filter(c=>(c.fields||{})['Change Summary']);
-const instructors=getInstructors();
-document.getElementById('app').innerHTML=`
-${isOffline?`<div class="offline-bar"><i class="ti ti-wifi-off"></i> Offline — showing cached roster</div>`:''}
-<div class="header">
-<img src="${LOGO_URL}" class="header-logo" alt="Afterschool Collective" onerror="this.style.display='none';document.querySelector('.header-logo-fallback').style.display='block'">
-<div class="header-logo-fallback" style="display:none"><div class="brand-name" style="font-size:16px;font-weight:600;color:#1C1C1C">AFTERSCHOOL</div><div style="font-size:9px;letter-spacing:0.22em;color:#999;text-transform:uppercase">Collective</div><div style="font-size:11px;color:#E8420A;margin-top:3px">Pickup — ${todayStr}</div></div>
-<div style="text-align:right"><div class="day-pill">${todayFull}</div><div style="font-size:10px;color:#999;margin-top:5px;text-align:center">Pickup — ${todayStr}</div></div>
-</div>
-<a href="tel:${REBECCA_PHONE}" class="emergency-bar"><i class="ti ti-phone" style="font-size:13px"></i> Emergency: Rebecca (770) 547-1075</a>
-<div class="stats">
-<div class="stat"><div class="stat-n">${noPickupCount>0?`${expectedToday} <span style="font-size:13px;color:#888;font-weight:500">of ${normalTotal}</span>`:normalTotal}</div><div class="stat-l">Expected${noPickupCount>0?` (${noPickupCount} out)`:''}</div></div>
-<div class="stat"><div class="stat-n green">${doneCount}</div><div class="stat-l">Picked up</div></div>
-<div class="stat"><div class="stat-n ${absentCount>0?'red':''}">${absentCount}</div><div class="stat-l">Absent</div></div>
-</div>
-${todayChanges.length?`<div class="alert-box" style="margin:12px 16px 0"><div class="alert-hdr"><i class="ti ti-alert-triangle" style="font-size:16px;color:#A32D2D"></i><span class="alert-hdr-text">Changes today, read first</span></div>${todayChanges.map(c=>`<div class="alert-item"><div class="alert-name">${(c.fields||{})['Change Summary']||'Change logged'}</div></div>`).join('')}</div>`:`<div class="clear-bar"><i class="ti ti-circle-check" style="font-size:16px;color:#2E7D32"></i><span class="clear-text">All clear, no changes today</span></div>`}
-${instructors.length>=1?`<div class="filter-bar"><button class="filter-pill${activeFilter==='all'?' active':''}" onclick="setFilter('all')"><i class="ti ti-users" style="font-size:13px"></i> All</button>${instructors.map(name=>{const photo=getInstrPhoto(name);return`<button class="filter-pill${activeFilter===name?' active':''}" onclick="setFilter('${name.replace(/'/g,"\\'")}')">  ${photo?`<img src="${photo}" alt="${name}" onerror="this.style.display='none'">`:''}${name.split(' ')[0]}</button>`;}).join('')}</div>`:''}
-<div class="section-hdr"><span class="section-title">${activeFilter==='all'?"Today's students":activeFilter.split(' ')[0]+"'s students"}</span><span class="count-chip">${list.length}</span></div>
-<div class="cards">
-${list.length===0?`<div style="text-align:center;padding:40px 0;color:#888;font-size:14px">No students enrolled for ${todayFull}</div>`:
-groupByLocation(list).map(g=>`<div class="stop-group">
-<div class="stop-hdr">
-<div class="stop-hdr-icon"><i class="ti ti-${g.type==='Studio'?'building':g.type==='School'?'school':'bus'}"></i></div>
-<div class="stop-hdr-text">
-<div class="stop-hdr-name">${g.name||'Unassigned location'}</div>
-${g.time?`<div class="stop-hdr-time">${g.time}</div>`:''}
-</div>
-<div class="stop-hdr-count">${g.students.length}</div>
-</div>
-<div class="cards-inner">
-${g.students.map(s=>renderCard(s)).join('')}
-</div>
-</div>`).join('')}
-</div>`;
-}
-
-function isLabDrop(s){
-const loc=locations.find(l=>l.id===s.pickupLocationId);
-if(!loc)return false;
-const nm=(loc.fields?.['Name']||'').toLowerCase();
-const tp=loc.fields?.['Type']?.name||loc.fields?.['Type']||'';
-return tp==='Studio'||nm.includes('steam lab');
-}
-
-function renderCard(s){
-const id=s.studentId;
-const st=states[id]||'pending';
-if(st==='pending'&&noPickupToday.includes(id)){
-return`<div class="card absent" id="c-${id}" style="opacity:0.6">
-<div class="card-accent absent"></div>
-<div class="card-top" style="padding-bottom:12px">
-<div class="av absent small">${s.photo?`<img src="${s.photo}" alt="${s.studentName}" onerror="this.style.display='none';this.parentNode.textContent='${initials(s.studentName)}'">`:initials(s.studentName)}</div>
-<div style="flex:1;min-width:0">
-<div class="sname" style="font-size:15px">${s.studentName}</div>
-<div class="sstatus absent"><i class="ti ti-calendar-off" style="font-size:13px"></i> No pickup needed today</div>
-</div>
-</div>
-</div>`;
-}
-const secondary=parseSecondary(s.notes);
-const instrPhoto=s.instructorPhotoUrl||getInstrPhoto(s.instructorName);
-const an=absentNotes[id]||{};
-const tn=teamNotes[id]||{};
-const now=new Date();
-const timeStr=now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-const collapsed=st==='done'||(st==='absent'&&an.sent);
-return`<div class="card ${st}" id="c-${id}">
-<div class="card-accent ${st}"></div>
-<div class="card-top" style="${collapsed?'padding-bottom:6px':''}">
-<div class="av ${st}${collapsed?' small':''}">${s.photo?`<img src="${s.photo}" alt="${s.studentName}" onerror="this.style.display='none';this.parentNode.textContent='${initials(s.studentName)}'">`:initials(s.studentName)}</div>
-<div style="flex:1;min-width:0">
-<div class="sname" style="${collapsed?'font-size:15px':''}">${s.studentName}${s.isOverride?`<span class="override-badge"><i class="ti ti-refresh" style="font-size:9px"></i> Sub</span>`:''}</div>
-<div class="sstatus ${st}">${st==='done'?`<i class="ti ti-circle-check" style="font-size:14px;color:#2E7D32"></i>`:`<div class="sdot ${st}"></div>`}${st==='pending'?'Not started yet':st==='enroute'?'En route to pickup':st==='absent'?(an.sent?'Marked absent, note sent':'Marked absent'):`Picked up${pickupTimes[id]?' at '+pickupTimes[id]:''}`}</div>
-${collapsed?(s.school?`<div style="margin-top:3px"><div class="school-chip"><i class="ti ti-building" style="font-size:11px"></i>${s.school}</div></div>`:''):`<div class="info-row">${s.school?`<div class="school-chip"><i class="ti ti-building" style="font-size:11px"></i>${s.school}</div>`:''}${(isLabDrop(s)&&s.labArrivalTime)?`<div class="time-chip"><i class="ti ti-clock" style="font-size:11px"></i>Arrives ${s.labArrivalTime}</div>`:''}</div>${s.teacher?`<div class="teacher-line">${s.teacher}${s.grade?' · '+s.grade:''}</div>`:''}`}
-</div>
-${instrPhoto&&activeFilter==='all'&&!collapsed?`<div class="instr-chip"><img src="${instrPhoto}" class="instr-photo" alt="${s.instructorName||''}" onerror="this.style.display='none'"><span class="instr-name">${(s.instructorName||'').split(' ')[0]}</span></div>`:''}
-</div>
-${(st!=='absent'&&!collapsed)?`<div class="parent-row"><div class="parent-contacts">
-<div class="parent-contact"><div><div class="parent-name">${s.pickupName||'Parent'}</div>${s.pickupPhone?`<div class="parent-phone">${s.pickupPhone}</div>`:`<div class="no-phone">Awaiting welcome email reply</div>`}</div></div>
-${secondary?`<div class="parent-contact"><div><div class="parent-name">${secondary.name}</div><div class="parent-phone">${secondary.phone}</div></div></div>`:''}
-</div></div>`:''}
-${!collapsed?`<div class="card-actions">
-${st==='pending'?((s.parentDropoff||isLabDrop(s))?`<button class="btn-action btn-picked" onclick="startArrival('${id}')"><i class="ti ti-building" style="font-size:15px"></i>Arrived — check in</button>`:`<button class="btn-action btn-enroute" onclick="startEnroute('${id}')"><i class="ti ti-walk" style="font-size:15px"></i>En route to pickup</button>`)
-:st==='enroute'?`<button class="btn-action btn-picked" onclick="startPickup('${id}')"><i class="ti ti-camera" style="font-size:15px"></i>Child picked up</button><button class="btn-action btn-absent" onclick="setAbsent('${id}')" style="max-width:110px"><i class="ti ti-user-x" style="font-size:14px"></i>Not there</button>`
-:''}
-</div>`:''}
-${st==='absent'?(an.sent?`<div class="post-pickup"><div class="note-row-wrap"><button class="btn-note-main" onclick="toggleTeamNote('${id}')"><i class="ti ti-pencil" style="font-size:15px"></i> Add another note</button><button class="btn-urgent-icon" onclick="openUrgent('${id}')" aria-label="Send urgent alert"><i class="ti ti-alert-triangle"></i></button></div>${tn.open?`<div class="note-form" style="margin-top:8px"><textarea class="note-input" id="note-${id}" rows="2" placeholder="Additional note for the team"></textarea><div class="note-row"><button class="btn-note-cancel" onclick="toggleTeamNote('${id}')">Cancel</button><button class="btn-note-send" onclick="sendTeamNote('${id}')"><i class="ti ti-send" style="font-size:13px"></i> Send to team</button></div></div>`:''}${tn.sent?`<div class="note-sent" style="margin-top:6px"><i class="ti ti-circle-check" style="font-size:14px;color:#2E7D32"></i> Additional note sent</div>`:''}</div>`:`<div class="absent-note">
-<div class="absent-note-label"><i class="ti ti-pencil" style="font-size:12px"></i> What happened?</div>
-<textarea class="absent-input" id="absent-${id}" rows="2" placeholder="${s.studentName} was not at pickup at ${timeStr}. "></textarea><div class="note-row-wrap" style="margin-top:6px"><button class="btn-absent-send" onclick="sendAbsentNote('${id}')"><i class="ti ti-send" style="font-size:13px"></i> Send to team</button><button class="btn-urgent-icon" onclick="openUrgent('${id}')" aria-label="Send urgent alert"><i class="ti ti-alert-triangle"></i></button></div>
-</div>`):''}
-${st==='done'?`<div class="post-pickup">
-${tn.sent?`<div class="note-sent-row"><span class="note-sent"><i class="ti ti-circle-check" style="font-size:14px;color:#2E7D32"></i> Note sent to the team</span><button class="btn-urgent-icon" onclick="openUrgent('${id}')" aria-label="Send urgent alert"><i class="ti ti-alert-triangle"></i></button></div>`:tn.open?`<div class="note-form"><textarea class="note-input" id="note-${id}" rows="2" placeholder="e.g. Bus arrived 10 min late at a new stop on 47th Ave"></textarea><div class="note-row"><button class="btn-note-cancel" onclick="toggleTeamNote('${id}')">Cancel</button><button class="btn-note-send" onclick="sendTeamNote('${id}')"><i class="ti ti-send" style="font-size:13px"></i> Send to team</button></div></div>`:`<div class="note-row-wrap"><button class="btn-note-main" onclick="toggleTeamNote('${id}')"><i class="ti ti-pencil" style="font-size:15px"></i> Leave a note for the team</button><button class="btn-urgent-icon" onclick="openUrgent('${id}')" aria-label="Send urgent alert"><i class="ti ti-alert-triangle"></i></button></div>`}
-</div>`:''}
-</div>`;
-}
-
-async function init(){
-const cached=loadCache();
-if(cached){roster=cached.roster||[];locations=cached.locations||[];changes=cached.changes||[];noPickupToday=cached.noPickupToday||[];buildPhotoCache();isOffline=false;render();}
-try{
-const [rosterRes,locRes,changeRes]=await Promise.all([
-proxy('getTodayRoster'),
-proxy('getLocations'),
-proxy('getChanges'),
-]);
-roster=rosterRes.roster||[];
-locations=locRes.records||[];
-changes=changeRes.records||[];
-noPickupToday=changeRes.noPickupStudentIds||[];
-buildPhotoCache();
-saveCache({roster,locations,changes,noPickupToday});
-isOffline=false;
-}catch(e){
-if(!cached){isOffline=true;roster=[];locations=[];changes=[];}
-else isOffline=true;
-}
-render();
-}
-
-init();
-</script>
-</body>
-</html>
+    return res.status(400).json({ error: 'Unknown action' });
+  } catch (e) {
+    return res.status(500).json({ error: e.message });
+  }
+};
