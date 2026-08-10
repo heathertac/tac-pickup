@@ -9,6 +9,10 @@
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f5;min-height:100vh;}
 .app{max-width:420px;margin:0 auto;background:#fff;min-height:100vh;}
+.test-bar{background:repeating-linear-gradient(45deg,#161616,#161616 11px,#2E2E2E 11px,#2E2E2E 22px);color:#fff;padding:9px 14px;display:flex;align-items:center;gap:9px;}
+.test-bar-icon{font-size:17px;color:#FFD54F;flex-shrink:0;}
+.test-bar-main{font-size:12px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;line-height:1.3;}
+.test-bar-sub{font-size:11px;font-weight:500;color:#D5D5D5;margin-top:2px;line-height:1.3;}
 .header{background:#fff;border-bottom:3px solid #E8420A;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;}
 .header-logo{height:44px;width:auto;object-fit:contain;}
 .header-logo-fallback{display:none;}
@@ -108,6 +112,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .tray-title{font-size:17px;font-weight:700;color:#1C1C1C;}
 .tray-sub{font-size:12px;color:#888;margin-top:1px;}
 .tray-note{padding:11px 14px;background:#FAFAFA;border-bottom:1px solid #e5e5e5;font-size:12px;color:#666;display:flex;align-items:center;gap:8px;line-height:1.4;}
+.tray-test{padding:11px 14px;background:#161616;color:#fff;font-size:12px;font-weight:600;display:flex;align-items:center;gap:8px;line-height:1.4;}
 .tray-row{display:flex;align-items:center;gap:11px;padding:12px 14px;border-bottom:1px solid #e5e5e5;}
 .tray-row.sent{background:#E8F5E9;}
 .tray-row.muted{background:#FAFAFA;}
@@ -164,13 +169,36 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </div>
 
 <script>
-const TODAY=new Date();
+/* ------------------------------------------------------------------
+   TEST MODE
+   Turned on ONLY by adding ?testdate=YYYY-MM-DD to the app URL.
+   With no parameter, every line below is inert and the app runs live.
+   When on: the date is pretended, a striped black banner is pinned to
+   the top, storage is isolated from real days, all parent texts are
+   redirected to Heather, and nothing is logged to Airtable.
+------------------------------------------------------------------ */
+const TEST_DATE=(function(){
+try{
+const m=String(location.search||'').match(/[?&]testdate=(\d{4}-\d{2}-\d{2})/);
+return m?m[1]:null;
+}catch(e){return null;}
+})();
+
+const TODAY=(function(){
+if(TEST_DATE){
+const p=TEST_DATE.split('-');
+return new Date(Number(p[0]),Number(p[1])-1,Number(p[2]));
+}
+return new Date();
+})();
+
 const DAYS_FULL=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const todayFull=DAYS_FULL[TODAY.getDay()];
 const todayStr=MONTHS[TODAY.getMonth()]+' '+TODAY.getDate();
-const CACHE_KEY='tac_roster_v7_'+TODAY.toDateString();
-const STATE_KEY='tac_states_v2_'+TODAY.toDateString();
+const KEY_SUFFIX=TEST_DATE?('test_'+TEST_DATE):TODAY.toDateString();
+const CACHE_KEY='tac_roster_v7_'+KEY_SUFFIX;
+const STATE_KEY='tac_states_v2_'+KEY_SUFFIX;
 const REBECCA_PHONE='7705471075';
 const LOGO_URL='https://static.wixstatic.com/media/7e1448_415a7686f7774d038fce84f0816a76b2~mv2.png/v1/fill/w_320,h_125,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/ASC%20LOGO.png';
 
@@ -268,6 +296,7 @@ return parsePickupTime(a.time)-parsePickupTime(b.time);
 
 async function proxy(action,extra){
 const payload=Object.assign({action:action},extra||{});
+if(TEST_DATE)payload.testdate=TEST_DATE;
 const r=await fetch('/api/proxy',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
 return r.json();
 }
@@ -414,6 +443,7 @@ body=greeting+' '+kid+' has arrived safely at The Afterschool Collective and is 
 }else{
 body=greeting+' '+kid+' has been safely picked up and is on the way back to the studio. See you at pickup time!';
 }
+if(TEST_DATE)body='[TEST — ignore] '+body;
 const phone=String(s.pickupPhone||'').replace(/\D/g,'');
 const url=(phone?'sms:'+phone:'sms:')+'?body='+encodeURIComponent(body);
 const a=document.createElement('a');
@@ -458,9 +488,10 @@ async function sendUrgent(){
 const text=document.getElementById('urgentText').value.trim();
 const s=roster.find(function(x){return x.studentId===urgentStudentId;});
 closeUrgentSheet();
-const msg='URGENT — '+((s&&s.studentName)||'Student')+' situation at pickup. '+text+' ['+todayStr+']';
+let msg='URGENT — '+((s&&s.studentName)||'Student')+' situation at pickup. '+text+' ['+todayStr+']';
+if(TEST_DATE)msg='[TEST — ignore] '+msg;
 const a=document.createElement('a');
-a.href='sms:'+REBECCA_PHONE+'?body='+encodeURIComponent(msg);
+a.href='sms:'+(TEST_DATE?'8036032328':REBECCA_PHONE)+'?body='+encodeURIComponent(msg);
 a.style.display='none';
 document.body.appendChild(a);
 a.click();
@@ -527,7 +558,7 @@ const secondary=parseSecondary(s.notes);
 let h='<div class="kexp">';
 if(state!=='nopickup'){
 h+='<div class="parent-box"><div class="parent-name">'+esc(s.pickupName||'Parent')+'</div>'+
-(hasPhone(s)?'<div class="parent-phone">'+esc(s.pickupPhone)+'</div>':'<div class="no-phone">Awaiting welcome email reply</div>')+
+(hasPhone(s)?'<div class="parent-phone">'+esc(s.pickupPhone)+(TEST_DATE?' (test — your phone)':'')+'</div>':'<div class="no-phone">Awaiting welcome email reply</div>')+
 (secondary?'<div style="margin-top:6px"><div class="parent-name">'+esc(secondary.name)+'</div><div class="parent-phone">'+esc(secondary.phone)+'</div></div>':'')+
 '</div>';
 }
@@ -629,6 +660,7 @@ return '<div class="tray-row muted"><div class="tray-info"><div class="tray-name
 host.innerHTML='<div class="tray">'+
 '<div class="tray-hdr"><button class="tray-back" onclick="closeTray()" aria-label="Back"><i class="ti ti-chevron-left"></i></button>'+
 '<div><div class="tray-title">Text parents</div><div class="tray-sub">'+pending.length+' left · '+sentIds.length+' sent</div></div></div>'+
+(TEST_DATE?'<div class="tray-test"><i class="ti ti-flask" style="font-size:17px;color:#FFD54F"></i> TEST MODE — every text below goes to your own phone, not to a family.</div>':'')+
 '<div class="tray-note"><i class="ti ti-photo" style="font-size:17px"></i> Attach a photo in Messages first if you\'re sending one today.</div>'+
 (pending.length?pending.map(function(id){return row(id,'pending');}).join(''):'<div class="tray-empty">Every parent has been texted.</div>')+
 noPhone.map(function(id){return row(id,'nophone');}).join('')+
@@ -649,6 +681,7 @@ const instructors=getInstructors();
 const needText=pendingTextIds().length;
 
 document.getElementById('app').innerHTML=
+(TEST_DATE?'<div class="test-bar"><i class="ti ti-flask test-bar-icon"></i><div><div class="test-bar-main">Test mode — not today\'s roster</div><div class="test-bar-sub">Pretending it is '+todayFull+', '+todayStr+'. All texts go to your phone. Nothing is logged.</div></div></div>':'')+
 (isOffline?'<div class="offline-bar"><i class="ti ti-wifi-off"></i> Offline — showing cached roster</div>':'')+
 '<div class="header">'+
 '<img src="'+LOGO_URL+'" class="header-logo" alt="Afterschool Collective" onerror="this.style.display=\'none\'">'+
