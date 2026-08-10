@@ -43,13 +43,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .count-chip{font-size:11px;color:#888;background:#f5f5f5;padding:2px 8px;border-radius:999px;}
 .stops{padding:0 16px 90px;display:flex;flex-direction:column;gap:14px;}
 .stop{border:1px solid #e5e5e5;border-radius:12px;overflow:hidden;}
-.stop-hdr{display:flex;align-items:center;gap:10px;padding:11px 12px;background:#2B5CE6;}
-.stop-hdr-icon{flex-shrink:0;width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,0.16);color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;}
+.stop-hdr{display:flex;align-items:center;gap:9px;padding:8px 12px;background:#2B5CE6;}
+.stop-hdr-icon{flex-shrink:0;width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,0.18);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;}
 .stop-hdr-text{flex:1;min-width:0;}
 .stop-hdr-name{font-size:14px;font-weight:600;color:#fff;line-height:1.2;}
 .stop-hdr-time{font-size:12px;color:rgba(255,255,255,0.78);font-weight:500;margin-top:1px;}
-.stop-hdr-count{flex-shrink:0;font-size:12px;color:#fff;background:rgba(255,255,255,0.16);padding:3px 10px;border-radius:999px;font-weight:600;}
-.map-ph{height:56px;background:#F1F5F9;border-bottom:1px solid #e5e5e5;display:flex;align-items:center;justify-content:center;gap:6px;color:#64748B;font-size:12px;}
+.stop-hdr-count{flex-shrink:0;font-size:11px;color:#fff;background:rgba(255,255,255,0.18);padding:2px 9px;border-radius:999px;font-weight:600;}
 .select-bar{display:flex;align-items:center;justify-content:space-between;padding:11px 12px;background:#FAFAFA;border-bottom:1px solid #e5e5e5;}
 .select-all{display:flex;align-items:center;gap:8px;font-size:14px;color:#E8420A;font-weight:600;background:none;border:none;cursor:pointer;padding:0;font-family:inherit;}
 .select-count{font-size:12px;color:#888;}
@@ -58,10 +57,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .krow.done{background:#E8F5E9;}
 .krow.absent{background:#F1F5F9;}
 .krow.nopickup{background:#fff;opacity:0.55;}
-.kbox{width:48px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border-right:1px solid #eee;background:none;cursor:pointer;padding:0;}
+.kbox{width:48px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border:none;border-right:1px solid #eee;background:none;cursor:pointer;padding:0;}
 .kbox-inner{width:24px;height:24px;border-radius:6px;border:2px solid #cbd5e1;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;}
 .kbox-inner.on{background:#E8420A;border-color:#E8420A;}
-.kbox-static{width:48px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border-right:1px solid #eee;font-size:18px;}
+.kbox-static{width:48px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border:none;border-right:1px solid #eee;font-size:18px;}
 .kmain{flex:1;min-width:0;display:flex;align-items:center;gap:10px;padding:11px 12px;background:none;border:none;cursor:pointer;font-family:inherit;text-align:left;}
 .av{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;flex-shrink:0;overflow:hidden;border:2px solid #e5e5e5;background:#f5f5f5;color:#333;}
 .av img{width:100%;height:100%;object-fit:cover;}
@@ -87,7 +86,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .parent-phone{font-size:11px;color:#888;font-family:monospace;}
 .no-phone{font-size:11px;color:#aaa;font-style:italic;}
 .exp-actions{display:flex;gap:6px;flex-wrap:wrap;}
-.btn-solo{flex:1;min-width:130px;background:#2E7D32;border:none;color:#fff;border-radius:8px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;}
 .btn-mini{background:#F1F5F9;border:1px solid #CBD5E1;color:#475569;border-radius:8px;padding:12px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;min-width:48px;display:flex;align-items:center;justify-content:center;}
 .btn-mini.danger{background:#FCEBEB;border-color:#E89999;color:#A32D2D;}
 .stop-foot{padding:10px 12px;}
@@ -105,7 +103,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .note-row{display:flex;gap:6px;}
 .btn-note-send{flex:1;background:#E8420A;border:none;color:#fff;border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;}
 .btn-note-cancel{background:#f5f5f5;border:none;color:#888;border-radius:8px;padding:10px 14px;font-size:13px;cursor:pointer;font-family:inherit;}
-.note-sent{font-size:12px;color:#2E7D32;display:flex;align-items:center;gap:5px;margin-top:8px;}
 .tray{position:fixed;inset:0;background:#fff;z-index:250;max-width:420px;margin:0 auto;overflow-y:auto;}
 .tray-hdr{position:sticky;top:0;background:#fff;padding:14px;border-bottom:1px solid #e5e5e5;display:flex;align-items:center;gap:10px;z-index:2;}
 .tray-back{background:none;border:none;color:#888;font-size:22px;cursor:pointer;padding:0;display:flex;}
@@ -142,6 +139,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .undo-toast-btn{background:#E8420A;border:none;color:#fff;border-radius:6px;padding:7px 13px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;}
 .undo-toast-bar{position:absolute;bottom:0;left:0;height:3px;background:#E8420A;border-radius:0 0 10px 10px;animation:shrink 5s linear forwards;}
 @keyframes shrink{from{width:100%;}to{width:0%;}}
+.outbox-bar{background:#FCEBEB;border-bottom:1px solid #E89999;padding:9px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.outbox-text{font-size:13px;color:#A32D2D;font-weight:700;display:flex;align-items:center;gap:7px;}
+.outbox-btn{background:#fff;border:1px solid #E89999;color:#A32D2D;font-size:12px;font-weight:700;padding:7px 12px;border-radius:8px;cursor:pointer;white-space:nowrap;font-family:inherit;}
+.note-status{display:flex;align-items:center;gap:6px;font-size:12px;margin-top:8px;font-weight:600;}
+.note-status.queued{color:#92540A;}
+.note-status.sent{color:#2E7D32;}
+.note-status.failed{color:#A32D2D;}
+.note-failed-box{margin-top:8px;background:#FCEBEB;border:1px solid #E89999;border-radius:8px;padding:10px 11px;}
+.note-failed-title{font-size:12px;color:#A32D2D;font-weight:700;display:flex;align-items:center;gap:6px;}
+.note-failed-sub{font-size:11px;color:#A32D2D;margin-top:3px;line-height:1.35;}
+.note-retry{margin-top:8px;background:#A32D2D;border:none;color:#fff;border-radius:8px;padding:9px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;}
 .offline-bar{background:#FEF3DC;border-bottom:1px solid #D4840A;padding:6px 16px;font-size:11px;color:#92540A;display:flex;align-items:center;gap:6px;}
 .loading{padding:60px 16px;text-align:center;}
 .spin{display:inline-block;width:28px;height:28px;border:3px solid #f5f5f5;border-top-color:#E8420A;border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:14px;}
@@ -217,7 +225,7 @@ let st=loadState();
 let states=st.states,absentNotes=st.absentNotes,teamNotes=st.teamNotes,pickupTimes=st.pickupTimes,textsSent=st.textsSent,textOpened=st.textOpened;
 
 function loadState(){
-const empty={states:{},absentNotes:{},teamNotes:{},pickupTimes:{},textsSent:{},textOpened:{}};
+const empty={states:{},absentNotes:{},teamNotes:{},pickupTimes:{},textsSent:{},textOpened:{},selected:{}};
 try{
 const s=localStorage.getItem(STATE_KEY);
 if(!s)return empty;
@@ -228,11 +236,91 @@ absentNotes:p.absentNotes||{},
 teamNotes:p.teamNotes||{},
 pickupTimes:p.pickupTimes||{},
 textsSent:p.textsSent||{},
-textOpened:p.textOpened||{}
+textOpened:p.textOpened||{},
+selected:p.selected||{}
 };
 }catch(e){return empty;}
 }
-function saveState(){try{localStorage.setItem(STATE_KEY,JSON.stringify({states:states,absentNotes:absentNotes,teamNotes:teamNotes,pickupTimes:pickupTimes,textsSent:textsSent,textOpened:textOpened}));}catch(e){}}
+function saveState(){try{localStorage.setItem(STATE_KEY,JSON.stringify({states:states,absentNotes:absentNotes,teamNotes:teamNotes,pickupTimes:pickupTimes,textsSent:textsSent,textOpened:textOpened,selected:selected}));}catch(e){}}
+selected=st.selected||{};
+
+
+/* ------------------------------------------------------------------
+   OUTBOX — a note is never reported as sent until it actually lands.
+   Notes are queued to localStorage first, then delivered. A failed
+   delivery keeps retrying (every 20s, on reconnect, on app focus) and
+   shows a red state until it succeeds. Nothing here can silently vanish.
+------------------------------------------------------------------ */
+const OUTBOX_KEY='tac_outbox_v1_'+KEY_SUFFIX;
+let outbox=loadOutbox();
+let flushing=false;
+
+function loadOutbox(){try{const s=localStorage.getItem(OUTBOX_KEY);const p=s?JSON.parse(s):[];return Array.isArray(p)?p:[];}catch(e){return [];}}
+function saveOutbox(){try{localStorage.setItem(OUTBOX_KEY,JSON.stringify(outbox));}catch(e){}}
+function newQid(){return 'q'+Date.now()+Math.random().toString(36).slice(2,7);}
+
+function queueIncident(qid,kind,studentId,payload){
+outbox.push({qid:qid,kind:kind,studentId:studentId,payload:payload,attempts:0});
+saveOutbox();
+}
+
+function noteRecord(kind,studentId){
+if(kind==='absent')return absentNotes[studentId];
+if(kind==='team')return teamNotes[studentId];
+return null;
+}
+
+async function postIncident(payload){
+const p=Object.assign({},payload);
+if(TEST_DATE)p.testdate=TEST_DATE;
+const r=await fetch('/api/proxy',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)});
+if(!r.ok)throw new Error('HTTP '+r.status);
+const j=await r.json();
+if(j&&j.error)throw new Error(String(j.error));
+return j;
+}
+
+async function flushOutbox(){
+if(flushing||!outbox.length)return;
+flushing=true;
+const items=outbox.slice();
+for(let i=0;i<items.length;i++){
+const item=items[i];
+try{
+await postIncident(item.payload);
+item.delivered=true;
+const rec=noteRecord(item.kind,item.studentId);
+if(rec&&rec.qid===item.qid)rec.status='sent';
+}catch(e){
+item.attempts=(item.attempts||0)+1;
+const rec=noteRecord(item.kind,item.studentId);
+if(rec&&rec.qid===item.qid)rec.status='failed';
+}
+}
+outbox=outbox.filter(function(x){return !x.delivered;});
+saveOutbox();saveState();render();
+flushing=false;
+}
+
+function retryOutbox(){
+outbox.forEach(function(x){
+const rec=noteRecord(x.kind,x.studentId);
+if(rec&&rec.qid===x.qid)rec.status='queued';
+});
+saveState();render();
+flushOutbox();
+}
+
+setInterval(flushOutbox,20000);
+window.addEventListener('online',flushOutbox);
+document.addEventListener('visibilitychange',function(){if(!document.hidden)flushOutbox();});
+
+function renderNoteStatus(rec,label){
+if(!rec||!rec.qid)return '';
+if(rec.status==='sent')return '<div class="note-status sent"><i class="ti ti-circle-check" style="font-size:14px"></i> '+label+' delivered to the team</div>';
+if(rec.status==='failed')return '<div class="note-failed-box"><div class="note-failed-title"><i class="ti ti-alert-triangle" style="font-size:14px"></i> NOT SENT YET</div><div class="note-failed-sub">'+label+' has not reached the team. Still retrying automatically \u2014 it will send as soon as you have signal.</div><button class="note-retry" onclick="retryOutbox()">Try now</button></div>';
+return '<div class="note-status queued"><i class="ti ti-clock" style="font-size:14px"></i> Sending '+label.toLowerCase()+'\u2026</div>';
+}
 
 function esc(t){return String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function initials(n){return String(n||'').split(' ').slice(0,2).map(function(w){return w[0]||'';}).join('').toUpperCase();}
@@ -271,7 +359,7 @@ return{name:f['Name']||'',time:f['Default Bus Arrival Time']||'',type:(f['Type']
 }
 function isDropoffStop(s){
 const info=locInfo(s.pickupLocationId);
-return info.type==='Studio'||String(info.name).toLowerCase().indexOf('steam lab')>-1;
+return info.type==='Studio'||info.type==='Drop-Off'||String(info.name).toLowerCase().indexOf('steam lab')>-1;
 }
 function isSchoolStop(locId){return locInfo(locId).type==='School';}
 function stopName(s){const info=locInfo(s.pickupLocationId);return info.name||'Unassigned location';}
@@ -459,9 +547,11 @@ const s=roster.find(function(x){return x.studentId===id;});
 const el=document.getElementById('absent-'+id);
 const text=el?el.value.trim():'';
 if(!text)return;
-absentNotes[id]={sent:true};
+const qid=newQid();
+queueIncident(qid,'absent',id,{action:'logIncident',description:'ABSENT — '+((s&&s.studentName)||id)+': '+text+' ['+todayStr+']',type:'Field Note',severity:'Low'});
+absentNotes[id]={qid:qid,status:'queued'};
 saveState();render();
-await proxy('logIncident',{description:'ABSENT — '+((s&&s.studentName)||id)+': '+text+' ['+todayStr+']',type:'Field Note',severity:'Low'});
+flushOutbox();
 }
 
 async function sendTeamNote(id){
@@ -469,9 +559,11 @@ const s=roster.find(function(x){return x.studentId===id;});
 const el=document.getElementById('note-'+id);
 const text=el?el.value.trim():'';
 if(!text)return;
-teamNotes[id]={sent:true,open:false};
+const qid=newQid();
+queueIncident(qid,'team',id,{action:'logIncident',description:text+' [Student: '+((s&&s.studentName)||id)+', Date: '+todayStr+']',type:'Field Note',severity:'Low'});
+teamNotes[id]={qid:qid,status:'queued',open:false};
 saveState();render();
-await proxy('logIncident',{description:text+' [Student: '+((s&&s.studentName)||id)+', Date: '+todayStr+']',type:'Field Note',severity:'Low'});
+flushOutbox();
 }
 
 function openUrgent(id){
@@ -496,7 +588,9 @@ a.style.display='none';
 document.body.appendChild(a);
 a.click();
 document.body.removeChild(a);
-await proxy('logIncident',{description:msg,type:'Missing Student',severity:'High'});
+queueIncident(newQid(),'urgent',urgentStudentId,{action:'logIncident',description:msg,type:'Missing Student',severity:'High'});
+render();
+flushOutbox();
 }
 
 function saveCache(data){try{sessionStorage.setItem(CACHE_KEY,JSON.stringify({ts:Date.now(),data:data}));}catch(e){}}
@@ -526,12 +620,14 @@ metaHtml='<div class="kmeta done">Picked up'+(pickupTimes[id]?' '+esc(pickupTime
 }else if(state==='absent'){
 boxHtml='<div class="kbox-static" style="color:#64748B"><i class="ti ti-user-x"></i></div>';
 rowCls='absent';avCls='absent';
-metaHtml='<div class="kmeta absent">'+(absentNotes[id]&&absentNotes[id].sent?'Marked absent, note sent':'Marked absent')+'</div>';
+const anr=absentNotes[id]||{};
+const anTxt=anr.status==='sent'?'Marked absent, note delivered':anr.status==='failed'?'Marked absent, NOTE NOT SENT':anr.status==='queued'?'Marked absent, note sending\u2026':'Marked absent';
+metaHtml='<div class="kmeta '+(anr.status==='failed'?'warn':'absent')+'">'+anTxt+'</div>';
 }else{
 boxHtml='<button class="kbox" onclick="toggleSelect(\''+id+'\')" aria-label="Select '+esc(s.studentName)+'"><div class="kbox-inner'+(sel?' on':'')+'">'+(sel?'<i class="ti ti-check"></i>':'')+'</div></button>';
 rowCls=sel?'sel':'';avCls=sel?'sel':'';
 const chips=[];
-if(s.school)chips.push('<div class="school-chip"><i class="ti ti-building" style="font-size:11px"></i>'+esc(s.school)+'</div>');
+if(s.school&&String(g.name||'').toLowerCase().indexOf(String(s.school).toLowerCase())===-1)chips.push('<div class="school-chip"><i class="ti ti-building" style="font-size:11px"></i>'+esc(s.school)+'</div>');
 if(schoolStop&&(s.teacher||s.classroom)){
 const tc=[s.teacher,s.classroom].filter(Boolean).map(esc).join(' · ');
 chips.push('<div class="teacher-chip"><i class="ti ti-user" style="font-size:11px"></i>'+tc+'</div>');
@@ -548,7 +644,8 @@ let html='<div class="krow '+rowCls+'">'+boxHtml+
 '<i class="ti ti-chevron-'+(isOpen?'up':'down')+' kchev"></i></button></div>';
 
 if(isOpen)html+=renderExpanded(s,state);
-if(state==='absent'&&!(absentNotes[id]&&absentNotes[id].sent))html+=renderAbsentNote(s);
+if(state==='absent'&&!(absentNotes[id]&&absentNotes[id].qid))html+=renderAbsentNote(s);
+if(state==='absent'&&absentNotes[id]&&absentNotes[id].qid)html+='<div style="padding:0 12px 10px;background:#FAFAFA;border-bottom:1px solid #e5e5e5">'+renderNoteStatus(absentNotes[id],'Absence note')+'</div>';
 return html;
 }
 
@@ -564,8 +661,7 @@ h+='<div class="parent-box"><div class="parent-name">'+esc(s.pickupName||'Parent
 }
 h+='<div class="exp-actions">';
 if(state==='pending'){
-h+='<button class="btn-solo" onclick="markOne(\''+id+'\')">'+(isDropoffStop(s)?'Arrived — check in':'I have '+esc(firstName(s.studentName)))+'</button>';
-h+='<button class="btn-mini" onclick="setAbsent(\''+id+'\')">Not here</button>';
+h+='<button class="btn-mini" style="flex:1" onclick="setAbsent(\''+id+'\')"><i class="ti ti-user-x" style="font-size:15px;margin-right:6px"></i>Not here</button>';
 }else if(state==='done'){
 h+='<button class="btn-mini" style="flex:1" onclick="toggleTeamNote(\''+id+'\')"><i class="ti ti-pencil" style="font-size:15px;margin-right:6px"></i>Note for the team</button>';
 }else if(state==='absent'){
@@ -578,7 +674,7 @@ const tn=teamNotes[id]||{};
 if(tn.open){
 h+='<div class="note-form"><textarea class="note-input" id="note-'+id+'" rows="2" placeholder="e.g. Bus arrived 10 min late at a new stop on 47th Ave"></textarea><div class="note-row"><button class="btn-note-cancel" onclick="toggleTeamNote(\''+id+'\')">Cancel</button><button class="btn-note-send" onclick="sendTeamNote(\''+id+'\')">Send to team</button></div></div>';
 }
-if(tn.sent)h+='<div class="note-sent"><i class="ti ti-circle-check" style="font-size:14px"></i> Note sent to the team</div>';
+if(tn.qid)h+=renderNoteStatus(tn,'Note');
 h+='</div>';
 return h;
 }
@@ -596,7 +692,7 @@ const total=g.students.filter(function(s){return stateOf(s.studentId)!=='nopicku
 const doneCount=g.students.filter(function(s){return stateOf(s.studentId)==='done';}).length;
 const openCount=g.students.filter(function(s){return stateOf(s.studentId)==='pending';}).length;
 const complete=total>0&&openCount===0;
-const icon=g.type==='Studio'?'building':g.type==='School'?'school':'bus';
+const icon=(g.type==='Studio'||g.type==='Drop-Off')?'building':g.type==='School'?'school':'bus';
 
 if(complete&&!openStops[g.id]){
 return '<div class="stop-collapsed" onclick="toggleStopOpen(\''+g.id+'\')">'+
@@ -608,7 +704,7 @@ return '<div class="stop-collapsed" onclick="toggleStopOpen(\''+g.id+'\')">'+
 const selIds=stopSelectedIds(g);
 const pend=stopPendingIds(g);
 const allOn=pend.length>0&&pend.every(function(id){return selected[id];});
-const dropoff=g.type==='Studio';
+const dropoff=g.type==='Studio'||g.type==='Drop-Off';
 let foot;
 if(selIds.length){
 foot='<button class="btn-stop-go" onclick="markStop(\''+g.id+'\')">'+(dropoff?selIds.length+(selIds.length===1?' arrived':' arrived')+' — check in':'I have '+selIds.length+(selIds.length===1?' kid':' kids'))+'</button>';
@@ -621,8 +717,7 @@ foot='<div class="btn-stop-idle">Everyone here is handled</div>';
 return '<div class="stop">'+
 '<div class="stop-hdr"><div class="stop-hdr-icon"><i class="ti ti-'+icon+'"></i></div>'+
 '<div class="stop-hdr-text"><div class="stop-hdr-name">'+esc(g.name)+'</div>'+(g.time?'<div class="stop-hdr-time">'+esc(g.time)+'</div>':'')+'</div>'+
-'<div class="stop-hdr-count">'+doneCount+' of '+total+' done</div></div>'+
-'<div class="map-ph"><i class="ti ti-map-pin" style="font-size:15px"></i> Map — waiting on stop coordinates</div>'+
+'<div class="stop-hdr-count">'+(doneCount===0?total+(total===1?' kid':' kids'):doneCount+' of '+total+' done')+'</div></div>'+
 (pend.length?'<div class="select-bar"><button class="select-all" onclick="toggleSelectAll(\''+g.id+'\')"><i class="ti ti-'+(allOn?'square-off':'checkbox')+'" style="font-size:18px"></i> '+(allOn?'Clear selection':'Select all here')+'</button><div class="select-count">'+(selIds.length?selIds.length+' selected':'none selected')+'</div></div>':'')+
 g.students.map(function(s){return renderRow(s,g);}).join('')+
 '<div class="stop-foot">'+foot+'</div>'+
@@ -679,10 +774,12 @@ const expectedToday=normalTotal-noPickupCount;
 const todayChanges=changes.filter(function(c){return(c.fields||{})['Change Summary'];});
 const instructors=getInstructors();
 const needText=pendingTextIds().length;
+const stillOut=roster.filter(function(s){return stateOf(s.studentId)==='pending';}).length;
 
 document.getElementById('app').innerHTML=
 (TEST_DATE?'<div class="test-bar"><i class="ti ti-flask test-bar-icon"></i><div><div class="test-bar-main">Test mode — not today\'s roster</div><div class="test-bar-sub">Pretending it is '+todayFull+', '+todayStr+'. All texts go to your phone. Nothing is logged.</div></div></div>':'')+
 (isOffline?'<div class="offline-bar"><i class="ti ti-wifi-off"></i> Offline — showing cached roster</div>':'')+
+(outbox.length?'<div class="outbox-bar"><div class="outbox-text"><i class="ti ti-alert-triangle" style="font-size:17px"></i> '+outbox.length+(outbox.length===1?' note has':' notes have')+' not reached the team</div><button class="outbox-btn" onclick="retryOutbox()">Try again</button></div>':'')+
 '<div class="header">'+
 '<img src="'+LOGO_URL+'" class="header-logo" alt="Afterschool Collective" onerror="this.style.display=\'none\'">'+
 '<div style="text-align:right"><div class="day-pill">'+todayFull+'</div><div style="font-size:10px;color:#999;margin-top:5px;text-align:center">Pickup — '+todayStr+'</div></div>'+
@@ -690,7 +787,7 @@ document.getElementById('app').innerHTML=
 '<a href="tel:'+REBECCA_PHONE+'" class="emergency-bar"><i class="ti ti-phone" style="font-size:13px"></i> Emergency: Rebecca (770) 547-1075</a>'+
 (needText?'<div class="nag-bar"><div class="nag-text"><i class="ti ti-message-2" style="font-size:17px"></i> '+needText+(needText===1?' parent still needs a text':' parents still need a text')+'</div><button class="nag-btn" onclick="openTray()">Send now</button></div>':'')+
 '<div class="stats">'+
-'<div class="stat"><div class="stat-n">'+(noPickupCount>0?expectedToday+' <span style="font-size:13px;color:#888;font-weight:500">of '+normalTotal+'</span>':normalTotal)+'</div><div class="stat-l">Expected'+(noPickupCount>0?' ('+noPickupCount+' out)':'')+'</div></div>'+
+'<div class="stat"><div class="stat-n '+(stillOut>0?'red':'green')+'">'+stillOut+'</div><div class="stat-l">Still out of '+expectedToday+(noPickupCount>0?' ('+noPickupCount+' not in today)':'')+'</div></div>'+
 '<div class="stat"><div class="stat-n green">'+doneCount+'</div><div class="stat-l">Picked up</div></div>'+
 '<div class="stat"><div class="stat-n '+(absentCount>0?'red':'')+'">'+absentCount+'</div><div class="stat-l">Absent</div></div>'+
 '</div>'+
@@ -699,7 +796,7 @@ document.getElementById('app').innerHTML=
 const photo=getInstrPhoto(name);
 return'<button class="filter-pill'+(activeFilter===name?' active':'')+'" onclick="setFilter(\''+name.replace(/'/g,"\\'")+'\')">'+(photo?'<img src="'+esc(photo)+'" alt="">':'')+esc(firstName(name))+'</button>';
 }).join('')+'</div>':'')+
-'<div class="section-hdr"><span class="section-title">'+(activeFilter==='all'?"Today's stops":esc(firstName(activeFilter))+"'s stops")+'</span><span class="count-chip">'+list.length+'</span></div>'+
+'<div class="section-hdr"><span class="section-title">'+(activeFilter==='all'?"Today's stops":esc(firstName(activeFilter))+"'s stops")+'</span><span class="count-chip">'+groupByLocation(list).length+'</span></div>'+
 '<div class="stops">'+
 (list.length===0?'<div style="text-align:center;padding:40px 0;color:#888;font-size:14px">No students enrolled for '+todayFull+'</div>':groupByLocation(list).map(renderStop).join(''))+
 '</div>';
