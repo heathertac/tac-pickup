@@ -1,259 +1,702 @@
-module.exports = async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  if (req.method === 'OPTIONS') return res.status(200).end();
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>TAC Pickup</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f5;min-height:100vh;}
+.app{max-width:420px;margin:0 auto;background:#fff;min-height:100vh;}
+.header{background:#fff;border-bottom:3px solid #E8420A;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;}
+.header-logo{height:44px;width:auto;object-fit:contain;}
+.header-logo-fallback{display:none;}
+.day-pill{background:#f5f5f5;color:#555;font-size:12px;font-weight:500;padding:5px 14px;border-radius:999px;border:1px solid #e5e5e5;white-space:nowrap;}
+.emergency-bar{display:flex;align-items:center;justify-content:center;gap:6px;background:#f5f5f5;color:#555;font-size:11px;font-weight:500;padding:5px 16px;text-decoration:none;letter-spacing:0.02em;width:100%;border-bottom:0.5px solid #e5e5e5;}
+.nag-bar{background:#FEF3DC;border-bottom:1px solid #F0C97A;padding:9px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.nag-text{font-size:13px;color:#92540A;font-weight:600;display:flex;align-items:center;gap:7px;}
+.nag-btn{background:#fff;border:1px solid #F0C97A;color:#92540A;font-size:12px;font-weight:700;padding:7px 12px;border-radius:8px;cursor:pointer;white-space:nowrap;}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:12px 16px 0;}
+.stat{background:#f5f5f5;border-radius:8px;padding:10px 12px;}
+.stat-n{font-size:22px;font-weight:600;color:#1C1C1C;}
+.stat-n.green{color:#2E7D32;}
+.stat-n.red{color:#C0392B;}
+.stat-l{font-size:10px;color:#888;margin-top:2px;}
+.alert-box{margin:12px 16px 0;border-radius:12px;overflow:hidden;border:1px solid #F09595;}
+.alert-hdr{background:#FCEBEB;padding:10px 14px;display:flex;align-items:center;gap:8px;}
+.alert-hdr-text{font-size:12px;font-weight:600;color:#A32D2D;}
+.alert-item{background:#fff;border-top:1px solid #F09595;padding:10px 14px;}
+.alert-name{font-size:14px;font-weight:500;color:#1C1C1C;}
+.clear-bar{margin:12px 16px 0;background:#E8F5E9;border:1px solid #A5D6A7;border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:8px;}
+.clear-text{font-size:13px;color:#2E7D32;font-weight:500;}
+.filter-bar{padding:12px 16px 0;display:flex;gap:6px;flex-wrap:wrap;}
+.filter-pill{background:#f5f5f5;border:1px solid #e5e5e5;color:#555;font-size:12px;font-weight:500;padding:5px 12px;border-radius:999px;cursor:pointer;display:flex;align-items:center;gap:5px;white-space:nowrap;}
+.filter-pill.active{background:#E8420A;border-color:#E8420A;color:#fff;}
+.filter-pill img{width:20px;height:20px;border-radius:50%;object-fit:cover;}
+.section-hdr{padding:14px 16px 8px;display:flex;align-items:center;justify-content:space-between;}
+.section-title{font-size:12px;font-weight:600;color:#E8420A;letter-spacing:0.05em;text-transform:uppercase;}
+.count-chip{font-size:11px;color:#888;background:#f5f5f5;padding:2px 8px;border-radius:999px;}
+.stops{padding:0 16px 90px;display:flex;flex-direction:column;gap:14px;}
+.stop{border:1px solid #e5e5e5;border-radius:12px;overflow:hidden;}
+.stop-hdr{display:flex;align-items:center;gap:10px;padding:11px 12px;background:#2B5CE6;}
+.stop-hdr-icon{flex-shrink:0;width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,0.16);color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;}
+.stop-hdr-text{flex:1;min-width:0;}
+.stop-hdr-name{font-size:14px;font-weight:600;color:#fff;line-height:1.2;}
+.stop-hdr-time{font-size:12px;color:rgba(255,255,255,0.78);font-weight:500;margin-top:1px;}
+.stop-hdr-count{flex-shrink:0;font-size:12px;color:#fff;background:rgba(255,255,255,0.16);padding:3px 10px;border-radius:999px;font-weight:600;}
+.map-ph{height:56px;background:#F1F5F9;border-bottom:1px solid #e5e5e5;display:flex;align-items:center;justify-content:center;gap:6px;color:#64748B;font-size:12px;}
+.select-bar{display:flex;align-items:center;justify-content:space-between;padding:11px 12px;background:#FAFAFA;border-bottom:1px solid #e5e5e5;}
+.select-all{display:flex;align-items:center;gap:8px;font-size:14px;color:#E8420A;font-weight:600;background:none;border:none;cursor:pointer;padding:0;font-family:inherit;}
+.select-count{font-size:12px;color:#888;}
+.krow{display:flex;align-items:stretch;border-bottom:1px solid #e5e5e5;background:#fff;}
+.krow.sel{background:#FFF4F0;}
+.krow.done{background:#E8F5E9;}
+.krow.absent{background:#F1F5F9;}
+.krow.nopickup{background:#fff;opacity:0.55;}
+.kbox{width:48px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border-right:1px solid #eee;background:none;cursor:pointer;padding:0;}
+.kbox-inner{width:24px;height:24px;border-radius:6px;border:2px solid #cbd5e1;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;}
+.kbox-inner.on{background:#E8420A;border-color:#E8420A;}
+.kbox-static{width:48px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border-right:1px solid #eee;font-size:18px;}
+.kmain{flex:1;min-width:0;display:flex;align-items:center;gap:10px;padding:11px 12px;background:none;border:none;cursor:pointer;font-family:inherit;text-align:left;}
+.av{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;flex-shrink:0;overflow:hidden;border:2px solid #e5e5e5;background:#f5f5f5;color:#333;}
+.av img{width:100%;height:100%;object-fit:cover;}
+.av.sel{border-color:#E8420A;}
+.av.done{border-color:#2E7D32;background:#E8F5E9;color:#2E7D32;}
+.av.absent{border-color:#64748B;background:#F1F5F9;color:#64748B;}
+.kinfo{flex:1;min-width:0;}
+.kname{font-size:15px;font-weight:600;color:#1C1C1C;}
+.kmeta{font-size:12px;margin-top:2px;color:#888;}
+.kmeta.done{color:#2E7D32;font-weight:500;}
+.kmeta.absent{color:#64748B;}
+.kmeta.warn{color:#92540A;font-weight:500;}
+.school-chip{display:inline-flex;align-items:center;gap:4px;background:#EEF2FF;border:1px solid #C7D2FE;border-radius:6px;padding:1px 7px;font-size:11px;color:#2B5CE6;margin-top:3px;}
+.teacher-chip{display:inline-flex;align-items:center;gap:4px;background:#FEF3DC;border:1px solid #F0C97A;border-radius:6px;padding:1px 7px;font-size:11px;color:#92540A;margin-top:3px;}
+.time-chip{display:inline-flex;align-items:center;gap:4px;background:#FEF3DC;border:1px solid #F0C97A;border-radius:6px;padding:1px 7px;font-size:11px;color:#92540A;font-weight:600;margin-top:3px;}
+.instr-chip{display:flex;align-items:center;gap:5px;background:#f5f5f5;border:1px solid #e5e5e5;border-radius:999px;padding:3px 9px 3px 3px;flex-shrink:0;}
+.instr-photo{width:22px;height:22px;border-radius:50%;object-fit:cover;}
+.instr-name{font-size:11px;color:#333;font-weight:500;}
+.kchev{color:#bbb;font-size:20px;flex-shrink:0;}
+.kexp{padding:0 12px 12px;background:#FAFAFA;border-bottom:1px solid #e5e5e5;}
+.parent-box{background:#fff;border:1px solid #e5e5e5;border-radius:8px;padding:8px 11px;margin-bottom:8px;}
+.parent-name{font-size:12px;color:#666;}
+.parent-phone{font-size:11px;color:#888;font-family:monospace;}
+.no-phone{font-size:11px;color:#aaa;font-style:italic;}
+.exp-actions{display:flex;gap:6px;flex-wrap:wrap;}
+.btn-solo{flex:1;min-width:130px;background:#2E7D32;border:none;color:#fff;border-radius:8px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;}
+.btn-mini{background:#F1F5F9;border:1px solid #CBD5E1;color:#475569;border-radius:8px;padding:12px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;min-width:48px;display:flex;align-items:center;justify-content:center;}
+.btn-mini.danger{background:#FCEBEB;border-color:#E89999;color:#A32D2D;}
+.stop-foot{padding:10px 12px;}
+.btn-stop-go{width:100%;background:#2E7D32;border:none;color:#fff;border-radius:10px;padding:16px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;}
+.btn-stop-idle{width:100%;background:#F1F5F9;border:1px solid #e5e5e5;color:#94A3B8;border-radius:10px;padding:16px;font-size:14px;font-weight:600;text-align:center;font-family:inherit;}
+.stop-collapsed{display:flex;align-items:center;gap:10px;padding:13px 12px;background:#E8F5E9;border:1px solid #A5D6A7;border-radius:12px;cursor:pointer;}
+.stop-collapsed-name{flex:1;min-width:0;font-size:14px;font-weight:600;color:#1C1C1C;}
+.stop-collapsed-sub{font-size:12px;color:#2E7D32;margin-top:1px;font-weight:500;}
+.absent-note{padding:0 12px 12px;background:#FAFAFA;border-bottom:1px solid #e5e5e5;}
+.absent-note-label{font-size:11px;color:#64748B;font-weight:600;margin-bottom:5px;display:flex;align-items:center;gap:4px;}
+.absent-input{width:100%;border:1px solid #CBD5E1;border-radius:8px;padding:9px 12px;font-size:13px;font-family:inherit;color:#1C1C1C;resize:none;outline:none;background:#fff;}
+.btn-absent-send{flex:1;background:#475569;border:none;color:#fff;border-radius:8px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;}
+.note-form{display:flex;flex-direction:column;gap:6px;margin-top:8px;}
+.note-input{width:100%;border:1px solid #ddd;border-radius:8px;padding:9px 12px;font-size:13px;font-family:inherit;color:#1C1C1C;resize:none;outline:none;}
+.note-row{display:flex;gap:6px;}
+.btn-note-send{flex:1;background:#E8420A;border:none;color:#fff;border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;}
+.btn-note-cancel{background:#f5f5f5;border:none;color:#888;border-radius:8px;padding:10px 14px;font-size:13px;cursor:pointer;font-family:inherit;}
+.note-sent{font-size:12px;color:#2E7D32;display:flex;align-items:center;gap:5px;margin-top:8px;}
+.tray{position:fixed;inset:0;background:#fff;z-index:250;max-width:420px;margin:0 auto;overflow-y:auto;}
+.tray-hdr{position:sticky;top:0;background:#fff;padding:14px;border-bottom:1px solid #e5e5e5;display:flex;align-items:center;gap:10px;z-index:2;}
+.tray-back{background:none;border:none;color:#888;font-size:22px;cursor:pointer;padding:0;display:flex;}
+.tray-title{font-size:17px;font-weight:700;color:#1C1C1C;}
+.tray-sub{font-size:12px;color:#888;margin-top:1px;}
+.tray-note{padding:11px 14px;background:#FAFAFA;border-bottom:1px solid #e5e5e5;font-size:12px;color:#666;display:flex;align-items:center;gap:8px;line-height:1.4;}
+.tray-row{display:flex;align-items:center;gap:11px;padding:12px 14px;border-bottom:1px solid #e5e5e5;}
+.tray-row.sent{background:#E8F5E9;}
+.tray-row.muted{background:#FAFAFA;}
+.tray-info{flex:1;min-width:0;}
+.tray-name{font-size:15px;font-weight:600;color:#1C1C1C;}
+.tray-meta{font-size:12px;color:#888;margin-top:1px;}
+.tray-meta.done{color:#2E7D32;}
+.btn-text{background:#E8420A;border:none;color:#fff;border-radius:8px;padding:12px 18px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;flex-shrink:0;}
+.btn-text.off{background:#fff;border:1px solid #CBD5E1;color:#94A3B8;}
+.confirm-box{padding:11px 14px;background:#FEF3DC;border-bottom:1px solid #F0C97A;}
+.confirm-q{font-size:13px;color:#92540A;font-weight:600;margin-bottom:8px;}
+.confirm-row{display:flex;gap:8px;}
+.btn-yes{flex:1;background:#2E7D32;border:none;color:#fff;border-radius:8px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;}
+.btn-no{background:#fff;border:1px solid #F0C97A;color:#92540A;border-radius:8px;padding:11px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;}
+.tray-empty{padding:50px 20px;text-align:center;color:#888;font-size:14px;}
+.sheet-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;display:flex;align-items:flex-end;justify-content:center;}
+.sheet{background:#fff;border-radius:16px 16px 0 0;width:100%;max-width:420px;padding:20px 20px 36px;}
+.sheet-handle{width:36px;height:4px;background:#ddd;border-radius:2px;margin:0 auto 16px;}
+.sheet-title{font-size:17px;font-weight:700;color:#1C1C1C;margin-bottom:6px;}
+.sheet-title.danger{color:#C0392B;}
+.sheet-sub{font-size:13px;color:#888;margin-bottom:16px;line-height:1.4;}
+.sheet-input{width:100%;border:1px solid #FFBDBD;border-radius:10px;padding:12px;font-size:14px;font-family:inherit;color:#1C1C1C;resize:none;outline:none;min-height:80px;background:#FFF5F5;}
+.sheet-actions{display:flex;gap:8px;margin-top:12px;}
+.btn-urgent-send{flex:1;background:#C0392B;border:none;color:#fff;border-radius:10px;padding:13px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;}
+.btn-sheet-cancel{background:#f5f5f5;border:none;color:#555;border-radius:10px;padding:13px 18px;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit;}
+.undo-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1C1C1C;color:#fff;border-radius:10px;padding:12px 18px;font-size:13px;display:flex;align-items:center;gap:12px;z-index:400;box-shadow:0 4px 20px rgba(0,0,0,0.25);white-space:nowrap;}
+.undo-toast-btn{background:#E8420A;border:none;color:#fff;border-radius:6px;padding:7px 13px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;}
+.undo-toast-bar{position:absolute;bottom:0;left:0;height:3px;background:#E8420A;border-radius:0 0 10px 10px;animation:shrink 5s linear forwards;}
+@keyframes shrink{from{width:100%;}to{width:0%;}}
+.offline-bar{background:#FEF3DC;border-bottom:1px solid #D4840A;padding:6px 16px;font-size:11px;color:#92540A;display:flex;align-items:center;gap:6px;}
+.loading{padding:60px 16px;text-align:center;}
+.spin{display:inline-block;width:28px;height:28px;border:3px solid #f5f5f5;border-top-color:#E8420A;border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:14px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading-t{font-size:14px;color:#888;}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+<div class="loading"><div class="spin"></div><div class="loading-t">Loading today's roster…</div></div>
+</div>
+<div id="trayHost"></div>
 
-  const TOKEN = process.env.AIRTABLE_API_KEY;
-  const BASE = 'appnWviGYgpWT2VPH';
+<div class="sheet-overlay" id="urgentOverlay" style="display:none" onclick="closeUrgentOnBg(event)">
+<div class="sheet">
+<div class="sheet-handle"></div>
+<div class="sheet-title danger">Urgent alert</div>
+<div class="sheet-sub" id="urgentSub"></div>
+<textarea class="sheet-input" id="urgentText" placeholder="Describe what's happening so the team can act immediately…"></textarea>
+<div class="sheet-actions">
+<button class="btn-sheet-cancel" onclick="closeUrgentSheet()">Cancel</button>
+<button class="btn-urgent-send" onclick="sendUrgent()">Send alert now</button>
+</div>
+</div>
+</div>
 
-  async function get(table, params='') {
-    const r = await fetch(`https://api.airtable.com/v0/${BASE}/${table}?${params}`, {
-      headers: { Authorization: `Bearer ${TOKEN}` }
-    });
-    return r.json();
-  }
+<script>
+const TODAY=new Date();
+const DAYS_FULL=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const todayFull=DAYS_FULL[TODAY.getDay()];
+const todayStr=MONTHS[TODAY.getMonth()]+' '+TODAY.getDate();
+const CACHE_KEY='tac_roster_v7_'+TODAY.toDateString();
+const STATE_KEY='tac_states_v2_'+TODAY.toDateString();
+const REBECCA_PHONE='7705471075';
+const LOGO_URL='https://static.wixstatic.com/media/7e1448_415a7686f7774d038fce84f0816a76b2~mv2.png/v1/fill/w_320,h_125,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/ASC%20LOGO.png';
 
-  async function getAllRecords(table, params='') {
-    let records = [], offset = null;
-    do {
-      const p = offset ? `${params}${params?'&':''}offset=${offset}` : params;
-      const d = await get(table, p);
-      records = records.concat(d.records || []);
-      offset = d.offset;
-    } while (offset);
-    return records;
-  }
+const INSTRUCTOR_PHOTO_CACHE={};
+function getInstrPhoto(name){if(!name)return null;return INSTRUCTOR_PHOTO_CACHE[name]||null;}
+function buildPhotoCache(){roster.forEach(function(s){if(s.instructorName&&s.instructorPhotoUrl){INSTRUCTOR_PHOTO_CACHE[s.instructorName]=s.instructorPhotoUrl;}});}
 
-  function normDay(d) {
-    const s = (d || '').toLowerCase();
-    if (s.startsWith('mo')) return 'mon';
-    if (s.startsWith('tu')) return 'tue';
-    if (s.startsWith('we')) return 'wed';
-    if (s.startsWith('th')) return 'thu';
-    if (s.startsWith('fr')) return 'fri';
-    return s.slice(0, 3);
-  }
+let roster=[],locations=[],changes=[],activeFilter='all',isOffline=false,urgentStudentId=null;
+let noPickupToday=[];
+let selected={};
+let expanded={};
+let openStops={};
+let trayOpen=false;
+let undoTimer=null;
+let st=loadState();
+let states=st.states,absentNotes=st.absentNotes,teamNotes=st.teamNotes,pickupTimes=st.pickupTimes,textsSent=st.textsSent,textOpened=st.textOpened;
 
-  // Semester windows. Outside every window the roster comes back EMPTY —
-  // no program is running, so no cards, no stops. Add the spring term here
-  // when its dates are set, and the winter gap closes itself.
-  const SEMESTERS = [
-    { label: 'Fall 2026', start: '2026-09-06', end: '2026-12-26' },
-    // { label: 'Spring 2027', start: '2027-MM-DD', end: '2027-MM-DD' },
-  ];
-
-  function inSemester(iso) {
-    return SEMESTERS.some(s => iso >= s.start && iso <= s.end);
-  }
-
-  // Fall 2026 semester: week of Sep 6 through week of Dec 20, 2026.
-  // Source: TAC semester schedule (the closures parents see when purchasing).
-  // Weekends are already excluded below, so only weekdays are listed here.
-  // WARNING: a date wrongly listed here returns an EMPTY roster that day.
-  const CLOSED_DATES = [
-    // September — school year starts Thu Sep 10
-    '2026-09-07', // Labor Day
-    '2026-09-08',
-    '2026-09-09',
-    '2026-09-21', // Yom Kippur
-    '2026-09-30',
-    // October
-    '2026-10-12', // Italian Heritage / Indigenous Peoples' Day
-    // November
-    '2026-11-03', // Election Day
-    '2026-11-05',
-    '2026-11-11', // Veterans Day
-    '2026-11-26', // Thanksgiving
-    '2026-11-27',
-    // December — fall semester ends Wed Dec 23
-    '2026-12-24',
-    '2026-12-25',
-  ];
-
-  try {
-    const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
-    const { action } = body || {};
-
-    if (action === 'getTodayRoster') {
-      const today = new Date();
-      const todayISO = today.toISOString().slice(0, 10);
-      const days = ['sun','mon','tue','wed','thu','fri','sat'];
-      const todayDay = days[today.getDay()];
-
-      if (!inSemester(todayISO)) {
-        return res.status(200).json({ roster: [], closedReason: 'Between semesters' });
-      }
-
-      if (CLOSED_DATES.includes(todayISO) || todayDay === 'sat' || todayDay === 'sun') {
-        return res.status(200).json({ roster: [] });
-      }
-
-      const [students, staff, assignments] = await Promise.all([
-        getAllRecords('tblJSQjtxq7yc29cY'),
-        getAllRecords('tblWuCldxuiPhtUUC'),
-        getAllRecords('tblqX1tGUs6W5VGt4',
-          `filterByFormula=DATESTR({Date})="${todayISO}"`),
-      ]);
-
-      // Build staff lookup by record ID
-      const staffById = {};
-      staff.forEach(r => {
-        const f = r.fields || {};
-        const name = f['Name'] || '';
-        const photos = f['Photo'] || [];
-        const photoUrl = photos[0]?.thumbnails?.large?.url || photos[0]?.url || null;
-        staffById[r.id] = { name, photoUrl };
-      });
-
-      // Build assignment map keyed by student record ID
-      // The REST API returns linked record fields as arrays of plain record ID strings
-      const assignmentMap = {};
-      assignments.forEach(a => {
-        const f = a.fields || {};
-
-        // Student field: array of record ID strings e.g. ["recABC123"]
-        const stuIds = (f['Student'] || []).map(x => (typeof x === 'string' ? x : x.id));
-
-        // Assigned Instructor: array of record ID strings e.g. ["rec5hPamO5JRaCPu8"]
-        const instrArr = f['Assigned Instructor'] || [];
-        const instrId = typeof instrArr[0] === 'string' ? instrArr[0] : instrArr[0]?.id || null;
-        const instrData = instrId ? staffById[instrId] : null;
-
-        // Pickup Location: array of record ID strings
-        const locArr = f['Pickup Location'] || [];
-        const locationId = typeof locArr[0] === 'string' ? locArr[0] : locArr[0]?.id || null;
-
-        // Bus Arrival Time
-        const busTime = f['Bus Arrival Time'] || '';
-
-        // Notes
-        const notes = f['Notes'] || '';
-
-        // EOD Location
-        const eodLoc = f['EOD Location']?.name || f['EOD Location'] || '';
-
-        // Parent drop-off: any assignment field whose value starts with "Parent drop"
-        const parentDropoff = Object.values(f).some(
-          v => typeof v === 'string' && v.trim().toLowerCase().startsWith('parent drop')
-        );
-
-        stuIds.forEach(sid => {
-          assignmentMap[sid] = {
-            instructorName: instrData?.name || '',
-            instructorPhotoUrl: instrData?.photoUrl || null,
-            locationId,
-            busTime,
-            notes,
-            eodLoc,
-            parentDropoff,
-          };
-        });
-      });
-
-      // Build roster
-      const roster = [];
-      for (const r of students) {
-        const f = r.fields || {};
-        const status = (f['Status']?.name || f['Status'] || '').toLowerCase();
-        if (!status.includes('active')) continue;
-
-        const enrolledDays = (f['Enrolled Days'] || []).map(d => normDay(d.name || d));
-        if (!enrolledDays.includes(todayDay)) continue;
-
-        const studentName = f['Name'] || 'Unknown';
-        const photos = f['Photo'] || [];
-        const defaultLocIds = f['Default Pickup Location'] || [];
-        const defaultLocId = typeof defaultLocIds[0] === 'string'
-          ? defaultLocIds[0]
-          : defaultLocIds[0]?.id || null;
-
-        const assignment = assignmentMap[r.id];
-        const hasAssignment = !!assignment;
-
-        const instructorName = assignment?.instructorName || '';
-        const instructorPhotoUrl = assignment?.instructorPhotoUrl || null;
-        const pickupLocationId = assignment?.locationId || defaultLocId || '';
-
-        roster.push({
-          studentId: r.id,
-          studentName,
-          photo: photos[0]?.thumbnails?.small?.url || photos[0]?.url || null,
-          school: f['School']?.name || f['School'] || '',
-          grade: f['Grade']?.name || f['Grade'] || '',
-          teacher: f['Homeroom Teacher'] || '',
-          pickupPhone: f['Pickup Contact Phone'] || '',
-          pickupName: f['Pickup Contact Name'] || '',
-          notes: f['Notes (Nice to Know)'] || '',
-          pickupLocationId,
-          pickupLocation: '',
-          instructorName,
-          instructorPhotoUrl,
-          parentDropoff: assignment?.parentDropoff || false,
-          labArrivalTime: f['Lab Arrival Time'] || '',
-          isOverride: false, // removed — "Sub" badge was misleading
-        });
-      }
-
-      return res.status(200).json({ roster });
-    }
-
-    if (action === 'getLocations') {
-      const records = await getAllRecords('tblI5cwN5EIXqrdK2');
-      return res.status(200).json({ records });
-    }
-
-    if (action === 'getChanges') {
-      const todayISO = new Date().toISOString().slice(0, 10);
-      const d = await get('tblEdgjx4phKSj4wS',
-        `filterByFormula=DATESTR({Affected Pickup Date})="${todayISO}"`);
-      const records = d.records || [];
-
-      // Build a simple list of students who need NO PICKUP today.
-      // Linked student fields come back as arrays of record ID strings.
-      const noPickupStudentIds = [];
-      records.forEach(rec => {
-        const f = rec.fields || {};
-        const type = f['Change Type']?.name || f['Change Type'] || '';
-        if (type === 'No Pickup Needed') {
-          const linked = f['Linked Student'] || [];
-          linked.forEach(x => {
-            const sid = (typeof x === 'string') ? x : (x && x.id) ? x.id : null;
-            if (sid) noPickupStudentIds.push(sid);
-          });
-        }
-      });
-
-      return res.status(200).json({ records, noPickupStudentIds });
-    }
-
-    if (action === 'logIncident') {
-      const { description, type, severity } = body;
-      const r = await fetch(`https://api.airtable.com/v0/${BASE}/tblBrZKAPGrg893o1`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ records: [{ fields: {
-          fldeXepi4JsJKPsWk: description,
-          fldmgu6wxyuCiOZ48: type || 'Field Note',
-          fldVIfEohqez31Wmw: severity || 'Low',
-          fldw6vBAo2K3rI9ip: new Date().toISOString().slice(0, 10),
-        }}]})
-      });
-      return res.status(200).json(await r.json());
-    }
-
-    if (action === 'getStudents') {
-      const records = await getAllRecords('tblJSQjtxq7yc29cY');
-      return res.status(200).json({ records });
-    }
-
-    if (action === 'getStaff') {
-      const d = await get('tblWuCldxuiPhtUUC');
-      return res.status(200).json({ records: d.records || [] });
-    }
-
-    return res.status(400).json({ error: 'Unknown action' });
-  } catch (e) {
-    return res.status(500).json({ error: e.message });
-  }
+function loadState(){
+const empty={states:{},absentNotes:{},teamNotes:{},pickupTimes:{},textsSent:{},textOpened:{}};
+try{
+const s=localStorage.getItem(STATE_KEY);
+if(!s)return empty;
+const p=JSON.parse(s);
+return{
+states:p.states||{},
+absentNotes:p.absentNotes||{},
+teamNotes:p.teamNotes||{},
+pickupTimes:p.pickupTimes||{},
+textsSent:p.textsSent||{},
+textOpened:p.textOpened||{}
 };
+}catch(e){return empty;}
+}
+function saveState(){try{localStorage.setItem(STATE_KEY,JSON.stringify({states:states,absentNotes:absentNotes,teamNotes:teamNotes,pickupTimes:pickupTimes,textsSent:textsSent,textOpened:textOpened}));}catch(e){}}
+
+function esc(t){return String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function initials(n){return String(n||'').split(' ').slice(0,2).map(function(w){return w[0]||'';}).join('').toUpperCase();}
+function parseSecondary(n){if(!n)return null;const m=String(n).match(/Also text[^\d]*?([\w\s]+?)\s+at\s+([\d\-\(\)\s]+)/i);if(!m)return null;return{name:m[1].trim().replace(/^(Dad|Mom|dad|mom)\s+/,''),phone:m[2].trim()};}
+function firstName(n){return String(n||'').split(' ')[0];}
+function hasPhone(s){return!!String(s.pickupPhone||'').replace(/\D/g,'');}
+function nowTime(){return new Date().toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});}
+
+function getInstructors(){
+const seen={};const out=[];
+roster.forEach(function(s){if(s.instructorName&&!seen[s.instructorName]){seen[s.instructorName]=1;out.push(s.instructorName);}});
+return out.sort();
+}
+function todayList(){
+let list=roster.slice();
+if(activeFilter!=='all')list=list.filter(function(s){return s.instructorName===activeFilter;});
+return list;
+}
+
+function parsePickupTime(t){
+if(!t)return 9999;
+const m=String(t).toLowerCase().match(/(\d+):(\d+)\s*(am|pm)?/);
+if(!m)return 9999;
+let h=parseInt(m[1],10);const min=parseInt(m[2],10);
+const ap=m[3]||'pm';
+if(ap==='pm'&&h<12)h+=12;
+if(ap==='am'&&h===12)h=0;
+return h*60+min;
+}
+
+function locInfo(id){
+const l=locations.find(function(x){return x.id===id;});
+if(!l)return{name:'',time:'',type:''};
+const f=l.fields||{};
+return{name:f['Name']||'',time:f['Default Bus Arrival Time']||'',type:(f['Type']&&f['Type'].name)||f['Type']||''};
+}
+function isDropoffStop(s){
+const info=locInfo(s.pickupLocationId);
+return info.type==='Studio'||String(info.name).toLowerCase().indexOf('steam lab')>-1;
+}
+function isSchoolStop(locId){return locInfo(locId).type==='School';}
+function stopName(s){const info=locInfo(s.pickupLocationId);return info.name||'Unassigned location';}
+
+function groupByLocation(list){
+const groups={};
+list.forEach(function(s){
+const locId=s.pickupLocationId||'__none__';
+const info=locInfo(locId);
+if(!groups[locId])groups[locId]={id:locId,name:info.name||'No pickup location set',time:info.time,type:info.type,students:[]};
+groups[locId].students.push(s);
+});
+Object.keys(groups).forEach(function(k){
+groups[k].students.sort(function(a,b){return String(a.studentName).localeCompare(String(b.studentName));});
+});
+return Object.keys(groups).map(function(k){return groups[k];}).sort(function(a,b){
+if(a.id==='__none__')return 1;
+if(b.id==='__none__')return -1;
+return parsePickupTime(a.time)-parsePickupTime(b.time);
+});
+}
+
+async function proxy(action,extra){
+const payload=Object.assign({action:action},extra||{});
+const r=await fetch('/api/proxy',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+return r.json();
+}
+
+function stateOf(id){
+if(noPickupToday.indexOf(id)>-1&&!states[id])return 'nopickup';
+return states[id]||'pending';
+}
+function isSelectable(id){return stateOf(id)==='pending';}
+
+function toggleSelect(id){
+if(!isSelectable(id))return;
+if(selected[id])delete selected[id];else selected[id]=true;
+render();
+}
+function stopPendingIds(g){
+return g.students.filter(function(s){return isSelectable(s.studentId);}).map(function(s){return s.studentId;});
+}
+function stopSelectedIds(g){
+return stopPendingIds(g).filter(function(id){return selected[id];});
+}
+function toggleSelectAll(locId){
+const g=groupByLocation(todayList()).find(function(x){return x.id===locId;});
+if(!g)return;
+const pend=stopPendingIds(g);
+const allOn=pend.length>0&&pend.every(function(id){return selected[id];});
+pend.forEach(function(id){if(allOn)delete selected[id];else selected[id]=true;});
+render();
+}
+function toggleExpand(id){
+if(expanded[id])delete expanded[id];else expanded[id]=true;
+render();
+}
+function toggleStopOpen(locId){
+if(openStops[locId])delete openStops[locId];else openStops[locId]=true;
+render();
+}
+
+function markPickedUp(ids){
+if(!ids.length)return;
+const t=nowTime();
+ids.forEach(function(id){
+states[id]='done';
+pickupTimes[id]=t;
+delete selected[id];
+delete expanded[id];
+});
+saveState();render();
+showUndoToast(ids);
+}
+function markStop(locId){
+const g=groupByLocation(todayList()).find(function(x){return x.id===locId;});
+if(!g)return;
+markPickedUp(stopSelectedIds(g));
+}
+function markOne(id){markPickedUp([id]);}
+
+function showUndoToast(ids){
+clearTimeout(undoTimer);
+const old=document.getElementById('undoToast');
+if(old)old.remove();
+const el=document.createElement('div');
+el.className='undo-toast';
+el.id='undoToast';
+const label=ids.length===1?'1 child marked picked up':ids.length+' children marked picked up';
+el.innerHTML='<span>'+label+'</span><button class="undo-toast-btn" onclick="undoPickup()">Undo</button><div class="undo-toast-bar"></div>';
+document.body.appendChild(el);
+window.__undoIds=ids.slice();
+undoTimer=setTimeout(function(){el.remove();window.__undoIds=null;},5000);
+}
+function undoPickup(){
+clearTimeout(undoTimer);
+const el=document.getElementById('undoToast');
+if(el)el.remove();
+const ids=window.__undoIds||[];
+ids.forEach(function(id){
+delete states[id];
+delete pickupTimes[id];
+delete textsSent[id];
+delete textOpened[id];
+selected[id]=true;
+});
+window.__undoIds=null;
+saveState();render();
+}
+
+function setAbsent(id){
+states[id]='absent';
+delete selected[id];
+delete pickupTimes[id];
+delete textsSent[id];
+delete textOpened[id];
+absentNotes[id]=absentNotes[id]||{sent:false};
+expanded[id]=true;
+saveState();render();
+}
+function undoAbsent(id){
+delete states[id];
+delete absentNotes[id];
+saveState();render();
+}
+
+function setFilter(f){activeFilter=f;render();}
+function toggleTeamNote(id){teamNotes[id]=teamNotes[id]||{};teamNotes[id].open=!teamNotes[id].open;saveState();render();}
+
+function pendingTextIds(){
+return roster.filter(function(s){
+const id=s.studentId;
+return states[id]==='done'&&!textsSent[id]&&hasPhone(s);
+}).map(function(s){return s.studentId;});
+}
+function noPhoneDoneIds(){
+return roster.filter(function(s){return states[s.studentId]==='done'&&!hasPhone(s);}).map(function(s){return s.studentId;});
+}
+
+function openTray(){trayOpen=true;render();}
+function closeTray(){trayOpen=false;render();}
+
+function openTextFor(id){
+const s=roster.find(function(x){return x.studentId===id;});
+if(!s)return;
+textOpened[id]=true;
+saveState();
+sendParentText(s);
+render();
+}
+function confirmTextSent(id){
+textsSent[id]=nowTime();
+delete textOpened[id];
+saveState();render();
+}
+function cancelTextSent(id){
+delete textOpened[id];
+saveState();render();
+}
+
+function sendParentText(s){
+const parentFirst=firstName(s.pickupName);
+const greeting=parentFirst?'Hi '+parentFirst+'!':'Hi there!';
+const kid=firstName(s.studentName);
+let body;
+if(isDropoffStop(s)||s.parentDropoff){
+body=greeting+' '+kid+' has arrived safely at The Afterschool Collective and is checked in. See you at pickup time!';
+}else{
+body=greeting+' '+kid+' has been safely picked up and is on the way back to the studio. See you at pickup time!';
+}
+const phone=String(s.pickupPhone||'').replace(/\D/g,'');
+const url=(phone?'sms:'+phone:'sms:')+'?body='+encodeURIComponent(body);
+const a=document.createElement('a');
+a.href=url;
+a.style.display='none';
+document.body.appendChild(a);
+a.click();
+document.body.removeChild(a);
+}
+
+async function sendAbsentNote(id){
+const s=roster.find(function(x){return x.studentId===id;});
+const el=document.getElementById('absent-'+id);
+const text=el?el.value.trim():'';
+if(!text)return;
+absentNotes[id]={sent:true};
+saveState();render();
+await proxy('logIncident',{description:'ABSENT — '+((s&&s.studentName)||id)+': '+text+' ['+todayStr+']',type:'Field Note',severity:'Low'});
+}
+
+async function sendTeamNote(id){
+const s=roster.find(function(x){return x.studentId===id;});
+const el=document.getElementById('note-'+id);
+const text=el?el.value.trim():'';
+if(!text)return;
+teamNotes[id]={sent:true,open:false};
+saveState();render();
+await proxy('logIncident',{description:text+' [Student: '+((s&&s.studentName)||id)+', Date: '+todayStr+']',type:'Field Note',severity:'Low'});
+}
+
+function openUrgent(id){
+const s=roster.find(function(x){return x.studentId===id;});
+urgentStudentId=id;
+document.getElementById('urgentSub').textContent='Student: '+((s&&s.studentName)||'');
+document.getElementById('urgentText').value='';
+document.getElementById('urgentOverlay').style.display='flex';
+}
+function closeUrgentSheet(){document.getElementById('urgentOverlay').style.display='none';urgentStudentId=null;}
+function closeUrgentOnBg(e){if(e.target.classList.contains('sheet-overlay'))closeUrgentSheet();}
+
+async function sendUrgent(){
+const text=document.getElementById('urgentText').value.trim();
+const s=roster.find(function(x){return x.studentId===urgentStudentId;});
+closeUrgentSheet();
+const msg='URGENT — '+((s&&s.studentName)||'Student')+' situation at pickup. '+text+' ['+todayStr+']';
+const a=document.createElement('a');
+a.href='sms:'+REBECCA_PHONE+'?body='+encodeURIComponent(msg);
+a.style.display='none';
+document.body.appendChild(a);
+a.click();
+document.body.removeChild(a);
+await proxy('logIncident',{description:msg,type:'Missing Student',severity:'High'});
+}
+
+function saveCache(data){try{sessionStorage.setItem(CACHE_KEY,JSON.stringify({ts:Date.now(),data:data}));}catch(e){}}
+function loadCache(){try{const c=sessionStorage.getItem(CACHE_KEY);if(c){const p=JSON.parse(c);if(Date.now()-p.ts<8*3600000)return p.data;}}catch(e){}return null;}
+
+function renderRow(s,g){
+const id=s.studentId;
+const state=stateOf(id);
+const sel=!!selected[id];
+const isOpen=!!expanded[id];
+const schoolStop=isSchoolStop(g.id);
+const instrPhoto=s.instructorPhotoUrl||getInstrPhoto(s.instructorName);
+const showInstr=instrPhoto&&activeFilter==='all'&&state==='pending';
+let boxHtml,rowCls,avCls,metaHtml;
+
+if(state==='nopickup'){
+boxHtml='<div class="kbox-static" style="color:#94A3B8"><i class="ti ti-calendar-off"></i></div>';
+rowCls='nopickup';avCls='absent';
+metaHtml='<div class="kmeta absent">No pickup needed today</div>';
+}else if(state==='done'){
+boxHtml='<div class="kbox-static" style="color:#2E7D32"><i class="ti ti-circle-check"></i></div>';
+rowCls='done';avCls='done';
+const sent=textsSent[id];
+const noph=!hasPhone(s);
+metaHtml='<div class="kmeta done">Picked up'+(pickupTimes[id]?' '+esc(pickupTimes[id]):'')+'</div>'+
+(noph?'<div class="kmeta">No phone on file</div>':sent?'<div class="kmeta done">Parent texted '+esc(sent)+'</div>':'<div class="kmeta warn">Parent not texted yet</div>');
+}else if(state==='absent'){
+boxHtml='<div class="kbox-static" style="color:#64748B"><i class="ti ti-user-x"></i></div>';
+rowCls='absent';avCls='absent';
+metaHtml='<div class="kmeta absent">'+(absentNotes[id]&&absentNotes[id].sent?'Marked absent, note sent':'Marked absent')+'</div>';
+}else{
+boxHtml='<button class="kbox" onclick="toggleSelect(\''+id+'\')" aria-label="Select '+esc(s.studentName)+'"><div class="kbox-inner'+(sel?' on':'')+'">'+(sel?'<i class="ti ti-check"></i>':'')+'</div></button>';
+rowCls=sel?'sel':'';avCls=sel?'sel':'';
+const chips=[];
+if(s.school)chips.push('<div class="school-chip"><i class="ti ti-building" style="font-size:11px"></i>'+esc(s.school)+'</div>');
+if(schoolStop&&(s.teacher||s.classroom)){
+const tc=[s.teacher,s.classroom].filter(Boolean).map(esc).join(' · ');
+chips.push('<div class="teacher-chip"><i class="ti ti-user" style="font-size:11px"></i>'+tc+'</div>');
+}
+if(isDropoffStop(s)&&s.labArrivalTime)chips.push('<div class="time-chip"><i class="ti ti-clock" style="font-size:11px"></i>Arrives '+esc(s.labArrivalTime)+'</div>');
+metaHtml=chips.length?'<div>'+chips.join(' ')+'</div>':'';
+}
+
+const avatar='<div class="av '+avCls+'">'+(s.photo?'<img src="'+esc(s.photo)+'" alt="">':esc(initials(s.studentName)))+'</div>';
+let html='<div class="krow '+rowCls+'">'+boxHtml+
+'<button class="kmain" onclick="toggleExpand(\''+id+'\')">'+avatar+
+'<div class="kinfo"><div class="kname">'+esc(s.studentName)+'</div>'+metaHtml+'</div>'+
+(showInstr?'<div class="instr-chip"><img src="'+esc(instrPhoto)+'" class="instr-photo" alt=""><span class="instr-name">'+esc(firstName(s.instructorName))+'</span></div>':'')+
+'<i class="ti ti-chevron-'+(isOpen?'up':'down')+' kchev"></i></button></div>';
+
+if(isOpen)html+=renderExpanded(s,state);
+if(state==='absent'&&!(absentNotes[id]&&absentNotes[id].sent))html+=renderAbsentNote(s);
+return html;
+}
+
+function renderExpanded(s,state){
+const id=s.studentId;
+const secondary=parseSecondary(s.notes);
+let h='<div class="kexp">';
+if(state!=='nopickup'){
+h+='<div class="parent-box"><div class="parent-name">'+esc(s.pickupName||'Parent')+'</div>'+
+(hasPhone(s)?'<div class="parent-phone">'+esc(s.pickupPhone)+'</div>':'<div class="no-phone">Awaiting welcome email reply</div>')+
+(secondary?'<div style="margin-top:6px"><div class="parent-name">'+esc(secondary.name)+'</div><div class="parent-phone">'+esc(secondary.phone)+'</div></div>':'')+
+'</div>';
+}
+h+='<div class="exp-actions">';
+if(state==='pending'){
+h+='<button class="btn-solo" onclick="markOne(\''+id+'\')">'+(isDropoffStop(s)?'Arrived — check in':'I have '+esc(firstName(s.studentName)))+'</button>';
+h+='<button class="btn-mini" onclick="setAbsent(\''+id+'\')">Not here</button>';
+}else if(state==='done'){
+h+='<button class="btn-mini" style="flex:1" onclick="toggleTeamNote(\''+id+'\')"><i class="ti ti-pencil" style="font-size:15px;margin-right:6px"></i>Note for the team</button>';
+}else if(state==='absent'){
+h+='<button class="btn-mini" style="flex:1" onclick="toggleTeamNote(\''+id+'\')"><i class="ti ti-pencil" style="font-size:15px;margin-right:6px"></i>Note for the team</button>';
+h+='<button class="btn-mini" onclick="undoAbsent(\''+id+'\')">Undo absent</button>';
+}
+if(state!=='nopickup')h+='<button class="btn-mini danger" onclick="openUrgent(\''+id+'\')" aria-label="Send urgent alert"><i class="ti ti-alert-triangle" style="font-size:17px"></i></button>';
+h+='</div>';
+const tn=teamNotes[id]||{};
+if(tn.open){
+h+='<div class="note-form"><textarea class="note-input" id="note-'+id+'" rows="2" placeholder="e.g. Bus arrived 10 min late at a new stop on 47th Ave"></textarea><div class="note-row"><button class="btn-note-cancel" onclick="toggleTeamNote(\''+id+'\')">Cancel</button><button class="btn-note-send" onclick="sendTeamNote(\''+id+'\')">Send to team</button></div></div>';
+}
+if(tn.sent)h+='<div class="note-sent"><i class="ti ti-circle-check" style="font-size:14px"></i> Note sent to the team</div>';
+h+='</div>';
+return h;
+}
+
+function renderAbsentNote(s){
+const id=s.studentId;
+return '<div class="absent-note"><div class="absent-note-label"><i class="ti ti-pencil" style="font-size:12px"></i> What happened?</div>'+
+'<textarea class="absent-input" id="absent-'+id+'" rows="2" placeholder="'+esc(s.studentName)+' was not at pickup at '+esc(nowTime())+'. "></textarea>'+
+'<div class="note-row" style="margin-top:6px"><button class="btn-absent-send" onclick="sendAbsentNote(\''+id+'\')">Send to team</button>'+
+'<button class="btn-mini danger" onclick="openUrgent(\''+id+'\')" aria-label="Send urgent alert"><i class="ti ti-alert-triangle" style="font-size:17px"></i></button></div></div>';
+}
+
+function renderStop(g){
+const total=g.students.filter(function(s){return stateOf(s.studentId)!=='nopickup';}).length;
+const doneCount=g.students.filter(function(s){return stateOf(s.studentId)==='done';}).length;
+const openCount=g.students.filter(function(s){return stateOf(s.studentId)==='pending';}).length;
+const complete=total>0&&openCount===0;
+const icon=g.type==='Studio'?'building':g.type==='School'?'school':'bus';
+
+if(complete&&!openStops[g.id]){
+return '<div class="stop-collapsed" onclick="toggleStopOpen(\''+g.id+'\')">'+
+'<i class="ti ti-circle-check" style="font-size:20px;color:#2E7D32"></i>'+
+'<div class="stop-collapsed-name">'+esc(g.name)+'<div class="stop-collapsed-sub">'+doneCount+' picked up'+(total-doneCount>0?', '+(total-doneCount)+' absent':'')+'</div></div>'+
+'<i class="ti ti-chevron-down" style="font-size:20px;color:#2E7D32"></i></div>';
+}
+
+const selIds=stopSelectedIds(g);
+const pend=stopPendingIds(g);
+const allOn=pend.length>0&&pend.every(function(id){return selected[id];});
+const dropoff=g.type==='Studio';
+let foot;
+if(selIds.length){
+foot='<button class="btn-stop-go" onclick="markStop(\''+g.id+'\')">'+(dropoff?selIds.length+(selIds.length===1?' arrived':' arrived')+' — check in':'I have '+selIds.length+(selIds.length===1?' kid':' kids'))+'</button>';
+}else if(pend.length){
+foot='<div class="btn-stop-idle">Tick the kids you have</div>';
+}else{
+foot='<div class="btn-stop-idle">Everyone here is handled</div>';
+}
+
+return '<div class="stop">'+
+'<div class="stop-hdr"><div class="stop-hdr-icon"><i class="ti ti-'+icon+'"></i></div>'+
+'<div class="stop-hdr-text"><div class="stop-hdr-name">'+esc(g.name)+'</div>'+(g.time?'<div class="stop-hdr-time">'+esc(g.time)+'</div>':'')+'</div>'+
+'<div class="stop-hdr-count">'+doneCount+' of '+total+' done</div></div>'+
+'<div class="map-ph"><i class="ti ti-map-pin" style="font-size:15px"></i> Map — waiting on stop coordinates</div>'+
+(pend.length?'<div class="select-bar"><button class="select-all" onclick="toggleSelectAll(\''+g.id+'\')"><i class="ti ti-'+(allOn?'square-off':'checkbox')+'" style="font-size:18px"></i> '+(allOn?'Clear selection':'Select all here')+'</button><div class="select-count">'+(selIds.length?selIds.length+' selected':'none selected')+'</div></div>':'')+
+g.students.map(function(s){return renderRow(s,g);}).join('')+
+'<div class="stop-foot">'+foot+'</div>'+
+'</div>';
+}
+
+function renderTray(){
+const host=document.getElementById('trayHost');
+if(!trayOpen){host.innerHTML='';return;}
+const pending=pendingTextIds();
+const sentIds=Object.keys(textsSent).filter(function(id){return roster.some(function(s){return s.studentId===id;});});
+const noPhone=noPhoneDoneIds();
+const absentIds=roster.filter(function(s){return states[s.studentId]==='absent';}).map(function(s){return s.studentId;});
+function row(id,kind){
+const s=roster.find(function(x){return x.studentId===id;});
+if(!s)return '';
+if(kind==='pending'){
+if(textOpened[id]){
+return '<div class="tray-row"><div class="tray-info"><div class="tray-name">'+esc(s.studentName)+'</div><div class="tray-meta">'+esc(s.pickupName||'Parent')+' · '+esc(stopName(s))+'</div></div></div>'+
+'<div class="confirm-box"><div class="confirm-q">Did that text actually send?</div><div class="confirm-row">'+
+'<button class="btn-yes" onclick="confirmTextSent(\''+id+'\')">Yes, sent</button>'+
+'<button class="btn-no" onclick="cancelTextSent(\''+id+'\')">Not yet</button></div></div>';
+}
+return '<div class="tray-row"><div class="tray-info"><div class="tray-name">'+esc(s.studentName)+'</div><div class="tray-meta">'+esc(s.pickupName||'Parent')+' · '+esc(stopName(s))+'</div></div>'+
+'<button class="btn-text" onclick="openTextFor(\''+id+'\')">Text</button></div>';
+}
+if(kind==='sent'){
+return '<div class="tray-row sent"><div class="tray-info"><div class="tray-name">'+esc(s.studentName)+'</div><div class="tray-meta done">Sent '+esc(textsSent[id])+'</div></div><i class="ti ti-circle-check" style="font-size:20px;color:#2E7D32"></i></div>';
+}
+if(kind==='nophone'){
+return '<div class="tray-row muted"><div class="tray-info"><div class="tray-name">'+esc(s.studentName)+'</div><div class="tray-meta">No phone on file — not counted</div></div><button class="btn-text off">Text</button></div>';
+}
+return '<div class="tray-row muted"><div class="tray-info"><div class="tray-name">'+esc(s.studentName)+'</div><div class="tray-meta">Marked absent — no text owed</div></div><i class="ti ti-user-x" style="font-size:19px;color:#64748B"></i></div>';
+}
+host.innerHTML='<div class="tray">'+
+'<div class="tray-hdr"><button class="tray-back" onclick="closeTray()" aria-label="Back"><i class="ti ti-chevron-left"></i></button>'+
+'<div><div class="tray-title">Text parents</div><div class="tray-sub">'+pending.length+' left · '+sentIds.length+' sent</div></div></div>'+
+'<div class="tray-note"><i class="ti ti-photo" style="font-size:17px"></i> Attach a photo in Messages first if you\'re sending one today.</div>'+
+(pending.length?pending.map(function(id){return row(id,'pending');}).join(''):'<div class="tray-empty">Every parent has been texted.</div>')+
+noPhone.map(function(id){return row(id,'nophone');}).join('')+
+sentIds.map(function(id){return row(id,'sent');}).join('')+
+absentIds.map(function(id){return row(id,'absent');}).join('')+
+'</div>';
+}
+
+function render(){
+const list=todayList();
+const doneCount=roster.filter(function(s){return states[s.studentId]==='done';}).length;
+const absentCount=roster.filter(function(s){return states[s.studentId]==='absent';}).length;
+const normalTotal=roster.length;
+const noPickupCount=roster.filter(function(s){return noPickupToday.indexOf(s.studentId)>-1;}).length;
+const expectedToday=normalTotal-noPickupCount;
+const todayChanges=changes.filter(function(c){return(c.fields||{})['Change Summary'];});
+const instructors=getInstructors();
+const needText=pendingTextIds().length;
+
+document.getElementById('app').innerHTML=
+(isOffline?'<div class="offline-bar"><i class="ti ti-wifi-off"></i> Offline — showing cached roster</div>':'')+
+'<div class="header">'+
+'<img src="'+LOGO_URL+'" class="header-logo" alt="Afterschool Collective" onerror="this.style.display=\'none\'">'+
+'<div style="text-align:right"><div class="day-pill">'+todayFull+'</div><div style="font-size:10px;color:#999;margin-top:5px;text-align:center">Pickup — '+todayStr+'</div></div>'+
+'</div>'+
+'<a href="tel:'+REBECCA_PHONE+'" class="emergency-bar"><i class="ti ti-phone" style="font-size:13px"></i> Emergency: Rebecca (770) 547-1075</a>'+
+(needText?'<div class="nag-bar"><div class="nag-text"><i class="ti ti-message-2" style="font-size:17px"></i> '+needText+(needText===1?' parent still needs a text':' parents still need a text')+'</div><button class="nag-btn" onclick="openTray()">Send now</button></div>':'')+
+'<div class="stats">'+
+'<div class="stat"><div class="stat-n">'+(noPickupCount>0?expectedToday+' <span style="font-size:13px;color:#888;font-weight:500">of '+normalTotal+'</span>':normalTotal)+'</div><div class="stat-l">Expected'+(noPickupCount>0?' ('+noPickupCount+' out)':'')+'</div></div>'+
+'<div class="stat"><div class="stat-n green">'+doneCount+'</div><div class="stat-l">Picked up</div></div>'+
+'<div class="stat"><div class="stat-n '+(absentCount>0?'red':'')+'">'+absentCount+'</div><div class="stat-l">Absent</div></div>'+
+'</div>'+
+(todayChanges.length?'<div class="alert-box"><div class="alert-hdr"><i class="ti ti-alert-triangle" style="font-size:16px;color:#A32D2D"></i><span class="alert-hdr-text">Changes today, read first</span></div>'+todayChanges.map(function(c){return'<div class="alert-item"><div class="alert-name">'+esc((c.fields||{})['Change Summary']||'Change logged')+'</div></div>';}).join('')+'</div>':'<div class="clear-bar"><i class="ti ti-circle-check" style="font-size:16px;color:#2E7D32"></i><span class="clear-text">All clear, no changes today</span></div>')+
+(instructors.length?'<div class="filter-bar"><button class="filter-pill'+(activeFilter==='all'?' active':'')+'" onclick="setFilter(\'all\')"><i class="ti ti-users" style="font-size:13px"></i> All</button>'+instructors.map(function(name){
+const photo=getInstrPhoto(name);
+return'<button class="filter-pill'+(activeFilter===name?' active':'')+'" onclick="setFilter(\''+name.replace(/'/g,"\\'")+'\')">'+(photo?'<img src="'+esc(photo)+'" alt="">':'')+esc(firstName(name))+'</button>';
+}).join('')+'</div>':'')+
+'<div class="section-hdr"><span class="section-title">'+(activeFilter==='all'?"Today's stops":esc(firstName(activeFilter))+"'s stops")+'</span><span class="count-chip">'+list.length+'</span></div>'+
+'<div class="stops">'+
+(list.length===0?'<div style="text-align:center;padding:40px 0;color:#888;font-size:14px">No students enrolled for '+todayFull+'</div>':groupByLocation(list).map(renderStop).join(''))+
+'</div>';
+
+renderTray();
+}
+
+async function init(){
+const cached=loadCache();
+if(cached){
+roster=cached.roster||[];locations=cached.locations||[];changes=cached.changes||[];noPickupToday=cached.noPickupToday||[];
+buildPhotoCache();isOffline=false;render();
+}
+try{
+const res=await Promise.all([proxy('getTodayRoster'),proxy('getLocations'),proxy('getChanges')]);
+roster=res[0].roster||[];
+locations=res[1].records||[];
+changes=res[2].records||[];
+noPickupToday=res[2].noPickupStudentIds||[];
+buildPhotoCache();
+saveCache({roster:roster,locations:locations,changes:changes,noPickupToday:noPickupToday});
+isOffline=false;
+}catch(e){
+if(!cached){isOffline=true;roster=[];locations=[];changes=[];}
+else isOffline=true;
+}
+render();
+}
+
+init();
+</script>
+</body>
+</html>
