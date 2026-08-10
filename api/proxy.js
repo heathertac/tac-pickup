@@ -35,8 +35,40 @@ module.exports = async function handler(req, res) {
     return s.slice(0, 3);
   }
 
+  // Semester windows. Outside every window the roster comes back EMPTY —
+  // no program is running, so no cards, no stops. Add the spring term here
+  // when its dates are set, and the winter gap closes itself.
+  const SEMESTERS = [
+    { label: 'Fall 2026', start: '2026-09-06', end: '2026-12-26' },
+    // { label: 'Spring 2027', start: '2027-MM-DD', end: '2027-MM-DD' },
+  ];
+
+  function inSemester(iso) {
+    return SEMESTERS.some(s => iso >= s.start && iso <= s.end);
+  }
+
+  // Fall 2026 semester: week of Sep 6 through week of Dec 20, 2026.
+  // Source: TAC semester schedule (the closures parents see when purchasing).
+  // Weekends are already excluded below, so only weekdays are listed here.
+  // WARNING: a date wrongly listed here returns an EMPTY roster that day.
   const CLOSED_DATES = [
-    '2026-05-25','2026-05-27','2026-06-04','2026-06-05','2026-06-19',
+    // September — school year starts Thu Sep 10
+    '2026-09-07', // Labor Day
+    '2026-09-08',
+    '2026-09-09',
+    '2026-09-21', // Yom Kippur
+    '2026-09-30',
+    // October
+    '2026-10-12', // Italian Heritage / Indigenous Peoples' Day
+    // November
+    '2026-11-03', // Election Day
+    '2026-11-05',
+    '2026-11-11', // Veterans Day
+    '2026-11-26', // Thanksgiving
+    '2026-11-27',
+    // December — fall semester ends Wed Dec 23
+    '2026-12-24',
+    '2026-12-25',
   ];
 
   try {
@@ -48,6 +80,10 @@ module.exports = async function handler(req, res) {
       const todayISO = today.toISOString().slice(0, 10);
       const days = ['sun','mon','tue','wed','thu','fri','sat'];
       const todayDay = days[today.getDay()];
+
+      if (!inSemester(todayISO)) {
+        return res.status(200).json({ roster: [], closedReason: 'Between semesters' });
+      }
 
       if (CLOSED_DATES.includes(todayISO) || todayDay === 'sat' || todayDay === 'sun') {
         return res.status(200).json({ roster: [] });
