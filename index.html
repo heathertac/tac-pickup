@@ -90,7 +90,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .btn-mini.danger{background:#FCEBEB;border-color:#E89999;color:#A32D2D;}
 .stop-foot{padding:10px 12px;}
 .btn-stop-go{width:100%;background:#2E7D32;border:none;color:#fff;border-radius:10px;padding:16px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;}
-.btn-stop-idle{width:100%;background:#F1F5F9;border:1px solid #e5e5e5;color:#94A3B8;border-radius:10px;padding:16px;font-size:14px;font-weight:600;text-align:center;font-family:inherit;}
 .stop-collapsed{display:flex;align-items:center;gap:10px;padding:13px 12px;background:#E8F5E9;border:1px solid #A5D6A7;border-radius:12px;cursor:pointer;}
 .stop-collapsed-name{flex:1;min-width:0;font-size:14px;font-weight:600;color:#1C1C1C;}
 .stop-collapsed-sub{font-size:12px;color:#2E7D32;margin-top:1px;font-weight:500;}
@@ -705,22 +704,17 @@ const selIds=stopSelectedIds(g);
 const pend=stopPendingIds(g);
 const allOn=pend.length>0&&pend.every(function(id){return selected[id];});
 const dropoff=g.type==='Studio'||g.type==='Drop-Off';
-let foot;
-if(selIds.length){
-foot='<button class="btn-stop-go" onclick="markStop(\''+g.id+'\')">'+(dropoff?selIds.length+(selIds.length===1?' arrived':' arrived')+' — check in':'I have '+selIds.length+(selIds.length===1?' kid':' kids'))+'</button>';
-}else if(pend.length){
-foot='<div class="btn-stop-idle">Tick the kids you have</div>';
-}else{
-foot='<div class="btn-stop-idle">Everyone here is handled</div>';
-}
+const foot=selIds.length
+?'<div class="stop-foot"><button class="btn-stop-go" onclick="markStop(\''+g.id+'\')">'+(dropoff?selIds.length+' arrived — check in':'I have '+selIds.length+(selIds.length===1?' kid':' kids'))+'</button></div>'
+:'';
 
 return '<div class="stop">'+
 '<div class="stop-hdr"><div class="stop-hdr-icon"><i class="ti ti-'+icon+'"></i></div>'+
 '<div class="stop-hdr-text"><div class="stop-hdr-name">'+esc(g.name)+'</div>'+(g.time?'<div class="stop-hdr-time">'+esc(g.time)+'</div>':'')+'</div>'+
 '<div class="stop-hdr-count">'+(doneCount===0?total+(total===1?' kid':' kids'):doneCount+' of '+total+' done')+'</div></div>'+
-(pend.length?'<div class="select-bar"><button class="select-all" onclick="toggleSelectAll(\''+g.id+'\')"><i class="ti ti-'+(allOn?'square-off':'checkbox')+'" style="font-size:18px"></i> '+(allOn?'Clear selection':'Select all here')+'</button><div class="select-count">'+(selIds.length?selIds.length+' selected':'none selected')+'</div></div>':'')+
+(pend.length>1?'<div class="select-bar"><button class="select-all" onclick="toggleSelectAll(\''+g.id+'\')"><i class="ti ti-'+(allOn?'square-off':'checkbox')+'" style="font-size:18px"></i> '+(allOn?'Clear selection':'Select all here')+'</button><div class="select-count">'+(selIds.length?selIds.length+' selected':'none selected')+'</div></div>':'')+
 g.students.map(function(s){return renderRow(s,g);}).join('')+
-'<div class="stop-foot">'+foot+'</div>'+
+foot+
 '</div>';
 }
 
