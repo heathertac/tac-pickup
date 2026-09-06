@@ -100,11 +100,21 @@ module.exports = async function handler(req, res) {
         ? body.testdate
         : null;
 
+    // The day the app is currently showing. Unlike testDate this changes
+    // NOTHING about safety: real phones, real writes, and the semester and
+    // closure rules still apply, so browsing to a closed day correctly shows
+    // an empty roster with a reason rather than a phantom one.
+    const viewDate =
+      body && typeof body.viewdate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(body.viewdate)
+        ? body.viewdate
+        : null;
+
     if (action === 'getTodayRoster') {
       const days = ['sun','mon','tue','wed','thu','fri','sat'];
       const today = new Date();
-      const todayISO = testDate || today.toISOString().slice(0, 10);
-      const todayDay = testDate ? days[isoWeekday(testDate)] : days[today.getDay()];
+      const askedFor = testDate || viewDate;
+      const todayISO = askedFor || today.toISOString().slice(0, 10);
+      const todayDay = askedFor ? days[isoWeekday(askedFor)] : days[today.getDay()];
 
       // Live behaviour only. In test mode every date is allowed through so the
       // screen can be walked before the semester opens.
@@ -112,8 +122,11 @@ module.exports = async function handler(req, res) {
         if (!inSemester(todayISO)) {
           return res.status(200).json({ roster: [], closedReason: 'Between semesters' });
         }
-        if (CLOSED_DATES.includes(todayISO) || todayDay === 'sat' || todayDay === 'sun') {
-          return res.status(200).json({ roster: [] });
+        if (todayDay === 'sat' || todayDay === 'sun') {
+          return res.status(200).json({ roster: [], closedReason: 'Weekend — no program' });
+        }
+        if (CLOSED_DATES.includes(todayISO)) {
+          return res.status(200).json({ roster: [], closedReason: 'Closed — no program this day' });
         }
       }
 
@@ -143,10 +156,15 @@ module.exports = async function handler(req, res) {
         // Student field: array of record ID strings e.g. ["recABC123"]
         const stuIds = (f['Student'] || []).map(x => (typeof x === 'string' ? x : x.id));
 
-        // Assigned Instructor: array of record ID strings e.g. ["rec5hPamO5JRaCPu8"]
+        // Assigned Instructor: array of record ID strings. There can be MORE THAN
+        // ONE (a lead plus an assistant, e.g. Janet + Shorn at PS384 on 9/11), so
+        // read every entry. Taking only the first silently hides the second
+        // instructor from the app.
         const instrArr = f['Assigned Instructor'] || [];
-        const instrId = typeof instrArr[0] === 'string' ? instrArr[0] : instrArr[0]?.id || null;
-        const instrData = instrId ? staffById[instrId] : null;
+        const instructors = instrArr
+          .map(x => (typeof x === 'string' ? x : (x && x.id) || null))
+          .map(id => (id ? staffById[id] : null))
+          .filter(Boolean);
 
         // Pickup Location: array of record ID strings
         const locArr = f['Pickup Location'] || [];
@@ -168,8 +186,9 @@ module.exports = async function handler(req, res) {
 
         stuIds.forEach(sid => {
           assignmentMap[sid] = {
-            instructorName: instrData?.name || '',
-            instructorPhotoUrl: instrData?.photoUrl || null,
+            instructors,
+            instructorName: instructors[0]?.name || '',
+            instructorPhotoUrl: instructors[0]?.photoUrl || null,
             locationId,
             busTime,
             notes,
@@ -199,6 +218,7 @@ module.exports = async function handler(req, res) {
         const assignment = assignmentMap[r.id];
         const hasAssignment = !!assignment;
 
+        const instructors = assignment?.instructors || [];
         const instructorName = assignment?.instructorName || '';
         const instructorPhotoUrl = assignment?.instructorPhotoUrl || null;
         const pickupLocationId = assignment?.locationId || defaultLocId || '';
@@ -220,6 +240,7 @@ module.exports = async function handler(req, res) {
           notes: f['Notes (Nice to Know)'] || '',
           pickupLocationId,
           pickupLocation: '',
+          instructors,
           instructorName,
           instructorPhotoUrl,
           parentDropoff: assignment?.parentDropoff || false,
@@ -237,7 +258,7 @@ module.exports = async function handler(req, res) {
     }
 
     if (action === 'getChanges') {
-      const todayISO = testDate || new Date().toISOString().slice(0, 10);
+      const todayISO = testDate || viewDate || new Date().toISOString().slice(0, 10);
       const d = await get('tblEdgjx4phKSj4wS',
         `filterByFormula=DATESTR({Affected Pickup Date})="${todayISO}"`);
       const records = d.records || [];
