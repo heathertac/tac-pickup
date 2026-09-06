@@ -165,6 +165,23 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .note-failed-title{font-size:12px;color:#A32D2D;font-weight:700;display:flex;align-items:center;gap:6px;}
 .note-failed-sub{font-size:11px;color:#A32D2D;margin-top:3px;line-height:1.35;}
 .note-retry{margin-top:8px;background:#A32D2D;border:none;color:#fff;border-radius:8px;padding:9px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;}
+.me-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#fff;border-bottom:0.5px solid #e5e5e5;padding:6px 16px;}
+.me-name{font-size:11px;color:#555;font-weight:600;display:flex;align-items:center;gap:6px;}
+.me-change{background:none;border:none;color:#2B5CE6;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;padding:0;}
+.who-overlay{position:fixed;inset:0;background:#fff;z-index:500;max-width:420px;margin:0 auto;overflow-y:auto;padding:26px 20px 40px;}
+.who-title{font-size:20px;font-weight:700;color:#1C1C1C;margin-bottom:6px;}
+.who-sub{font-size:13px;color:#888;margin-bottom:20px;line-height:1.45;}
+.who-btn{width:100%;display:flex;align-items:center;gap:11px;background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:13px;margin-bottom:9px;cursor:pointer;font-family:inherit;text-align:left;}
+.who-btn.admin{border-color:#C7D2FE;background:#EEF2FF;}
+.who-photo{width:38px;height:38px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid #e5e5e5;background:#f5f5f5;}
+.who-nm{font-size:15px;font-weight:600;color:#1C1C1C;}
+.who-role{font-size:11px;color:#888;margin-top:1px;}
+.locked-note{font-size:11px;color:#94A3B8;font-style:italic;padding:8px 12px 12px;background:#FAFAFA;border-bottom:1px solid #e5e5e5;display:flex;align-items:center;gap:6px;}
+.custody-names{background:#F0FDF4;border:1px solid #A5D6A7;border-radius:10px;padding:12px 14px;margin-bottom:14px;}
+.custody-name{font-size:15px;font-weight:600;color:#1C1C1C;padding:3px 0;display:flex;align-items:center;gap:7px;}
+.btn-custody-yes{flex:1;background:#2E7D32;border:none;color:#fff;border-radius:10px;padding:15px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;}
+.picked-by{font-size:11px;color:#2E7D32;margin-top:1px;}
+.sync-bar{display:flex;align-items:center;justify-content:center;gap:6px;background:#F0FDF4;color:#2E7D32;font-size:11px;font-weight:600;padding:5px 16px;border-bottom:0.5px solid #A5D6A7;}
 .offline-bar{background:#FEF3DC;border-bottom:1px solid #D4840A;padding:6px 16px;font-size:11px;color:#92540A;display:flex;align-items:center;gap:6px;}
 .loading{padding:60px 16px;text-align:center;}
 .spin{display:inline-block;width:28px;height:28px;border:3px solid #f5f5f5;border-top-color:#E8420A;border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:14px;}
@@ -177,6 +194,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="loading"><div class="spin"></div><div class="loading-t">Loading today's roster…</div></div>
 </div>
 <div id="trayHost"></div>
+
+<div class="sheet-overlay" id="custodyOverlay" style="display:none">
+<div class="sheet">
+<div class="sheet-handle"></div>
+<div class="sheet-title">Confirm custody</div>
+<div class="sheet-sub" id="custodyCount"></div>
+<div class="custody-names" id="custodyNames"></div>
+<div class="sheet-actions">
+<button class="btn-sheet-cancel" onclick="cancelCustody()">Not yet</button>
+<button class="btn-custody-yes" onclick="confirmCustody()">Yes, I have them</button>
+</div>
+</div>
+</div>
 
 <div class="sheet-overlay" id="urgentOverlay" style="display:none" onclick="closeUrgentOnBg(event)">
 <div class="sheet">
@@ -239,6 +269,29 @@ function stateKey(){return'tac_states_v3_'+keySuffix();}
 const REBECCA_PHONE='7705471075';
 const LOGO_URL='https://static.wixstatic.com/media/7e1448_415a7686f7774d038fce84f0816a76b2~mv2.png/v1/fill/w_320,h_125,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/ASC%20LOGO.png';
 
+const ME_KEY='tac_me_v2';
+let me=null;
+try{me=localStorage.getItem(ME_KEY)||null;}catch(e){me=null;}
+function setMe(v){me=v;try{localStorage.setItem(ME_KEY,v);}catch(e){}render();}
+function clearMe(){me=null;try{localStorage.removeItem(ME_KEY);}catch(e){}render();}
+function isAdmin(){return me==='__admin__';}
+function myLabel(){return isAdmin()?'Rebecca / admin':(me||'');}
+
+/* Whose child is this to handle?
+   Only the instructor assigned to a child on this date can mark custody
+   for them, plus admin. Everyone else sees the child but cannot touch
+   the record — so two instructors working different routes can no longer
+   mark each other's children by mistake. Children with nobody assigned
+   stay open to anyone, otherwise they would be unmarkable. */
+function canEdit(s){
+if(readOnly())return false;
+if(!me)return false;
+if(isAdmin())return true;
+const list=instrList(s);
+if(!list.length)return true;
+return list.some(function(i){return i.name===me;});
+}
+
 const INSTRUCTOR_PHOTO_CACHE={};
 function instrList(s){
 if(s&&Array.isArray(s.instructors)&&s.instructors.length)return s.instructors;
@@ -257,10 +310,10 @@ let openStops={};
 let trayOpen=false;
 let undoTimer=null;
 let st=loadState();
-let states=st.states,absentNotes=st.absentNotes,teamNotes=st.teamNotes,pickupTimes=st.pickupTimes,textsSent=st.textsSent,textOpened=st.textOpened;
+let states=st.states,absentNotes=st.absentNotes,teamNotes=st.teamNotes,pickupTimes=st.pickupTimes,textsSent=st.textsSent,textOpened=st.textOpened,mine=st.mine||{};
 
 function loadState(){
-const empty={states:{},absentNotes:{},teamNotes:{},pickupTimes:{},textsSent:{},textOpened:{},selected:{}};
+const empty={states:{},absentNotes:{},teamNotes:{},pickupTimes:{},textsSent:{},textOpened:{},selected:{},mine:{}};
 try{
 const s=localStorage.getItem(stateKey());
 if(!s)return empty;
@@ -272,11 +325,12 @@ teamNotes:p.teamNotes||{},
 pickupTimes:p.pickupTimes||{},
 textsSent:p.textsSent||{},
 textOpened:p.textOpened||{},
-selected:p.selected||{}
+selected:p.selected||{},
+mine:p.mine||{}
 };
 }catch(e){return empty;}
 }
-function saveState(){try{localStorage.setItem(stateKey(),JSON.stringify({states:states,absentNotes:absentNotes,teamNotes:teamNotes,pickupTimes:pickupTimes,textsSent:textsSent,textOpened:textOpened,selected:selected}));}catch(e){}}
+function saveState(){try{localStorage.setItem(stateKey(),JSON.stringify({states:states,absentNotes:absentNotes,teamNotes:teamNotes,pickupTimes:pickupTimes,textsSent:textsSent,textOpened:textOpened,selected:selected,mine:mine}));}catch(e){}}
 selected=st.selected||{};
 
 
@@ -299,9 +353,19 @@ outbox.push({qid:qid,kind:kind,studentId:studentId,payload:payload,attempts:0});
 saveOutbox();
 }
 
+function pushStatus(studentId,status){
+const s=roster.find(function(x){return x.studentId===studentId;});
+if(!s||!s.assignmentId)return; // no assignment row today: nothing shared to write to
+outbox=outbox.filter(function(x){return!(x.kind==='status'&&x.studentId===studentId);});
+outbox.push({qid:newQid(),kind:'status',studentId:studentId,
+payload:{action:'setPickupStatus',assignmentId:s.assignmentId,status:status},attempts:0});
+saveOutbox();flushOutbox();
+}
+
 function noteRecord(kind,studentId){
 if(kind==='absent')return absentNotes[studentId];
 if(kind==='team')return teamNotes[studentId];
+if(kind==='status')return null;
 return null;
 }
 
@@ -432,6 +496,39 @@ const r=await fetch('/api/proxy',{method:'POST',headers:{'Content-Type':'applica
 return r.json();
 }
 
+/* ------------------------------------------------------------------
+   MERGING OTHER INSTRUCTORS' WORK
+   Pickup only moves forward. If Airtable says a child is in someone's
+   custody, this phone adopts that immediately. A poll is NEVER allowed
+   to un-do a pickup recorded here, so a stale read cannot make a
+   collected child look like they are still waiting at the stop.
+------------------------------------------------------------------ */
+function mergeRemote(){
+let changed=false;
+roster.forEach(function(s){
+const id=s.studentId;
+const rs=s.rowStatus||'';
+const local=states[id];
+if(rs==='Custody Confirmed'||rs==='Completed'){
+if(local!=='done'&&local!=='absent'){
+states[id]='done';
+delete selected[id];
+changed=true;
+}
+if(rs==='Completed'&&!textsSent[id]&&!mine[id]){textsSent[id]='by team';changed=true;}
+}else if(rs==='Incident'){
+if(local!=='absent'&&local!=='done'){
+states[id]='absent';
+absentNotes[id]=absentNotes[id]||{sent:false};
+delete selected[id];
+changed=true;
+}
+}
+});
+if(changed)saveState();
+return changed;
+}
+
 function stateOf(id){
 if(noPickupToday.indexOf(id)>-1&&!states[id])return 'nopickup';
 return states[id]||'pending';
@@ -440,12 +537,14 @@ function isSelectable(id){return stateOf(id)==='pending';}
 
 function toggleSelect(id){
 if(readOnly())return;
+const st0=roster.find(function(x){return x.studentId===id;});
+if(!st0||!canEdit(st0))return;
 if(!isSelectable(id))return;
 if(selected[id])delete selected[id];else selected[id]=true;
 render();
 }
 function stopPendingIds(g){
-return g.students.filter(function(s){return isSelectable(s.studentId);}).map(function(s){return s.studentId;});
+return g.students.filter(function(s){return isSelectable(s.studentId)&&canEdit(s);}).map(function(s){return s.studentId;});
 }
 function stopSelectedIds(g){
 return stopPendingIds(g).filter(function(id){return selected[id];});
@@ -475,18 +574,40 @@ const t=nowTime();
 ids.forEach(function(id){
 states[id]='done';
 pickupTimes[id]=t;
+mine[id]=true;
 delete selected[id];
 delete expanded[id];
+pushStatus(id,'Custody Confirmed');
 });
 saveState();render();
 showUndoToast(ids);
 }
+let custodyIds=null;
+function askCustody(ids){
+if(!ids.length)return;
+custodyIds=ids.slice();
+const names=ids.map(function(id){
+const s=roster.find(function(x){return x.studentId===id;});
+return'<div class="custody-name"><i class="ti ti-user-check" style="font-size:15px;color:#2E7D32"></i>'+esc(s?s.studentName:id)+'</div>';
+}).join('');
+document.getElementById('custodyNames').innerHTML=names;
+document.getElementById('custodyCount').textContent=
+ids.length===1?'Do you have this child with you right now?':'Do you have all '+ids.length+' of these children with you right now?';
+document.getElementById('custodyOverlay').style.display='flex';
+}
+function cancelCustody(){document.getElementById('custodyOverlay').style.display='none';custodyIds=null;}
+function confirmCustody(){
+const ids=custodyIds||[];
+cancelCustody();
+markPickedUp(ids);
+}
+
 function markStop(locId){
 const g=groupByLocation(todayList()).find(function(x){return x.id===locId;});
 if(!g)return;
-markPickedUp(stopSelectedIds(g));
+askCustody(stopSelectedIds(g));
 }
-function markOne(id){markPickedUp([id]);}
+function markOne(id){askCustody([id]);}
 
 function showUndoToast(ids){
 clearTimeout(undoTimer);
@@ -511,7 +632,9 @@ delete states[id];
 delete pickupTimes[id];
 delete textsSent[id];
 delete textOpened[id];
+delete mine[id];
 selected[id]=true;
+pushStatus(id,'Scheduled');
 });
 window.__undoIds=null;
 saveState();render();
@@ -525,12 +648,16 @@ delete pickupTimes[id];
 delete textsSent[id];
 delete textOpened[id];
 absentNotes[id]=absentNotes[id]||{sent:false};
+mine[id]=true;
 expanded[id]=true;
+pushStatus(id,'Incident');
 saveState();render();
 }
 function undoAbsent(id){
 delete states[id];
 delete absentNotes[id];
+delete mine[id];
+pushStatus(id,'Scheduled');
 saveState();render();
 }
 
@@ -541,12 +668,13 @@ activeFilter='all';
 selected={};expanded={};openStops={};trayOpen=false;
 const s=loadState();
 states=s.states;absentNotes=s.absentNotes;teamNotes=s.teamNotes;
-pickupTimes=s.pickupTimes;textsSent=s.textsSent;textOpened=s.textOpened;
+pickupTimes=s.pickupTimes;textsSent=s.textsSent;textOpened=s.textOpened;mine=s.mine||{};
 selected=s.selected||{};
 closedReason='';
 roster=[];locations=locations;changes=[];noPickupToday=[];
 render();
 loadDay();
+startPolling();
 }
 function stepDay(n){
 const d=viewDate();
@@ -562,7 +690,7 @@ if(readOnly())return;teamNotes[id]=teamNotes[id]||{};teamNotes[id].open=!teamNot
 function pendingTextIds(){
 return roster.filter(function(s){
 const id=s.studentId;
-return states[id]==='done'&&!textsSent[id]&&hasPhone(s);
+return states[id]==='done'&&mine[id]&&!textsSent[id]&&hasPhone(s);
 }).map(function(s){return s.studentId;});
 }
 function noPhoneDoneIds(){
@@ -583,6 +711,7 @@ render();
 function confirmTextSent(id){
 textsSent[id]=nowTime();
 delete textOpened[id];
+pushStatus(id,'Completed');
 saveState();render();
 }
 function cancelTextSent(id){
@@ -685,7 +814,9 @@ boxHtml='<div class="kbox-static" style="color:#2E7D32"><i class="ti ti-circle-c
 rowCls='done';avCls='done';
 const sent=textsSent[id];
 const noph=!hasPhone(s);
+const by=mine[id]?'you':(instrList(s)[0]?firstName(instrList(s)[0].name):'the team');
 metaHtml='<div class="kmeta done">Picked up'+(pickupTimes[id]?' '+esc(pickupTimes[id]):'')+'</div>'+
+'<div class="picked-by">by '+esc(by)+'</div>'+
 (noph?'<div class="kmeta">No phone on file</div>':sent?'<div class="kmeta done">Parent texted '+esc(sent)+'</div>':'<div class="kmeta warn">Parent not texted yet</div>');
 }else if(state==='absent'){
 boxHtml='<div class="kbox-static" style="color:#64748B"><i class="ti ti-user-x"></i></div>';
@@ -694,8 +825,8 @@ const anr=absentNotes[id]||{};
 const anTxt=anr.status==='sent'?'Marked absent, note delivered':anr.status==='failed'?'Marked absent, NOTE NOT SENT':anr.status==='queued'?'Marked absent, note sending\u2026':'Marked absent';
 metaHtml='<div class="kmeta '+(anr.status==='failed'?'warn':'absent')+'">'+anTxt+'</div>';
 }else{
-boxHtml=readOnly()
-?'<div class="kbox-static" style="color:#CBD5E1"><i class="ti ti-point"></i></div>'
+boxHtml=(readOnly()||!canEdit(s))
+?'<div class="kbox-static" style="color:#CBD5E1"><i class="ti ti-'+(readOnly()?'point':'lock')+'"></i></div>'
 :'<button class="kbox" onclick="toggleSelect(\''+id+'\')" aria-label="Select '+esc(s.studentName)+'"><div class="kbox-inner'+(sel?' on':'')+'">'+(sel?'<i class="ti ti-check"></i>':'')+'</div></button>';
 rowCls=sel?'sel':'';avCls=sel?'sel':'';
 const chips=[];
@@ -734,7 +865,7 @@ h+='<div class="parent-box"><div class="parent-name">'+esc(s.pickupName||'Parent
 (secondary?'<div style="margin-top:6px"><div class="parent-name">'+esc(secondary.name)+'</div><div class="parent-phone">'+esc(secondary.phone)+'</div></div>':'')+
 '</div>';
 }
-if(!readOnly()){
+if(!readOnly()&&canEdit(s)){
 h+='<div class="exp-actions">';
 if(state==='pending'){
 h+='<button class="btn-mini" style="flex:1" onclick="setAbsent(\''+id+'\')"><i class="ti ti-user-x" style="font-size:15px;margin-right:6px"></i>Not here</button>';
@@ -746,6 +877,10 @@ h+='<button class="btn-mini" onclick="undoAbsent(\''+id+'\')">Undo absent</butto
 }
 if(state!=='nopickup')h+='<button class="btn-mini danger" onclick="openUrgent(\''+id+'\')" aria-label="Send urgent alert"><i class="ti ti-alert-triangle" style="font-size:17px"></i></button>';
 h+='</div>';
+}
+if(!readOnly()&&!canEdit(s)){
+const own=instrList(s)[0];
+h+='<div class="locked-note"><i class="ti ti-lock" style="font-size:13px"></i>'+(own?esc(firstName(own.name))+'\u2019s route \u2014 view only':'Not on your route \u2014 view only')+'</div>';
 }
 const tn=teamNotes[id]||{};
 if(tn.open){
@@ -809,6 +944,25 @@ mapBlock+
 (pend.length>1&&!readOnly()?'<div class="select-bar"><button class="select-all" onclick="toggleSelectAll(\''+g.id+'\')"><i class="ti ti-'+(allOn?'square-off':'checkbox')+'" style="font-size:18px"></i> '+(allOn?'Clear selection':'Select all here')+'</button><div class="select-count">'+(selIds.length?selIds.length+' selected':'none selected')+'</div></div>':'')+
 g.students.map(function(s){return renderRow(s,g);}).join('')+
 foot+
+'</div>';
+}
+
+function renderWho(){
+const host=document.getElementById('trayHost');
+const names=getInstructors();
+const btns=names.map(function(n){
+const ph=getInstrPhoto(n);
+return'<button class="who-btn" onclick="setMe(\''+n.replace(/'/g,"\\'")+'\')">'+
+(ph?'<img src="'+esc(ph)+'" class="who-photo" alt="">':'<div class="who-photo" style="display:flex;align-items:center;justify-content:center;font-weight:600;font-size:13px">'+esc(initials(n))+'</div>')+
+'<div><div class="who-nm">'+esc(n)+'</div><div class="who-role">Instructor</div></div></button>';
+}).join('');
+host.innerHTML='<div class="who-overlay">'+
+'<div class="who-title">Who\u2019s using this phone?</div>'+
+'<div class="who-sub">You can only mark custody for the children on your own route. Pick your name so the app knows which ones are yours.</div>'+
+btns+
+'<button class="who-btn admin" onclick="setMe(\'__admin__\')"><div class="who-photo" style="display:flex;align-items:center;justify-content:center;color:#2B5CE6"><i class="ti ti-shield-check" style="font-size:18px"></i></div>'+
+'<div><div class="who-nm">Rebecca / admin</div><div class="who-role">Can mark any child at any stop</div></div></button>'+
+(names.length?'':'<div class="who-sub" style="margin-top:14px">No instructors are assigned for this day yet.</div>')+
 '</div>';
 }
 
@@ -877,6 +1031,8 @@ document.getElementById('app').innerHTML=
 '<button class="datenav-arrow" onclick="stepDay(1)" aria-label="Next day">\u203a</button>'+
 '</div>'+
 '</div>'+
+(isHomeDay()&&lastSync?'<div class="sync-bar"><i class="ti ti-refresh" style="font-size:12px"></i> Shared with the team \u00b7 updated '+esc(lastSync)+'</div>':'')+
+(me?'<div class="me-bar"><div class="me-name"><i class="ti ti-'+(isAdmin()?'shield-check':'user')+'" style="font-size:13px"></i> You: '+esc(myLabel())+'</div><button class="me-change" onclick="clearMe()">Not you?</button></div>':'')+
 '<a href="tel:'+REBECCA_PHONE+'" class="emergency-bar"><i class="ti ti-phone" style="font-size:13px"></i> Emergency: Rebecca (770) 547-1075</a>'+
 (readOnly()?'<div class="away-bar"><div class="away-text"><i class="ti ti-eye" style="font-size:17px"></i> Looking ahead \u2014 view only</div><button class="away-btn" onclick="goHome()">Back to today</button></div>':'')+
 (needText&&!readOnly()?'<div class="nag-bar"><div class="nag-text"><i class="ti ti-message-2" style="font-size:17px"></i> '+needText+(needText===1?' parent still needs a text':' parents still need a text')+'</div><button class="nag-btn" onclick="openTray()">Send now</button></div>':'')+
@@ -895,8 +1051,38 @@ return'<button class="filter-pill'+(activeFilter===name?' active':'')+'" onclick
 (list.length===0?'<div class="closed-note">'+esc(closedReason||('No students enrolled for '+dayFull()))+'</div>':groupByLocation(list).map(renderStop).join(''))+
 '</div>';
 
-renderTray();
+if(!me&&roster.length&&isHomeDay()){renderWho();}else{renderTray();}
 }
+
+let lastSync=null;
+let pollTimer=null;
+
+async function refreshQuietly(){
+if(!isHomeDay())return;              // only the working day matters
+if(trayOpen)return;                   // never yank the screen mid-text
+if(document.hidden)return;
+if(document.getElementById('urgentOverlay').style.display==='flex')return;
+try{
+const res=await Promise.all([proxy('getTodayRoster'),proxy('getChanges')]);
+const fresh=res[0].roster;
+if(!Array.isArray(fresh))return;
+roster=fresh;
+changes=res[1].records||[];
+noPickupToday=res[1].noPickupStudentIds||[];
+buildPhotoCache();
+mergeRemote();
+saveCache({roster:roster,locations:locations,changes:changes,noPickupToday:noPickupToday});
+isOffline=false;
+lastSync=nowTime();
+render();
+}catch(e){/* stay on what we have; the next tick tries again */}
+}
+
+function startPolling(){
+clearInterval(pollTimer);
+pollTimer=setInterval(refreshQuietly,30000);
+}
+document.addEventListener('visibilitychange',function(){if(!document.hidden)refreshQuietly();});
 
 async function loadDay(){
 const cached=loadCache();
@@ -912,6 +1098,8 @@ locations=res[1].records||[];
 changes=res[2].records||[];
 noPickupToday=res[2].noPickupStudentIds||[];
 buildPhotoCache();
+mergeRemote();
+lastSync=nowTime();
 saveCache({roster:roster,locations:locations,changes:changes,noPickupToday:noPickupToday});
 isOffline=false;
 }catch(e){
@@ -922,6 +1110,7 @@ render();
 }
 
 loadDay();
+startPolling();
 </script>
 </body>
 </html>
