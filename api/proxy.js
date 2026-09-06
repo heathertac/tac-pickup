@@ -184,8 +184,12 @@ module.exports = async function handler(req, res) {
           v => typeof v === 'string' && v.trim().toLowerCase().startsWith('parent drop')
         );
 
+        const rowStatus = f['Status']?.name || f['Status'] || '';
+
         stuIds.forEach(sid => {
           assignmentMap[sid] = {
+            assignmentId: a.id,
+            rowStatus,
             instructors,
             instructorName: instructors[0]?.name || '',
             instructorPhotoUrl: instructors[0]?.photoUrl || null,
@@ -219,6 +223,8 @@ module.exports = async function handler(req, res) {
         const hasAssignment = !!assignment;
 
         const instructors = assignment?.instructors || [];
+        const assignmentId = assignment?.assignmentId || null;
+        const rowStatus = assignment?.rowStatus || '';
         const instructorName = assignment?.instructorName || '';
         const instructorPhotoUrl = assignment?.instructorPhotoUrl || null;
         const pickupLocationId = assignment?.locationId || defaultLocId || '';
@@ -240,6 +246,8 @@ module.exports = async function handler(req, res) {
           notes: f['Notes (Nice to Know)'] || '',
           pickupLocationId,
           pickupLocation: '',
+          assignmentId,
+          rowStatus,
           instructors,
           instructorName,
           instructorPhotoUrl,
@@ -249,7 +257,14 @@ module.exports = async function handler(req, res) {
         });
       }
 
-      return res.status(200).json({ roster, testMode: !!testDate, testDate: testDate || null });
+      // Every active staff name, so the "who is using this phone" picker
+      // still works on days that have no assignment rows yet.
+      const staffList = Object.keys(staffById)
+        .map(id => ({ name: staffById[id].name, photoUrl: staffById[id].photoUrl }))
+        .filter(s => s.name)
+        .sort((a, b) => a.name.localeCompare(b.name));
+
+      return res.status(200).json({ roster, staff: staffList, testMode: !!testDate, testDate: testDate || null });
     }
 
     if (action === 'getLocations') {
@@ -279,6 +294,37 @@ module.exports = async function handler(req, res) {
       });
 
       return res.status(200).json({ records, noPickupStudentIds });
+    }
+
+    // ------------------------------------------------------------------
+    // SHARED PICKUP STATE
+    // Writes the pickup outcome onto the student's Pickup Assignment row so
+    // every instructor — and Rebecca's dashboard — sees the same picture.
+    // Uses the Status options that already exist on the table:
+    //   Custody Confirmed = instructor has the child
+    //   Completed         = child has been collected AND the parent notified
+    //   Incident          = child was not at the stop
+    // ------------------------------------------------------------------
+    if (action === 'setPickupStatus') {
+      const { assignmentId, status } = body;
+      const ALLOWED = ['Custody Confirmed', 'Completed', 'Incident', 'Scheduled'];
+
+      if (!assignmentId || !ALLOWED.includes(status)) {
+        return res.status(400).json({ error: 'Bad assignmentId or status' });
+      }
+      // Test mode never touches live rows.
+      if (testDate) {
+        return res.status(200).json({ skipped: true, testMode: true });
+      }
+
+      const r = await fetch(`https://api.airtable.com/v0/${BASE}/tblqX1tGUs6W5VGt4/${assignmentId}`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fields: { fldH57ACWfMEwHEEA: status } })
+      });
+      const out = await r.json();
+      if (!r.ok) return res.status(502).json({ error: out?.error?.message || 'Airtable write failed' });
+      return res.status(200).json({ ok: true, id: out.id, status });
     }
 
     if (action === 'logIncident') {
