@@ -487,7 +487,11 @@ return out.sort();
 }
 function todayList(){
 let list=roster.slice();
-if(activeFilter!=='all')list=list.filter(function(s){return instrList(s).some(function(i){return i.name===activeFilter;});});
+if(activeFilter==='__admin__'){
+list=list.filter(function(s){return instrList(s).length===0||mine[s.studentId];});
+}else if(activeFilter!=='all'){
+list=list.filter(function(s){return instrList(s).some(function(i){return i.name===activeFilter;});});
+}
 return list;
 }
 
@@ -1113,13 +1117,15 @@ document.getElementById('app').innerHTML=
 '<div class="stat"><div class="stat-n '+(absentCount>0?'red':'')+'">'+absentCount+'</div><div class="stat-l">Absent</div></div>'+
 '</div>'+
 (todayChanges.length?'<div class="alert-box"><div class="alert-hdr"><i class="ti ti-alert-triangle" style="font-size:16px;color:#A32D2D"></i><span class="alert-hdr-text">Changes today, read first</span></div>'+todayChanges.map(function(c){return'<div class="alert-item"><div class="alert-name">'+esc((c.fields||{})['Change Summary']||'Change logged')+'</div></div>';}).join('')+'</div>':'<div class="clear-bar"><i class="ti ti-circle-check" style="font-size:16px;color:#2E7D32"></i><span class="clear-text">All clear, no changes today</span></div>')+
-(instructors.length?'<div class="filter-bar"><button class="filter-pill'+(activeFilter==='all'?' active':'')+'" onclick="setFilter(\'all\')"><i class="ti ti-users" style="font-size:13px"></i> All</button>'+instructors.map(function(name){
+('<div class="filter-bar"><button class="filter-pill'+(activeFilter==='all'?' active':'')+'" onclick="setFilter(\'all\')"><i class="ti ti-users" style="font-size:13px"></i> All</button>'+instructors.map(function(name){
 const photo=getInstrPhoto(name);
 return'<button class="filter-pill'+(activeFilter===name?' active':'')+'" onclick="setFilter(\''+name.replace(/'/g,"\\'")+'\')">'+(photo?'<img src="'+esc(photo)+'" alt="">':'')+esc(firstName(name))+'</button>';
-}).join('')+'</div>':'')+
-'<div class="section-hdr"><span class="section-title">'+(activeFilter==='all'?"Today's stops":esc(firstName(activeFilter))+"'s stops")+'</span><span class="count-chip">'+groupByLocation(list).length+'</span></div>'+
+}).join('')+
+'<button class="filter-pill'+(activeFilter==='__admin__'?' active':'')+'" onclick="setFilter(\'__admin__\')"><i class="ti ti-shield-check" style="font-size:13px"></i> Admin</button>'+
+'</div>')+
+'<div class="section-hdr"><span class="section-title">'+(activeFilter==='all'?"Today's stops":activeFilter==='__admin__'?"Unassigned \u00b7 and yours":esc(firstName(activeFilter))+"'s stops")+'</span><span class="count-chip">'+groupByLocation(list).length+'</span></div>'+
 '<div class="stops">'+
-(list.length===0?'<div class="closed-note">'+esc(closedReason||('No students enrolled for '+dayFull()))+'</div>':groupByLocation(list).map(renderStop).join(''))+
+(list.length===0?'<div class="closed-note">'+esc(activeFilter==='__admin__'?'Every child today is on someone\u2019s route.':(closedReason||('No students enrolled for '+dayFull())))+'</div>':groupByLocation(list).map(renderStop).join(''))+
 '</div>';
 
 if(!me&&roster.length&&isHomeDay()){renderWho();}else{renderTray();}
