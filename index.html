@@ -62,6 +62,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .stop-hdr-name{font-size:14px;font-weight:600;color:#fff;line-height:1.2;}
 .stop-hdr-time{font-size:12px;color:rgba(255,255,255,0.78);font-weight:500;margin-top:1px;}
 .stop-hdr-count{flex-shrink:0;font-size:11px;color:#fff;background:rgba(255,255,255,0.18);padding:2px 9px;border-radius:999px;font-weight:600;}
+.stop-map{position:relative;height:132px;border-bottom:1px solid #e5e5e5;background:#F1F5F9;}
+.stop-map iframe{width:100%;height:100%;border:0;display:block;filter:saturate(0.9);}
+.btn-directions{position:absolute;right:8px;bottom:8px;display:inline-flex;align-items:center;gap:5px;background:#fff;border:1px solid #CBD5E1;color:#1C1C1C;font-size:12px;font-weight:700;padding:7px 11px;border-radius:8px;text-decoration:none;box-shadow:0 1px 4px rgba(0,0,0,0.18);}
 .select-bar{display:flex;align-items:center;justify-content:space-between;padding:11px 12px;background:#FAFAFA;border-bottom:1px solid #e5e5e5;}
 .select-all{display:flex;align-items:center;gap:8px;font-size:14px;color:#E8420A;font-weight:600;background:none;border:none;cursor:pointer;padding:0;font-family:inherit;}
 .select-count{font-size:12px;color:#888;}
@@ -383,11 +386,18 @@ if(ap==='am'&&h===12)h=0;
 return h*60+min;
 }
 
+function num(v){const n=parseFloat(v);return isFinite(n)?n:null;}
 function locInfo(id){
 const l=locations.find(function(x){return x.id===id;});
-if(!l)return{name:'',time:'',type:''};
+if(!l)return{name:'',time:'',type:'',lat:null,lng:null};
 const f=l.fields||{};
-return{name:f['Name']||'',time:f['Default Bus Arrival Time']||'',type:(f['Type']&&f['Type'].name)||f['Type']||''};
+return{
+name:f['Name']||'',
+time:f['Default Bus Arrival Time']||'',
+type:(f['Type']&&f['Type'].name)||f['Type']||'',
+lat:num(f['Latitude']!=null?f['Latitude']:f['fldGFlkXJUApQLTix']),
+lng:num(f['Longitude']!=null?f['Longitude']:f['fldrFJZO6NRuOVnyr'])
+};
 }
 function isDropoffStop(s){
 const info=locInfo(s.pickupLocationId);
@@ -401,7 +411,7 @@ const groups={};
 list.forEach(function(s){
 const locId=s.pickupLocationId||'__none__';
 const info=locInfo(locId);
-if(!groups[locId])groups[locId]={id:locId,name:info.name||'No pickup location set',time:info.time,type:info.type,students:[]};
+if(!groups[locId])groups[locId]={id:locId,name:info.name||'No pickup location set',time:info.time,type:info.type,lat:info.lat,lng:info.lng,students:[]};
 groups[locId].students.push(s);
 });
 Object.keys(groups).forEach(function(k){
@@ -776,10 +786,26 @@ const foot=(!readOnly()&&selIds.length)
 ?'<div class="stop-foot"><button class="btn-stop-go" onclick="markStop(\''+g.id+'\')">'+(dropoff?selIds.length+' arrived — check in':'I have '+selIds.length+(selIds.length===1?' kid':' kids'))+'</button></div>'
 :'';
 
+const hasPin=g.lat!==null&&g.lng!==null;
+let mapBlock='';
+if(hasPin){
+const lat=g.lat,lng=g.lng;
+// OpenStreetMap embed: no API key, no billing, no tracking script.
+const bbox=(lng-0.0028)+','+(lat-0.0014)+','+(lng+0.0028)+','+(lat+0.0014);
+const src='https://www.openstreetmap.org/export/embed.html?bbox='+encodeURIComponent(bbox)+'&layer=mapnik&marker='+lat+','+lng;
+// Universal directions link — opens the phone's own maps app.
+const dir='https://www.google.com/maps/dir/?api=1&destination='+lat+','+lng;
+mapBlock='<div class="stop-map">'+
+'<iframe src="'+esc(src)+'" loading="lazy" title="Map of '+esc(g.name)+'" referrerpolicy="no-referrer"></iframe>'+
+'<a class="btn-directions" href="'+esc(dir)+'" target="_blank" rel="noopener noreferrer"><i class="ti ti-navigation" style="font-size:14px"></i> Directions</a>'+
+'</div>';
+}
+
 return '<div class="stop">'+
 '<div class="stop-hdr"><div class="stop-hdr-icon"><i class="ti ti-'+icon+'"></i></div>'+
-'<div class="stop-hdr-text"><div class="stop-hdr-name">'+esc(g.name)+'</div>'+(g.time?'<div class="stop-hdr-time">'+esc(g.time)+'</div>':'')+'</div>'+
+'<div class="stop-hdr-text"><div class="stop-hdr-name">'+esc(g.name)+'</div>'+(g.time?'<div class="stop-hdr-time">'+esc(g.time)+(String(g.time).indexOf('~')===0?' \u00b7 not confirmed':'')+'</div>':'')+'</div>'+
 '<div class="stop-hdr-count">'+(doneCount===0?total+(total===1?' kid':' kids'):doneCount+' of '+total+' done')+'</div></div>'+
+mapBlock+
 (pend.length>1&&!readOnly()?'<div class="select-bar"><button class="select-all" onclick="toggleSelectAll(\''+g.id+'\')"><i class="ti ti-'+(allOn?'square-off':'checkbox')+'" style="font-size:18px"></i> '+(allOn?'Clear selection':'Select all here')+'</button><div class="select-count">'+(selIds.length?selIds.length+' selected':'none selected')+'</div></div>':'')+
 g.students.map(function(s){return renderRow(s,g);}).join('')+
 foot+
