@@ -177,8 +177,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .who-nm{font-size:15px;font-weight:600;color:#1C1C1C;}
 .who-role{font-size:11px;color:#888;margin-top:1px;}
 .locked-note{font-size:11px;color:#94A3B8;font-style:italic;padding:8px 12px 12px;background:#FAFAFA;border-bottom:1px solid #e5e5e5;display:flex;align-items:center;gap:6px;}
-.custody-names{background:#F0FDF4;border:1px solid #A5D6A7;border-radius:10px;padding:12px 14px;margin-bottom:14px;}
+.custody-names{background:#F0FDF4;border:1px solid #A5D6A7;border-radius:10px;padding:12px 14px;margin-bottom:14px;max-height:38vh;overflow-y:auto;}
 .custody-name{font-size:15px;font-weight:600;color:#1C1C1C;padding:3px 0;display:flex;align-items:center;gap:7px;}
+.btn-confirm-cover{flex:1;background:#E8420A;border:none;color:#fff;border-radius:10px;padding:15px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;}
+.sheet-student{font-size:15px;color:#E8420A;font-weight:600;margin-bottom:4px;}
+.btn-cover{width:100%;background:#fff;border:1px dashed #CBD5E1;color:#64748B;border-radius:10px;padding:13px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:7px;}
+.covering-chip{display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,0.18);border-radius:6px;padding:1px 7px;font-size:10px;color:#fff;font-weight:700;margin-left:6px;}
 .btn-custody-yes{flex:1;background:#2E7D32;border:none;color:#fff;border-radius:10px;padding:15px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;}
 .picked-by{font-size:11px;color:#2E7D32;margin-top:1px;}
 .sync-bar{display:flex;align-items:center;justify-content:center;gap:6px;background:#F0FDF4;color:#2E7D32;font-size:11px;font-weight:600;padding:5px 16px;border-bottom:0.5px solid #A5D6A7;}
@@ -194,6 +198,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="loading"><div class="spin"></div><div class="loading-t">Loading today's roster…</div></div>
 </div>
 <div id="trayHost"></div>
+
+<div class="sheet-overlay" id="coverOverlay" style="display:none">
+<div class="sheet">
+<div class="sheet-handle"></div>
+<div class="sheet-title">Cover this stop?</div>
+<div class="sheet-student" id="coverStop"></div>
+<div class="sheet-sub" id="coverSub"></div>
+<div class="sheet-actions">
+<button class="btn-sheet-cancel" onclick="cancelCover()">Cancel</button>
+<button class="btn-confirm-cover" onclick="confirmCover()">Yes, I'm covering it</button>
+</div>
+</div>
+</div>
 
 <div class="sheet-overlay" id="custodyOverlay" style="display:none">
 <div class="sheet">
@@ -273,6 +290,7 @@ const ME_KEY='tac_me_v2';
 let me=null;
 try{me=localStorage.getItem(ME_KEY)||null;}catch(e){me=null;}
 function setMe(v){me=v;try{localStorage.setItem(ME_KEY,v);}catch(e){}render();}
+function askClearMe(){if(confirm('Switch to a different person? Your ticks stay saved.'))clearMe();}
 function clearMe(){me=null;try{localStorage.removeItem(ME_KEY);}catch(e){}render();}
 function isAdmin(){return me==='__admin__';}
 function myLabel(){return isAdmin()?'Rebecca / admin':(me||'');}
@@ -287,9 +305,39 @@ function canEdit(s){
 if(readOnly())return false;
 if(!me)return false;
 if(isAdmin())return true;
+if(covering[s.pickupLocationId||'__none__'])return true;
 const list=instrList(s);
 if(!list.length)return true;
 return list.some(function(i){return i.name===me;});
+}
+
+/* Coverage happens. Someone calls in sick and another instructor walks the
+   route, and nobody edits Airtable at 2:35pm. A lock that cannot be opened
+   would leave that instructor unable to mark the children in front of them,
+   so the honest option is friction plus a record: say you are covering,
+   the stop unlocks, and the swap is logged and shown on every row. */
+let coverLocId=null;
+function askCover(locId,ownerName,stopName2){
+coverLocId=locId;
+document.getElementById('coverSub').textContent=ownerName
+?'This stop is assigned to '+ownerName+'. Only take it if you are actually covering it today.'
+:'Only take this stop if you are actually covering it today.';
+document.getElementById('coverStop').textContent=stopName2||'';
+document.getElementById('coverOverlay').style.display='flex';
+}
+function cancelCover(){document.getElementById('coverOverlay').style.display='none';coverLocId=null;}
+function confirmCover(){
+const locId=coverLocId;
+cancelCover();
+if(!locId)return;
+covering[locId]=me||'unknown';
+const g=groupByLocation(todayList()).find(function(x){return x.id===locId;});
+const owner=g&&g.students.length?instrList(g.students[0])[0]:null;
+saveState();render();
+queueIncident(newQid(),'cover',locId,{action:'logIncident',
+description:'COVERAGE \u2014 '+(myLabel()||'Someone')+' took over '+((g&&g.name)||'a stop')+
+(owner?' from '+owner.name:'')+' ['+dayStr()+']',type:'Field Note',severity:'Low'});
+flushOutbox();
 }
 
 const INSTRUCTOR_PHOTO_CACHE={};
@@ -298,22 +346,23 @@ if(s&&Array.isArray(s.instructors)&&s.instructors.length)return s.instructors;
 if(s&&s.instructorName)return[{name:s.instructorName,photoUrl:s.instructorPhotoUrl||null}];
 return[];
 }
-function getInstrPhoto(name){if(!name)return null;return INSTRUCTOR_PHOTO_CACHE[name]||null;}
+function getInstrPhoto(name){if(!name)return null;if(INSTRUCTOR_PHOTO_CACHE[name])return INSTRUCTOR_PHOTO_CACHE[name];const m=allStaff.find(function(x){return x.name===name;});return(m&&m.photoUrl)||null;}
 function buildPhotoCache(){roster.forEach(function(s){instrList(s).forEach(function(i){if(i.name&&i.photoUrl)INSTRUCTOR_PHOTO_CACHE[i.name]=i.photoUrl;});});}
 
 let roster=[],locations=[],changes=[],activeFilter='all',isOffline=false,urgentStudentId=null;
 let noPickupToday=[];
 let closedReason='';
+let allStaff=[];
 let selected={};
 let expanded={};
 let openStops={};
 let trayOpen=false;
 let undoTimer=null;
 let st=loadState();
-let states=st.states,absentNotes=st.absentNotes,teamNotes=st.teamNotes,pickupTimes=st.pickupTimes,textsSent=st.textsSent,textOpened=st.textOpened,mine=st.mine||{};
+let states=st.states,absentNotes=st.absentNotes,teamNotes=st.teamNotes,pickupTimes=st.pickupTimes,textsSent=st.textsSent,textOpened=st.textOpened,mine=st.mine||{},covering=st.covering||{},coverMark=st.coverMark||{};
 
 function loadState(){
-const empty={states:{},absentNotes:{},teamNotes:{},pickupTimes:{},textsSent:{},textOpened:{},selected:{},mine:{}};
+const empty={states:{},absentNotes:{},teamNotes:{},pickupTimes:{},textsSent:{},textOpened:{},selected:{},mine:{},covering:{},coverMark:{}};
 try{
 const s=localStorage.getItem(stateKey());
 if(!s)return empty;
@@ -326,11 +375,13 @@ pickupTimes:p.pickupTimes||{},
 textsSent:p.textsSent||{},
 textOpened:p.textOpened||{},
 selected:p.selected||{},
-mine:p.mine||{}
+mine:p.mine||{},
+covering:p.covering||{},
+coverMark:p.coverMark||{}
 };
 }catch(e){return empty;}
 }
-function saveState(){try{localStorage.setItem(stateKey(),JSON.stringify({states:states,absentNotes:absentNotes,teamNotes:teamNotes,pickupTimes:pickupTimes,textsSent:textsSent,textOpened:textOpened,selected:selected,mine:mine}));}catch(e){}}
+function saveState(){try{localStorage.setItem(stateKey(),JSON.stringify({states:states,absentNotes:absentNotes,teamNotes:teamNotes,pickupTimes:pickupTimes,textsSent:textsSent,textOpened:textOpened,selected:selected,mine:mine,covering:covering,coverMark:coverMark}));}catch(e){}}
 selected=st.selected||{};
 
 
@@ -366,6 +417,7 @@ function noteRecord(kind,studentId){
 if(kind==='absent')return absentNotes[studentId];
 if(kind==='team')return teamNotes[studentId];
 if(kind==='status')return null;
+if(kind==='cover')return null;
 return null;
 }
 
@@ -575,6 +627,8 @@ ids.forEach(function(id){
 states[id]='done';
 pickupTimes[id]=t;
 mine[id]=true;
+const sx=roster.find(function(x){return x.studentId===id;});
+if(sx&&covering[sx.pickupLocationId||'__none__'])coverMark[id]=true;
 delete selected[id];
 delete expanded[id];
 pushStatus(id,'Custody Confirmed');
@@ -668,7 +722,7 @@ activeFilter='all';
 selected={};expanded={};openStops={};trayOpen=false;
 const s=loadState();
 states=s.states;absentNotes=s.absentNotes;teamNotes=s.teamNotes;
-pickupTimes=s.pickupTimes;textsSent=s.textsSent;textOpened=s.textOpened;mine=s.mine||{};
+pickupTimes=s.pickupTimes;textsSent=s.textsSent;textOpened=s.textOpened;mine=s.mine||{};covering=s.covering||{};coverMark=s.coverMark||{};
 selected=s.selected||{};
 closedReason='';
 roster=[];locations=locations;changes=[];noPickupToday=[];
@@ -814,7 +868,7 @@ boxHtml='<div class="kbox-static" style="color:#2E7D32"><i class="ti ti-circle-c
 rowCls='done';avCls='done';
 const sent=textsSent[id];
 const noph=!hasPhone(s);
-const by=mine[id]?'you':(instrList(s)[0]?firstName(instrList(s)[0].name):'the team');
+const by=mine[id]?(coverMark[id]?'you (covering)':'you'):(instrList(s)[0]?firstName(instrList(s)[0].name):'the team');
 metaHtml='<div class="kmeta done">Picked up'+(pickupTimes[id]?' '+esc(pickupTimes[id]):'')+'</div>'+
 '<div class="picked-by">by '+esc(by)+'</div>'+
 (noph?'<div class="kmeta">No phone on file</div>':sent?'<div class="kmeta done">Parent texted '+esc(sent)+'</div>':'<div class="kmeta warn">Parent not texted yet</div>');
@@ -917,6 +971,22 @@ const selIds=stopSelectedIds(g);
 const pend=stopPendingIds(g);
 const allOn=pend.length>0&&pend.every(function(id){return selected[id];});
 const dropoff=g.type==='Studio'||g.type==='Drop-Off';
+const lockedOut=!readOnly()&&me&&pend.length===0&&
+g.students.some(function(s){return stateOf(s.studentId)==='pending'&&!canEdit(s);});
+if(lockedOut){
+const owner=instrList(g.students.filter(function(s){return stateOf(s.studentId)==='pending';})[0]||{})[0];
+const foot2='<div class="stop-foot"><button class="btn-cover" onclick="askCover(\''+g.id+'\',\''+
+esc(owner?owner.name:'').replace(/'/g,"\\'")+'\',\''+esc(g.name).replace(/'/g,"\\'")+'\')">'+
+'<i class="ti ti-arrows-exchange" style="font-size:15px"></i> I\u2019m covering this stop</button></div>';
+return '<div class="stop">'+
+'<div class="stop-hdr"><div class="stop-hdr-icon"><i class="ti ti-'+icon+'"></i></div>'+
+'<div class="stop-hdr-text"><div class="stop-hdr-name">'+esc(g.name)+'</div>'+(g.time?'<div class="stop-hdr-time">'+esc(g.time)+(String(g.time).indexOf('~')===0?' \u00b7 not confirmed':'')+'</div>':'')+'</div>'+
+'<div class="stop-hdr-count">'+(doneCount===0?total+(total===1?' kid':' kids'):doneCount+' of '+total+' done')+'</div></div>'+
+mapBlock+
+g.students.map(function(s){return renderRow(s,g);}).join('')+
+foot2+'</div>';
+}
+
 const foot=(!readOnly()&&selIds.length)
 ?'<div class="stop-foot"><button class="btn-stop-go" onclick="markStop(\''+g.id+'\')">'+(dropoff?selIds.length+' arrived — check in':'I have '+selIds.length+(selIds.length===1?' kid':' kids'))+'</button></div>'
 :'';
@@ -938,7 +1008,7 @@ mapBlock='<div class="stop-map">'+
 
 return '<div class="stop">'+
 '<div class="stop-hdr"><div class="stop-hdr-icon"><i class="ti ti-'+icon+'"></i></div>'+
-'<div class="stop-hdr-text"><div class="stop-hdr-name">'+esc(g.name)+'</div>'+(g.time?'<div class="stop-hdr-time">'+esc(g.time)+(String(g.time).indexOf('~')===0?' \u00b7 not confirmed':'')+'</div>':'')+'</div>'+
+'<div class="stop-hdr-text"><div class="stop-hdr-name">'+esc(g.name)+(covering[g.id]?'<span class="covering-chip"><i class="ti ti-arrows-exchange" style="font-size:9px"></i>covering</span>':'')+'</div>'+(g.time?'<div class="stop-hdr-time">'+esc(g.time)+(String(g.time).indexOf('~')===0?' \u00b7 not confirmed':'')+'</div>':'')+'</div>'+
 '<div class="stop-hdr-count">'+(doneCount===0?total+(total===1?' kid':' kids'):doneCount+' of '+total+' done')+'</div></div>'+
 mapBlock+
 (pend.length>1&&!readOnly()?'<div class="select-bar"><button class="select-all" onclick="toggleSelectAll(\''+g.id+'\')"><i class="ti ti-'+(allOn?'square-off':'checkbox')+'" style="font-size:18px"></i> '+(allOn?'Clear selection':'Select all here')+'</button><div class="select-count">'+(selIds.length?selIds.length+' selected':'none selected')+'</div></div>':'')+
@@ -949,7 +1019,8 @@ foot+
 
 function renderWho(){
 const host=document.getElementById('trayHost');
-const names=getInstructors();
+const onRoute=getInstructors();
+const names=onRoute.length?onRoute:allStaff.map(function(x){return x.name;});
 const btns=names.map(function(n){
 const ph=getInstrPhoto(n);
 return'<button class="who-btn" onclick="setMe(\''+n.replace(/'/g,"\\'")+'\')">'+
@@ -1032,7 +1103,7 @@ document.getElementById('app').innerHTML=
 '</div>'+
 '</div>'+
 (isHomeDay()&&lastSync?'<div class="sync-bar"><i class="ti ti-refresh" style="font-size:12px"></i> Shared with the team \u00b7 updated '+esc(lastSync)+'</div>':'')+
-(me?'<div class="me-bar"><div class="me-name"><i class="ti ti-'+(isAdmin()?'shield-check':'user')+'" style="font-size:13px"></i> You: '+esc(myLabel())+'</div><button class="me-change" onclick="clearMe()">Not you?</button></div>':'')+
+(me?'<div class="me-bar"><div class="me-name"><i class="ti ti-'+(isAdmin()?'shield-check':'user')+'" style="font-size:13px"></i> You: '+esc(myLabel())+'</div><button class="me-change" onclick="askClearMe()">Not you?</button></div>':'')+
 '<a href="tel:'+REBECCA_PHONE+'" class="emergency-bar"><i class="ti ti-phone" style="font-size:13px"></i> Emergency: Rebecca (770) 547-1075</a>'+
 (readOnly()?'<div class="away-bar"><div class="away-text"><i class="ti ti-eye" style="font-size:17px"></i> Looking ahead \u2014 view only</div><button class="away-btn" onclick="goHome()">Back to today</button></div>':'')+
 (needText&&!readOnly()?'<div class="nag-bar"><div class="nag-text"><i class="ti ti-message-2" style="font-size:17px"></i> '+needText+(needText===1?' parent still needs a text':' parents still need a text')+'</div><button class="nag-btn" onclick="openTray()">Send now</button></div>':'')+
@@ -1067,6 +1138,7 @@ const res=await Promise.all([proxy('getTodayRoster'),proxy('getChanges')]);
 const fresh=res[0].roster;
 if(!Array.isArray(fresh))return;
 roster=fresh;
+allStaff=res[0].staff||allStaff;
 changes=res[1].records||[];
 noPickupToday=res[1].noPickupStudentIds||[];
 buildPhotoCache();
@@ -1093,6 +1165,7 @@ buildPhotoCache();isOffline=false;render();
 try{
 const res=await Promise.all([proxy('getTodayRoster'),proxy('getLocations'),proxy('getChanges')]);
 roster=res[0].roster||[];
+allStaff=res[0].staff||allStaff;
 closedReason=res[0].closedReason||'';
 locations=res[1].records||[];
 changes=res[2].records||[];
