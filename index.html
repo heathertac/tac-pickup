@@ -488,7 +488,9 @@ return out.sort();
 function todayList(){
 let list=roster.slice();
 if(activeFilter==='__admin__'){
-list=list.filter(function(s){return instrList(s).length===0||mine[s.studentId];});
+// The backstop view: every child nobody has yet, whoever's route they are on.
+// Shrinks to nothing as the afternoon closes out.
+list=list.filter(function(s){return stateOf(s.studentId)==='pending';});
 }else if(activeFilter!=='all'){
 list=list.filter(function(s){return instrList(s).some(function(i){return i.name===activeFilter;});});
 }
@@ -1121,11 +1123,11 @@ document.getElementById('app').innerHTML=
 const photo=getInstrPhoto(name);
 return'<button class="filter-pill'+(activeFilter===name?' active':'')+'" onclick="setFilter(\''+name.replace(/'/g,"\\'")+'\')">'+(photo?'<img src="'+esc(photo)+'" alt="">':'')+esc(firstName(name))+'</button>';
 }).join('')+
-'<button class="filter-pill'+(activeFilter==='__admin__'?' active':'')+'" onclick="setFilter(\'__admin__\')"><i class="ti ti-shield-check" style="font-size:13px"></i> Admin</button>'+
+'<button class="filter-pill'+(activeFilter==='__admin__'?' active':'')+'" onclick="setFilter(\'__admin__\')"><i class="ti ti-shield-check" style="font-size:13px"></i> Still out</button>'+
 '</div>')+
-'<div class="section-hdr"><span class="section-title">'+(activeFilter==='all'?"Today's stops":activeFilter==='__admin__'?"Unassigned \u00b7 and yours":esc(firstName(activeFilter))+"'s stops")+'</span><span class="count-chip">'+groupByLocation(list).length+'</span></div>'+
+'<div class="section-hdr"><span class="section-title">'+(activeFilter==='all'?"Today's stops":activeFilter==='__admin__'?"Still to collect":esc(firstName(activeFilter))+"'s stops")+'</span><span class="count-chip">'+groupByLocation(list).length+'</span></div>'+
 '<div class="stops">'+
-(list.length===0?'<div class="closed-note">'+esc(activeFilter==='__admin__'?'Every child today is on someone\u2019s route.':(closedReason||('No students enrolled for '+dayFull())))+'</div>':groupByLocation(list).map(renderStop).join(''))+
+(list.length===0?'<div class="closed-note">'+esc(activeFilter==='__admin__'?'Everyone is accounted for.':(closedReason||('No students enrolled for '+dayFull())))+'</div>':groupByLocation(list).map(renderStop).join(''))+
 '</div>';
 
 if(!me&&roster.length&&isHomeDay()){renderWho();}else{renderTray();}
