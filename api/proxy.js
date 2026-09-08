@@ -15,9 +15,15 @@ module.exports = async function handler(req, res) {
   //   - the semester window and closure list are ignored, so any date works
   //   - every parent phone is replaced with TEST_PHONE below
   //   - nothing is written to the Incidents table
+  //   - nothing is written to Pickup Assignments (status or route start)
   // Remove nothing here to "go live" — with no parameter, this code is inert.
   // ---------------------------------------------------------------------
   const TEST_PHONE = '8036032328'; // Heather's mobile
+
+  // Field IDs on Pickup Assignments (tblqX1tGUs6W5VGt4)
+  const F_STATUS        = 'fldH57ACWfMEwHEEA';
+  const F_STARTED_ROUTE = 'fldKM6iReJ9J968kn'; // "Started Route" checkbox
+  const F_CLOCK_IN      = 'fldSLhp25TqDgmx0J'; // "Clock-In Time"
 
   async function get(table, params='') {
     const r = await fetch(`https://api.airtable.com/v0/${BASE}/${table}?${params}`, {
@@ -186,6 +192,11 @@ module.exports = async function handler(req, res) {
 
         const rowStatus = f['Status']?.name || f['Status'] || '';
 
+        // Has the instructor tapped "I'm starting my route" for this date?
+        // Read back so a second phone, or Rebecca ticking it by hand in
+        // Airtable, both show up in the app.
+        const startedRoute = !!f['Started Route'];
+
         stuIds.forEach(sid => {
           assignmentMap[sid] = {
             assignmentId: a.id,
@@ -198,6 +209,7 @@ module.exports = async function handler(req, res) {
             notes,
             eodLoc,
             parentDropoff,
+            startedRoute,
           };
         });
       });
@@ -236,7 +248,13 @@ module.exports = async function handler(req, res) {
         roster.push({
           studentId: r.id,
           studentName,
-          photo: photos[0]?.thumbnails?.small?.url || photos[0]?.url || null,
+          // Airtable's `small` thumbnail is 36px on its longest side — far too
+          // small to identify a child at dismissal, and it looks soft however
+          // it is displayed. `large` is 512px, which the row and the expanded
+          // view both need. `photoFull` is the original upload and is only
+          // fetched when someone taps a face to fill the screen with it.
+          photo: photos[0]?.thumbnails?.large?.url || photos[0]?.url || null,
+          photoFull: photos[0]?.url || photos[0]?.thumbnails?.large?.url || null,
           school: f['School']?.name || f['School'] || '',
           grade: f['Grade']?.name || f['Grade'] || '',
           teacher: f['Homeroom Teacher'] || '',
@@ -252,6 +270,7 @@ module.exports = async function handler(req, res) {
           instructorName,
           instructorPhotoUrl,
           parentDropoff: assignment?.parentDropoff || false,
+          startedRoute: assignment?.startedRoute || false,
           labArrivalTime: f['Lab Arrival Time'] || '',
           isOverride: false, // removed — "Sub" badge was misleading
         });
@@ -320,11 +339,67 @@ module.exports = async function handler(req, res) {
       const r = await fetch(`https://api.airtable.com/v0/${BASE}/tblqX1tGUs6W5VGt4/${assignmentId}`, {
         method: 'PATCH',
         headers: { Authorization: `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fields: { fldH57ACWfMEwHEEA: status } })
+        body: JSON.stringify({ fields: { [F_STATUS]: status } })
       });
       const out = await r.json();
       if (!r.ok) return res.status(502).json({ error: out?.error?.message || 'Airtable write failed' });
       return res.status(200).json({ ok: true, id: out.id, status });
+    }
+
+    // ------------------------------------------------------------------
+    // ROUTE START
+    // One tap marks EVERY row this instructor has on this date. Confirming
+    // per child or per stop would leave Rebecca's chase list half-empty,
+    // which is worse than no list: it looks answered when it isn't.
+    // ------------------------------------------------------------------
+    if (action === 'startRoute') {
+      const { instructorName, date } = body;
+      if (!instructorName || !/^\d{4}-\d{2}-\d{2}$/.test(String(date || ''))) {
+        return res.status(400).json({ error: 'Need instructorName and a YYYY-MM-DD date' });
+      }
+      // Test mode never touches live rows.
+      if (testDate) {
+        return res.status(200).json({ skipped: true, testMode: true, marked: 0 });
+      }
+
+      const [staff, assignments] = await Promise.all([
+        getAllRecords('tblWuCldxuiPhtUUC'),
+        getAllRecords('tblqX1tGUs6W5VGt4', `filterByFormula=DATESTR({Date})="${date}"`),
+      ]);
+
+      const meIds = staff
+        .filter(r => (r.fields?.['Name'] || '') === instructorName)
+        .map(r => r.id);
+      if (!meIds.length) {
+        return res.status(404).json({ error: 'No staff record for ' + instructorName });
+      }
+
+      const mine = assignments.filter(a => {
+        const arr = a.fields?.['Assigned Instructor'] || [];
+        return arr.some(x => meIds.includes(typeof x === 'string' ? x : x?.id));
+      });
+      if (!mine.length) {
+        return res.status(200).json({ ok: true, marked: 0, note: 'No rows for this instructor on this date' });
+      }
+
+      const stamp = new Date().toISOString();
+      // Airtable caps PATCH at 10 records per request.
+      for (let i = 0; i < mine.length; i += 10) {
+        const chunk = mine.slice(i, i + 10).map(a => ({
+          id: a.id,
+          fields: { [F_STARTED_ROUTE]: true, [F_CLOCK_IN]: stamp },
+        }));
+        const r = await fetch(`https://api.airtable.com/v0/${BASE}/tblqX1tGUs6W5VGt4`, {
+          method: 'PATCH',
+          headers: { Authorization: `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ records: chunk }),
+        });
+        if (!r.ok) {
+          const out = await r.json();
+          return res.status(502).json({ error: out?.error?.message || 'Airtable write failed' });
+        }
+      }
+      return res.status(200).json({ ok: true, marked: mine.length });
     }
 
     if (action === 'logIncident') {
