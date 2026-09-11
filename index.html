@@ -877,7 +877,7 @@ if(readOnly())return;teamNotes[id]=teamNotes[id]||{};teamNotes[id].open=!teamNot
 function pendingTextIds(){
 return roster.filter(function(s){
 const id=s.studentId;
-return states[id]==='done'&&mine[id]&&!textsSent[id]&&hasPhone(s);
+return states[id]==='done'&&(mine[id]||isAdmin())&&!textsSent[id]&&hasPhone(s);
 }).map(function(s){return s.studentId;});
 }
 function noPhoneDoneIds(){
