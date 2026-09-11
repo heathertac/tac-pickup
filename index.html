@@ -18,9 +18,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .header-logo-fallback{display:none;}
 .day-pill{background:#f5f5f5;color:#555;font-size:12px;font-weight:500;padding:5px 14px;border-radius:999px;border:1px solid #e5e5e5;white-space:nowrap;}
 .emergency-bar{display:flex;align-items:center;justify-content:center;gap:6px;background:#f5f5f5;color:#555;font-size:11px;font-weight:500;padding:5px 16px;text-decoration:none;letter-spacing:0.02em;width:100%;border-bottom:0.5px solid #e5e5e5;}
-.nag-bar{background:#FEF3DC;border-bottom:1px solid #F0C97A;padding:9px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
-.nag-text{font-size:13px;color:#92540A;font-weight:600;display:flex;align-items:center;gap:7px;}
-.nag-btn{background:#fff;border:1px solid #F0C97A;color:#92540A;font-size:12px;font-weight:700;padding:7px 12px;border-radius:8px;cursor:pointer;white-space:nowrap;}
+.nag-bar{background:#E8420A;border:2px solid #A82D05;border-radius:12px;margin:10px 12px;padding:16px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.nag-text{font-size:17px;color:#FFFFFF;font-weight:600;display:flex;align-items:center;gap:9px;}
+.nag-btn{background:#FFFFFF;border:none;color:#A82D05;font-size:14px;font-weight:700;padding:11px 16px;border-radius:8px;cursor:pointer;white-space:nowrap;}
 .datenav{display:flex;align-items:center;gap:2px;}
 .datenav-arrow{width:34px;height:34px;border-radius:8px;border:1px solid #e5e5e5;background:#fff;color:#555;font-size:19px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit;flex-shrink:0;}
 .datenav-arrow:disabled{opacity:0.3;}
@@ -1152,9 +1152,9 @@ const foot=(!readOnly()&&selIds.length)
 :'';
 
 return '<div class="stop">'+
-'<div class="stop-hdr"><div class="stop-hdr-icon"><i class="ti ti-'+icon+'"></i></div>'+
+'<div class="stop-hdr" onclick="toggleStopOpen(\''+g.id+'\')" style="cursor:pointer"><div class="stop-hdr-icon"><i class="ti ti-'+icon+'"></i></div>'+
 '<div class="stop-hdr-text"><div class="stop-hdr-name">'+esc(g.name)+(covering[g.id]?'<span class="covering-chip"><i class="ti ti-arrows-exchange" style="font-size:9px"></i>covering</span>':'')+'</div>'+(g.time?'<div class="stop-hdr-time">'+esc(g.time)+(String(g.time).indexOf('~')===0?' \u00b7 not confirmed':'')+'</div>':'')+'</div>'+
-'<div class="stop-hdr-count">'+(doneCount===0?total+(total===1?' kid':' kids'):doneCount+' of '+total+' done')+'</div></div>'+
+'<div class="stop-hdr-count">'+(doneCount===0?total+(total===1?' kid':' kids'):doneCount+' of '+total+' done')+'</div><i class="ti ti-chevron-up" style="font-size:18px;color:#64748B"></i></div>'+
 mapBlock+
 (pend.length>1&&!readOnly()?'<div class="select-bar"><button class="select-all" onclick="toggleSelectAll(\''+g.id+'\')"><i class="ti ti-'+(allOn?'square-off':'checkbox')+'" style="font-size:18px"></i> '+(allOn?'Clear selection':'Select all here')+'</button><div class="select-count">'+(selIds.length?selIds.length+' selected':'none selected')+'</div></div>':'')+
 g.students.map(function(s){return renderRow(s,g);}).join('')+
@@ -1255,12 +1255,12 @@ document.getElementById('app').innerHTML=
 (readOnly()?'<div class="away-bar"><div class="away-text"><i class="ti ti-eye" style="font-size:17px"></i> '+esc(dayFull())+' is not today \u2014 you can look, but not tick</div><button class="away-btn" onclick="goHome()">Back to today</button></div>':'')+
 (showStart?'<div class="start-bar"><button class="btn-start" onclick="startMyRoute()"><i class="ti ti-walk" style="font-size:20px"></i> I\u2019m starting my route</button></div>':'')+
 (showStarted?'<div class="started-bar"><i class="ti ti-circle-check" style="font-size:16px"></i> Route started '+esc(routeStarted[me])+' \u2014 the team knows you\u2019re on your way</div>':'')+
-(needText&&!readOnly()?'<div class="nag-bar"><div class="nag-text"><i class="ti ti-message-2" style="font-size:17px"></i> '+needText+(needText===1?' parent still needs a text':' parents still need a text')+'</div><button class="nag-btn" onclick="openTray()">Send now</button></div>':'')+
 '<div class="stats">'+
 '<div class="stat"><div class="stat-n '+(stillOut>0?'red':'green')+'">'+stillOut+'</div><div class="stat-l">Still out of '+expectedToday+(noPickupCount>0?' ('+noPickupCount+' not in today)':'')+'</div></div>'+
 '<div class="stat"><div class="stat-n green">'+doneCount+'</div><div class="stat-l">Picked up</div></div>'+
 '<div class="stat"><div class="stat-n '+(absentCount>0?'red':'')+'">'+absentCount+'</div><div class="stat-l">Absent</div></div>'+
 '</div>'+
+(needText&&!readOnly()?'<div class="nag-bar"><div class="nag-text"><i class="ti ti-message-2" style="font-size:22px"></i> '+needText+(needText===1?' parent still needs a text':' parents still need a text')+'</div><button class="nag-btn" onclick="openTray()">Send now</button></div>':'')+
 (todayChanges.length?'<div class="alert-box"><div class="alert-hdr"><i class="ti ti-alert-triangle" style="font-size:16px;color:#A32D2D"></i><span class="alert-hdr-text">Changes today, read first</span></div>'+todayChanges.map(function(c){return'<div class="alert-item"><div class="alert-name">'+esc((c.fields||{})['Change Summary']||'Change logged')+'</div></div>';}).join('')+'</div>':'<div class="clear-bar"><i class="ti ti-circle-check" style="font-size:16px;color:#2E7D32"></i><span class="clear-text">All clear, no changes today</span></div>')+
 ('<div class="filter-bar"><button class="filter-pill'+(activeFilter==='all'?' active':'')+'" onclick="setFilter(\'all\')"><i class="ti ti-users" style="font-size:13px"></i> All</button>'+instructors.map(function(name){
 const photo=getInstrPhoto(name);
