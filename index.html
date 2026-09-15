@@ -404,7 +404,7 @@ const owner=g&&g.students.length?instrList(g.students[0])[0]:null;
 saveState();render();
 queueIncident(newQid(),'cover',locId,{action:'logIncident',
 description:'COVERAGE \u2014 '+(myLabel()||'Someone')+' took over '+((g&&g.name)||'a stop')+
-(owner?' from '+owner.name:'')+' ['+dayStr()+']',type:'Field Note',severity:'Low'});
+(owner?' from '+owner.name:'')+' ['+dayStr()+']',severity:'Low',instructorName:me||''});
 flushOutbox();
 }
 
@@ -465,6 +465,44 @@ let outbox=loadOutbox();
 let flushing=false;
 
 function loadOutbox(){try{const s=localStorage.getItem(OUTBOX_KEY);const p=s?JSON.parse(s):[];return Array.isArray(p)?p:[];}catch(e){return [];}}
+
+/* Notes from a previous day used to be stranded forever.
+   The outbox is stored per day, so when the date rolls over the app stops
+   looking at yesterday's key and anything still undelivered sits in that
+   phone's storage unseen. This sweeps every older outbox into today's on
+   load, so a note written on a day the server was rejecting writes still
+   reaches the team once the app can deliver it. Status pushes are dropped
+   rather than replayed, because a stale pickup status must never overwrite
+   a newer one. Old keys are removed once nothing undelivered is left. */
+function sweepOldOutboxes(){
+let swept=0;
+try{
+const prefix='tac_outbox_v1_';
+const keys=[];
+for(let i=0;i<localStorage.length;i++){
+const k=localStorage.key(i);
+if(k&&k.indexOf(prefix)===0&&k!==OUTBOX_KEY)keys.push(k);
+}
+keys.forEach(function(k){
+let items=[];
+try{items=JSON.parse(localStorage.getItem(k)||'[]');}catch(e){items=[];}
+if(!Array.isArray(items)){try{localStorage.removeItem(k);}catch(e){}return;}
+const stuck=items.filter(function(x){
+return x&&!x.delivered&&x.payload&&x.payload.action==='logIncident';
+});
+stuck.forEach(function(x){
+if(outbox.some(function(y){return y.qid===x.qid;}))return;
+x.attempts=0;
+x.sweptFrom=k.slice(prefix.length);
+outbox.push(x);
+swept++;
+});
+try{localStorage.removeItem(k);}catch(e){}
+});
+if(swept){saveOutbox();}
+}catch(e){}
+return swept;
+}
 function saveOutbox(){try{localStorage.setItem(OUTBOX_KEY,JSON.stringify(outbox));}catch(e){}}
 function newQid(){return 'q'+Date.now()+Math.random().toString(36).slice(2,7);}
 
@@ -495,8 +533,11 @@ const p=Object.assign({},payload);
 if(TEST_DATE)p.testdate=TEST_DATE;
 const r=await fetch('/api/proxy',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)});
 if(!r.ok)throw new Error('HTTP '+r.status);
-const j=await r.json();
-if(j&&j.error)throw new Error(String(j.error));
+const j=await r.json().catch(function(){return {};});
+if(j&&j.error){
+const m=(typeof j.error==='string')?j.error:(j.error.message||j.error.type||'Airtable rejected the note');
+throw new Error(m);
+}
 return j;
 }
 
@@ -507,14 +548,17 @@ const items=outbox.slice();
 for(let i=0;i<items.length;i++){
 const item=items[i];
 try{
-await postIncident(item.payload);
+const res=await postIncident(item.payload);
 item.delivered=true;
 const rec=noteRecord(item.kind,item.studentId);
-if(rec&&rec.qid===item.qid)rec.status='sent';
+if(rec&&rec.qid===item.qid){
+rec.status=(res&&res.skipped)?'skipped':'sent';
+rec.reason='';
+}
 }catch(e){
 item.attempts=(item.attempts||0)+1;
 const rec=noteRecord(item.kind,item.studentId);
-if(rec&&rec.qid===item.qid)rec.status='failed';
+if(rec&&rec.qid===item.qid){rec.status='failed';rec.reason=(e&&e.message)||'';}
 }
 }
 outbox=outbox.filter(function(x){return !x.delivered;});
@@ -531,6 +575,8 @@ saveState();render();
 flushOutbox();
 }
 
+/* Pull in anything stranded on an earlier day, then deliver. */
+sweepOldOutboxes();
 setInterval(flushOutbox,20000);
 window.addEventListener('online',flushOutbox);
 document.addEventListener('visibilitychange',function(){if(!document.hidden)flushOutbox();});
@@ -538,7 +584,8 @@ document.addEventListener('visibilitychange',function(){if(!document.hidden)flus
 function renderNoteStatus(rec,label){
 if(!rec||!rec.qid)return '';
 if(rec.status==='sent')return '<div class="note-status sent"><i class="ti ti-circle-check" style="font-size:14px"></i> '+label+' delivered to the team</div>';
-if(rec.status==='failed')return '<div class="note-failed-box"><div class="note-failed-title"><i class="ti ti-alert-triangle" style="font-size:14px"></i> NOT SENT YET</div><div class="note-failed-sub">'+label+' has not reached the team. Still retrying automatically \u2014 it will send as soon as you have signal.</div><button class="note-retry" onclick="retryOutbox()">Try now</button></div>';
+if(rec.status==='skipped')return '<div class="note-failed-box"><div class="note-failed-title"><i class="ti ti-flask" style="font-size:14px"></i> NOT LOGGED \u2014 TEST MODE</div><div class="note-failed-sub">This phone is in test mode, so nothing was saved. Write it again on the live app.</div></div>';
+if(rec.status==='failed')return '<div class="note-failed-box"><div class="note-failed-title"><i class="ti ti-alert-triangle" style="font-size:14px"></i> NOT SENT YET</div><div class="note-failed-sub">'+label+' has not reached the team. Still retrying automatically \u2014 it will send as soon as you have signal.'+(rec.reason?'<br><span style="opacity:.75">Reason: '+esc(rec.reason)+'</span>':'')+'</div><button class="note-retry" onclick="retryOutbox()">Try now</button></div>';
 return '<div class="note-status queued"><i class="ti ti-clock" style="font-size:14px"></i> Sending '+label.toLowerCase()+'\u2026</div>';
 }
 
@@ -699,7 +746,11 @@ states[id]='done';
 delete selected[id];
 changed=true;
 }
-if(rs==='Completed'&&!textsSent[id]&&!mine[id]){textsSent[id]='by team';changed=true;}
+/* Completed means a text already went out, so hide the button everywhere.
+   This used to skip the phone that marked the child, which meant a parent
+   could be texted a second time by that instructor after admin had
+   already texted them. */
+if(rs==='Completed'&&!textsSent[id]){textsSent[id]='by team';changed=true;}
 }else if(rs==='Incident'){
 if(local!=='absent'&&local!=='done'){
 states[id]='absent';
@@ -834,6 +885,8 @@ delete pickupTimes[id];
 delete textsSent[id];
 delete textOpened[id];
 absentNotes[id]=absentNotes[id]||{sent:false};
+teamNotes[id]=teamNotes[id]||{};
+teamNotes[id].open=true; // one box, opened for you the moment you mark a child not here
 mine[id]=true;
 expanded[id]=true;
 pushStatus(id,'Incident');
@@ -874,10 +927,18 @@ function setFilter(f){activeFilter=f;render();}
 function toggleTeamNote(id){
 if(readOnly())return;teamNotes[id]=teamNotes[id]||{};teamNotes[id].open=!teamNotes[id].open;saveState();render();}
 
+/* Who may text a parent?
+   The same people who may mark the child picked up, via canEdit: admin,
+   whoever is covering the stop, or the assigned instructor. This used to
+   ask "did THIS PHONE mark them", which lived only in that browser's
+   storage. When storage was lost the buttons vanished even though the
+   child was picked up, and a second instructor on the same route could
+   never text at all. Assignment comes from Airtable on every poll, so it
+   survives a dead phone, a reload, or Safari clearing storage. */
 function pendingTextIds(){
 return roster.filter(function(s){
 const id=s.studentId;
-return states[id]==='done'&&(mine[id]||isAdmin())&&!textsSent[id]&&hasPhone(s);
+return states[id]==='done'&&canEdit(s)&&!textsSent[id]&&hasPhone(s);
 }).map(function(s){return s.studentId;});
 }
 function noPhoneDoneIds(){
@@ -927,25 +988,13 @@ a.click();
 document.body.removeChild(a);
 }
 
-async function sendAbsentNote(id){
-const s=roster.find(function(x){return x.studentId===id;});
-const el=document.getElementById('absent-'+id);
-const text=el?el.value.trim():'';
-if(!text)return;
-const qid=newQid();
-queueIncident(qid,'absent',id,{action:'logIncident',description:'ABSENT — '+((s&&s.studentName)||id)+': '+text+' ['+dayStr()+']',type:'Field Note',severity:'Low'});
-absentNotes[id]={qid:qid,status:'queued'};
-saveState();render();
-flushOutbox();
-}
-
 async function sendTeamNote(id){
 const s=roster.find(function(x){return x.studentId===id;});
 const el=document.getElementById('note-'+id);
 const text=el?el.value.trim():'';
 if(!text)return;
 const qid=newQid();
-queueIncident(qid,'team',id,{action:'logIncident',description:text+' [Student: '+((s&&s.studentName)||id)+', Date: '+dayStr()+']',type:'Field Note',severity:'Low'});
+queueIncident(qid,'team',id,{action:'logIncident',description:text+'\n\n\u2014 '+((s&&s.studentName)||id)+', '+dayStr(),severity:'Low',assignmentId:(s&&s.assignmentId)||'',instructorName:me||''});
 teamNotes[id]={qid:qid,status:'queued',open:false};
 saveState();render();
 flushOutbox();
@@ -975,7 +1024,7 @@ a.style.display='none';
 document.body.appendChild(a);
 a.click();
 document.body.removeChild(a);
-queueIncident(newQid(),'urgent',sid,{action:'logIncident',description:msg,type:'Missing Student',severity:'High'});
+queueIncident(newQid(),'urgent',sid,{action:'logIncident',description:msg,severity:'High',assignmentId:(s&&s.assignmentId)||'',instructorName:me||''});
 render();
 flushOutbox();
 }
@@ -1009,7 +1058,7 @@ metaHtml='<div class="kmeta done">Picked up'+(pickupTimes[id]?' '+esc(pickupTime
 }else if(state==='absent'){
 boxHtml='<div class="kbox-static" style="color:#64748B"><i class="ti ti-user-x"></i></div>';
 rowCls='absent';avCls='absent';
-const anr=absentNotes[id]||{};
+const anr=teamNotes[id]||{};
 const anTxt=anr.status==='sent'?'Marked absent, note delivered':anr.status==='failed'?'Marked absent, NOTE NOT SENT':anr.status==='queued'?'Marked absent, note sending\u2026':'Marked absent';
 metaHtml='<div class="kmeta '+(anr.status==='failed'?'warn':'absent')+'">'+anTxt+'</div>';
 }else{
@@ -1045,8 +1094,6 @@ return '<div class="instr-chip">'+(ph?'<img src="'+esc(ph)+'" class="instr-photo
 '<i class="ti ti-chevron-'+(isOpen?'up':'down')+' kchev"></i></button></div>';
 
 if(isOpen)html+=renderExpanded(s,state);
-if(state==='absent'&&!(absentNotes[id]&&absentNotes[id].qid)&&!readOnly())html+=renderAbsentNote(s);
-if(state==='absent'&&absentNotes[id]&&absentNotes[id].qid)html+='<div style="padding:0 12px 10px;background:#FAFAFA;border-bottom:1px solid #e5e5e5">'+renderNoteStatus(absentNotes[id],'Absence note')+'</div>';
 return html;
 }
 
@@ -1079,19 +1126,11 @@ h+='<div class="locked-note"><i class="ti ti-lock" style="font-size:13px"></i>'+
 }
 const tn=teamNotes[id]||{};
 if(tn.open){
-h+='<div class="note-form"><textarea class="note-input" id="note-'+id+'" rows="2" placeholder="e.g. Bus arrived 10 min late at a new stop on 47th Ave"></textarea><div class="note-row"><button class="btn-note-cancel" onclick="toggleTeamNote(\''+id+'\')">Cancel</button><button class="btn-note-send" onclick="sendTeamNote(\''+id+'\')">Send to team</button></div></div>';
+h+='<div class="note-form"><textarea class="note-input" id="note-'+id+'" rows="3" placeholder="Type what happened in your own words. It goes to Heather and Rebecca exactly as you write it."></textarea><div class="note-row"><button class="btn-note-cancel" onclick="toggleTeamNote(\''+id+'\')">Cancel</button><button class="btn-note-send" onclick="sendTeamNote(\''+id+'\')">Send to team</button></div></div>';
 }
 if(tn.qid)h+=renderNoteStatus(tn,'Note');
 h+='</div>';
 return h;
-}
-
-function renderAbsentNote(s){
-const id=s.studentId;
-return '<div class="absent-note"><div class="absent-note-label"><i class="ti ti-pencil" style="font-size:12px"></i> What happened?</div>'+
-'<textarea class="absent-input" id="absent-'+id+'" rows="2" placeholder="'+esc(s.studentName)+' was not at pickup at '+esc(nowTime())+'. "></textarea>'+
-'<div class="note-row" style="margin-top:6px"><button class="btn-absent-send" onclick="sendAbsentNote(\''+id+'\')">Send to team</button>'+
-'<button class="btn-mini danger" onclick="openUrgent(\''+id+'\')" aria-label="Send urgent alert"><i class="ti ti-alert-triangle" style="font-size:17px"></i></button></div></div>';
 }
 
 function renderStop(g){
