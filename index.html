@@ -404,7 +404,7 @@ const owner=g&&g.students.length?instrList(g.students[0])[0]:null;
 saveState();render();
 queueIncident(newQid(),'cover',locId,{action:'logIncident',
 description:'COVERAGE \u2014 '+(myLabel()||'Someone')+' took over '+((g&&g.name)||'a stop')+
-(owner?' from '+owner.name:'')+' ['+dayStr()+']',severity:'Low',instructorName:me||''});
+(owner?' from '+owner.name:'')+' ['+dayStr()+']',severity:'Low',instructorName:me||'',occurredOn:HOME_ISO});
 flushOutbox();
 }
 
@@ -494,6 +494,8 @@ stuck.forEach(function(x){
 if(outbox.some(function(y){return y.qid===x.qid;}))return;
 x.attempts=0;
 x.sweptFrom=k.slice(prefix.length);
+// notes queued before this existed have no date on them; the key holds it
+if(x.payload&&!x.payload.occurredOn&&/^\d{4}-\d{2}-\d{2}$/.test(x.sweptFrom))x.payload.occurredOn=x.sweptFrom;
 outbox.push(x);
 swept++;
 });
@@ -994,7 +996,7 @@ const el=document.getElementById('note-'+id);
 const text=el?el.value.trim():'';
 if(!text)return;
 const qid=newQid();
-queueIncident(qid,'team',id,{action:'logIncident',description:text+'\n\n\u2014 '+((s&&s.studentName)||id)+', '+dayStr(),severity:'Low',assignmentId:(s&&s.assignmentId)||'',instructorName:me||''});
+queueIncident(qid,'team',id,{action:'logIncident',description:text+'\n\n\u2014 '+((s&&s.studentName)||id)+', '+dayStr(),severity:'Low',assignmentId:(s&&s.assignmentId)||'',instructorName:me||'',occurredOn:HOME_ISO});
 teamNotes[id]={qid:qid,status:'queued',open:false};
 saveState();render();
 flushOutbox();
@@ -1024,7 +1026,7 @@ a.style.display='none';
 document.body.appendChild(a);
 a.click();
 document.body.removeChild(a);
-queueIncident(newQid(),'urgent',sid,{action:'logIncident',description:msg,severity:'High',assignmentId:(s&&s.assignmentId)||'',instructorName:me||''});
+queueIncident(newQid(),'urgent',sid,{action:'logIncident',description:msg,severity:'High',assignmentId:(s&&s.assignmentId)||'',instructorName:me||'',occurredOn:HOME_ISO});
 render();
 flushOutbox();
 }
