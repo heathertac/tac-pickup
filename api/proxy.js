@@ -403,22 +403,96 @@ module.exports = async function handler(req, res) {
     }
 
     if (action === 'logIncident') {
-      // Test mode never writes to the audit log.
+      // Test mode never writes to the audit log. It says so plainly now, so
+      // the app can tell the instructor nothing was saved instead of showing
+      // a delivery confirmation for a note that exists nowhere.
       if (testDate) {
         return res.status(200).json({ skipped: true, testMode: true });
       }
-      const { description, type, severity } = body;
-      const r = await fetch(`https://api.airtable.com/v0/${BASE}/tblBrZKAPGrg893o1`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ records: [{ fields: {
-          fldeXepi4JsJKPsWk: description,
-          fldmgu6wxyuCiOZ48: type || 'Field Note',
-          fldVIfEohqez31Wmw: severity || 'Low',
-          fldw6vBAo2K3rI9ip: new Date().toISOString().slice(0, 10),
-        }}]})
+
+      const { description, severity, assignmentId, instructorName } = body;
+      const text = String(description == null ? '' : description).trim();
+      if (!text) return res.status(400).json({ error: 'The note was empty, so nothing was saved.' });
+
+      // WHY THERE IS NO TYPE HERE
+      // The Type column on Incidents is a single select with a fixed list of
+      // choices (Late Bus, Medical, Weather and so on). Every note this app
+      // sent used to carry "Field Note", which is not on that list, and
+      // Airtable refuses an entire record over one bad choice. The
+      // instructor's words were being thrown away along with a label they
+      // never picked and never saw. Type is allowed to be empty, so we send
+      // nothing for it and it can be set later from the desk. Do not add a
+      // Type back here without first adding the matching choice in Airtable.
+      const F_DESC       = 'fldeXepi4JsJKPsWk';
+      const F_SEVERITY   = 'fldVIfEohqez31Wmw';
+      const F_DATE       = 'fldw6vBAo2K3rI9ip';
+      const F_ASSIGNMENT = 'fldTURNgfyAJnpyXv'; // link to Pickup Assignments
+      const F_STAFF      = 'fldXelX5LTznOxBTr'; // link to Staff
+      const SEVERITIES   = ['Low', 'Medium', 'High', 'Critical'];
+
+      const fields = {
+        [F_DESC]: text,
+        [F_DATE]: new Date().toISOString().slice(0, 10),
+      };
+      if (SEVERITIES.includes(severity)) fields[F_SEVERITY] = severity;
+      if (typeof assignmentId === 'string' && /^rec[A-Za-z0-9]{10,}$/.test(assignmentId)) {
+        fields[F_ASSIGNMENT] = [assignmentId];
+      }
+
+      // Who wrote it. The app knows the instructor by name, so the record is
+      // looked up here rather than trusting a record ID sent by a browser.
+      if (instructorName && instructorName !== '__admin__') {
+        try {
+          const safe = String(instructorName).trim().replace(/'/g, "\\'");
+          if (safe) {
+            const d = await get('tblWuCldxuiPhtUUC',
+              `maxRecords=1&filterByFormula=${encodeURIComponent(`{Name}='${safe}'`)}`);
+            const hit = d && d.records && d.records[0] && d.records[0].id;
+            if (hit) fields[F_STAFF] = [hit];
+          }
+        } catch (e) { /* attribution is a nicety; never lose a note over it */ }
+      }
+
+      async function writeIncident(f) {
+        const r = await fetch(`https://api.airtable.com/v0/${BASE}/tblBrZKAPGrg893o1`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ records: [{ fields: f }] }),
+        });
+        let out = {};
+        try { out = await r.json(); } catch (e) { out = {}; }
+        return { ok: r.ok, body: out };
+      }
+
+      let result = await writeIncident(fields);
+
+      // If either link is rejected, save the words on their own rather than
+      // losing them. An unattributed note beats no note.
+      if (!result.ok && (fields[F_ASSIGNMENT] || fields[F_STAFF])) {
+        const bare = { [F_DESC]: fields[F_DESC], [F_DATE]: fields[F_DATE] };
+        if (fields[F_SEVERITY]) bare[F_SEVERITY] = fields[F_SEVERITY];
+        result = await writeIncident(bare);
+        if (result.ok) {
+          return res.status(200).json({
+            ok: true,
+            id: (result.body.records && result.body.records[0] && result.body.records[0].id) || null,
+            unlinked: true,
+          });
+        }
+      }
+
+      if (!result.ok) {
+        // A failed write must not come back as a success. Returning 200 here
+        // regardless of what Airtable said is how this went unnoticed.
+        const err = result.body && result.body.error;
+        const msg = (err && (err.message || err.type)) || 'Airtable rejected the note';
+        return res.status(502).json({ error: msg });
+      }
+
+      return res.status(200).json({
+        ok: true,
+        id: (result.body.records && result.body.records[0] && result.body.records[0].id) || null,
       });
-      return res.status(200).json(await r.json());
     }
 
     if (action === 'getStudents') {
