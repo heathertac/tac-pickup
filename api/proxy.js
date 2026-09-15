@@ -410,7 +410,7 @@ module.exports = async function handler(req, res) {
         return res.status(200).json({ skipped: true, testMode: true });
       }
 
-      const { description, severity, assignmentId, instructorName } = body;
+      const { description, severity, assignmentId, instructorName, occurredOn } = body;
       const text = String(description == null ? '' : description).trim();
       if (!text) return res.status(400).json({ error: 'The note was empty, so nothing was saved.' });
 
@@ -430,9 +430,28 @@ module.exports = async function handler(req, res) {
       const F_STAFF      = 'fldXelX5LTznOxBTr'; // link to Staff
       const SEVERITIES   = ['Low', 'Medium', 'High', 'Critical'];
 
+      // WHY NOT toISOString()
+      // That returns the UTC date. After 8pm Eastern (7pm in winter) UTC has
+      // already rolled over, so an evening note was being stamped with
+      // tomorrow's date and disappeared from anything filtering on today.
+      // occurredOn is the day the note was WRITTEN, sent by the app. A note
+      // recovered from an earlier day must keep that day, not the day it
+      // finally managed to deliver.
+      let nyToday;
+      try {
+        nyToday = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(new Date());
+      } catch (e) {
+        // Never lose a note over a date. Falls back to UTC, which is only ever
+        // used when the app did not send occurredOn, which it always does now.
+        nyToday = new Date().toISOString().slice(0, 10);
+      }
+      const noteDate = (typeof occurredOn === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(occurredOn))
+        ? occurredOn
+        : nyToday;
+
       const fields = {
         [F_DESC]: text,
-        [F_DATE]: new Date().toISOString().slice(0, 10),
+        [F_DATE]: noteDate,
       };
       if (SEVERITIES.includes(severity)) fields[F_SEVERITY] = severity;
       if (typeof assignmentId === 'string' && /^rec[A-Za-z0-9]{10,}$/.test(assignmentId)) {
