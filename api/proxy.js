@@ -197,10 +197,16 @@ module.exports = async function handler(req, res) {
         // Airtable, both show up in the app.
         const startedRoute = !!f['Started Route'];
 
+        // Who confirmed the parent text actually sent. Written by the app when
+        // it marks the row Completed. Read back so every other phone can say
+        // "Parent texted by Becky" instead of the unhelpful "by team".
+        const textedBy = (f['Picked Up By'] || '').trim();
+
         stuIds.forEach(sid => {
           assignmentMap[sid] = {
             assignmentId: a.id,
             rowStatus,
+            textedBy,
             instructors,
             instructorName: instructors[0]?.name || '',
             instructorPhotoUrl: instructors[0]?.photoUrl || null,
@@ -240,6 +246,7 @@ module.exports = async function handler(req, res) {
         const instructorName = assignment?.instructorName || '';
         const instructorPhotoUrl = assignment?.instructorPhotoUrl || null;
         const pickupLocationId = assignment?.locationId || defaultLocId || '';
+        const textedBy = assignment?.textedBy || '';
 
         // In test mode every text goes to Heather, never to a family.
         const realPhone = f['Pickup Contact Phone'] || '';
@@ -260,6 +267,7 @@ module.exports = async function handler(req, res) {
           teacher: f['Homeroom Teacher'] || '',
           classroom: f['Classroom'] || '',
           pickupPhone,
+          textedBy,
           pickupName: f['Pickup Contact Name'] || '',
           notes: f['Notes (Nice to Know)'] || '',
           pickupLocationId,
@@ -325,7 +333,7 @@ module.exports = async function handler(req, res) {
     //   Incident          = child was not at the stop
     // ------------------------------------------------------------------
     if (action === 'setPickupStatus') {
-      const { assignmentId, status } = body;
+      const { assignmentId, status, textedBy } = body;
       const ALLOWED = ['Custody Confirmed', 'Completed', 'Incident', 'Scheduled'];
 
       if (!assignmentId || !ALLOWED.includes(status)) {
@@ -343,6 +351,31 @@ module.exports = async function handler(req, res) {
       });
       const out = await r.json();
       if (!r.ok) return res.status(502).json({ error: out?.error?.message || 'Airtable write failed' });
+
+      // WHO SENT THE TEXT, AND WHEN
+      // Deliberately a SECOND write, after the status has already saved above.
+      // Marking a child picked up is the thing that must never fail, so if this
+      // write breaks for any reason the status is already safe and the app
+      // carries on exactly as it did before these fields existed.
+      //   Picked Up By      = the person who confirmed the text actually sent.
+      //                       Rebecca's "Who has them" formula reads this and
+      //                       falls back to the assigned instructor when empty.
+      //   Parent Texted At  = the moment it was sent.
+      //   Parent Texted     = the checkbox, so a glance shows who has been told.
+      if (status === 'Completed' && typeof textedBy === 'string' && textedBy.trim() && textedBy !== '__admin__') {
+        try {
+          await fetch(`https://api.airtable.com/v0/${BASE}/tblqX1tGUs6W5VGt4/${assignmentId}`, {
+            method: 'PATCH',
+            headers: { Authorization: `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ fields: {
+              fldvyf7qF32Qy2ili: textedBy.trim().slice(0, 120),  // Picked Up By
+              fldfPZoSjbIr9t1pV: new Date().toISOString(),       // Parent Texted At
+              flda9FqvukRDq1j8Z: true,                           // Parent Texted
+            }})
+          });
+        } catch (e) { /* never let attribution break a status write */ }
+      }
+
       return res.status(200).json({ ok: true, id: out.id, status });
     }
 
