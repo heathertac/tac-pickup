@@ -461,6 +461,11 @@ selected=st.selected||{};
    shows a red state until it succeeds. Nothing here can silently vanish.
 ------------------------------------------------------------------ */
 const OUTBOX_KEY='tac_outbox_v1_'+(TEST_DATE?'test_':'')+HOME_ISO;
+/* Who sent each parent text, as far as THIS phone knows. The server records
+   the same thing on the row, and the poll reads it back so every other phone
+   agrees. This local copy only exists so the row reads correctly in the second
+   before the next poll returns. */
+let textedByLocal={};
 let outbox=loadOutbox();
 let flushing=false;
 
@@ -513,12 +518,16 @@ outbox.push({qid:qid,kind:kind,studentId:studentId,payload:payload,attempts:0});
 saveOutbox();
 }
 
-function pushStatus(studentId,status){
+/* textedBy is only meaningful on 'Completed', which is set the moment an
+   instructor confirms the parent text actually sent. The server ignores it on
+   any other status, and ignores admin, so Rebecca's own sends stay attributed
+   to her name rather than to the word admin. */
+function pushStatus(studentId,status,textedBy){
 const s=roster.find(function(x){return x.studentId===studentId;});
 if(!s||!s.assignmentId)return; // no assignment row today: nothing shared to write to
 outbox=outbox.filter(function(x){return!(x.kind==='status'&&x.studentId===studentId);});
 outbox.push({qid:newQid(),kind:'status',studentId:studentId,
-payload:{action:'setPickupStatus',assignmentId:s.assignmentId,status:status},attempts:0});
+payload:{action:'setPickupStatus',assignmentId:s.assignmentId,status:status,textedBy:textedBy||''},attempts:0});
 saveOutbox();flushOutbox();
 }
 
@@ -582,6 +591,18 @@ sweepOldOutboxes();
 setInterval(flushOutbox,20000);
 window.addEventListener('online',flushOutbox);
 document.addEventListener('visibilitychange',function(){if(!document.hidden)flushOutbox();});
+
+/* What the row says once a parent has been texted.
+   If this phone sent it, the instructor already knows who did: show the time.
+   If somebody else sent it, the useful fact is WHO, not when, so name them.
+   Falls back to the old wording whenever no name was recorded, which covers
+   every text sent before this existed. */
+function textedLabel(s,sent){
+const who=textedByLocal[s.studentId]||s.textedBy||'';
+if(sent!=='by team')return 'Parent texted '+sent;
+if(who)return 'Parent texted by '+firstName(who);
+return 'Parent texted by team';
+}
 
 function renderNoteStatus(rec,label){
 if(!rec||!rec.qid)return '';
@@ -960,8 +981,14 @@ render();
 }
 function confirmTextSent(id){
 textsSent[id]=nowTime();
+/* Record the profile that sent it, not the raw key. Admin sends as
+   "Rebecca / admin" rather than the internal __admin__, because Rebecca
+   texting from the board is the commonest case of somebody else having
+   already told the parent, and it is the one the field needs to see. */
+const who=isAdmin()?myLabel():(me||'');
+textedByLocal[id]=who;
 delete textOpened[id];
-pushStatus(id,'Completed');
+pushStatus(id,'Completed',who);
 saveState();render();
 }
 function cancelTextSent(id){
@@ -1056,7 +1083,7 @@ const noph=!hasPhone(s);
 const by=mine[id]?(coverMark[id]?'you (covering)':'you'):(instrList(s)[0]?firstName(instrList(s)[0].name):'the team');
 metaHtml='<div class="kmeta done">Picked up'+(pickupTimes[id]?' '+esc(pickupTimes[id]):'')+'</div>'+
 '<div class="picked-by">by '+esc(by)+'</div>'+
-(noph?'<div class="kmeta">No phone on file</div>':sent?'<div class="kmeta done">Parent texted '+esc(sent)+'</div>':'<div class="kmeta warn">Parent not texted yet</div>');
+(noph?'<div class="kmeta">No phone on file</div>':sent?'<div class="kmeta done">'+esc(textedLabel(s,sent))+'</div>':'<div class="kmeta warn">Parent not texted yet</div>');
 }else if(state==='absent'){
 boxHtml='<div class="kbox-static" style="color:#64748B"><i class="ti ti-user-x"></i></div>';
 rowCls='absent';avCls='absent';
