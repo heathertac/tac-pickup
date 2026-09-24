@@ -82,7 +82,6 @@ module.exports = async function handler(req, res) {
     '2026-09-08',
     '2026-09-09',
     '2026-09-21', // Yom Kippur
-    '2026-09-30',
     // October
     '2026-10-12', // Italian Heritage / Indigenous Peoples' Day
     // November
@@ -94,6 +93,13 @@ module.exports = async function handler(req, res) {
     // December — fall semester ends Wed Dec 23
     '2026-12-24',
     '2026-12-25',
+  ];
+
+  // Special days that are NOT part of the semester tuition. On these dates
+  // only children who have a pickup row for that day appear, so families
+  // who did not book it stay off the roster.
+  const BOOKED_ONLY_DATES = [
+    '2026-09-30', // schools open on the planned PTC day; booked separately
   ];
 
   try {
@@ -228,7 +234,9 @@ module.exports = async function handler(req, res) {
         if (!status.includes('active')) continue;
 
         const enrolledDays = (f['Enrolled Days'] || []).map(d => normDay(d.name || d));
-        if (!enrolledDays.includes(todayDay)) continue;
+        if (BOOKED_ONLY_DATES.includes(todayISO)) {
+          if (!assignmentMap[r.id]) continue;
+        } else if (!enrolledDays.includes(todayDay)) continue;
 
         const studentName = f['Name'] || 'Unknown';
         const photos = f['Photo'] || [];
