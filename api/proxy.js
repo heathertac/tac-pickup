@@ -128,6 +128,27 @@ module.exports = async function handler(req, res) {
       const todayISO = askedFor || today.toISOString().slice(0, 10);
       const todayDay = askedFor ? days[isoWeekday(askedFor)] : days[today.getDay()];
 
+      // The Program Calendar table in Airtable (tblSXH7xahZ2kHHdl) is where
+      // closed and booked-only days are managed. If it can't be read, or it is
+      // empty, the lists written above are used instead so the app never breaks.
+      let closedDates = CLOSED_DATES;
+      let bookedOnlyDates = BOOKED_ONLY_DATES;
+      try {
+        const cal = await getAllRecords('tblSXH7xahZ2kHHdl');
+        if (Array.isArray(cal) && cal.length) {
+          closedDates = [];
+          bookedOnlyDates = [];
+          cal.forEach(rec => {
+            const f = rec.fields || {};
+            const d = String(f['Date'] || '').slice(0, 10);
+            const t = f['Type']?.name || f['Type'] || '';
+            if (!d) return;
+            if (t === 'Closed') closedDates.push(d);
+            else if (t === 'Booked-only') bookedOnlyDates.push(d);
+          });
+        }
+      } catch (e) { /* keep the built-in lists */ }
+
       // Live behaviour only. In test mode every date is allowed through so the
       // screen can be walked before the semester opens.
       if (!testDate) {
@@ -137,7 +158,7 @@ module.exports = async function handler(req, res) {
         if (todayDay === 'sat' || todayDay === 'sun') {
           return res.status(200).json({ roster: [], closedReason: 'Weekend — no program' });
         }
-        if (CLOSED_DATES.includes(todayISO)) {
+        if (closedDates.includes(todayISO)) {
           return res.status(200).json({ roster: [], closedReason: 'Closed — no program this day' });
         }
       }
@@ -234,7 +255,7 @@ module.exports = async function handler(req, res) {
         if (!status.includes('active')) continue;
 
         const enrolledDays = (f['Enrolled Days'] || []).map(d => normDay(d.name || d));
-        if (BOOKED_ONLY_DATES.includes(todayISO)) {
+        if (bookedOnlyDates.includes(todayISO)) {
           if (!assignmentMap[r.id]) continue;
         } else if (!enrolledDays.includes(todayDay)) continue;
 
